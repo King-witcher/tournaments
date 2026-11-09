@@ -77,12 +77,13 @@
   },
   "deletion": {
     "title": "Eliminar la comunidad",
-    "description": "La comunidad se elimina 7 días después del pedido, con todo lo que tiene dentro. Hasta entonces queda en solo lectura, y puedes cancelar. Si algún torneo está en curso, termínalo o deshaz el inicio antes.",
     "submit": "Eliminar comunidad",
-    "confirm": "¿Programar la eliminación de la comunidad? En la fecha, se borra con todo lo que tiene dentro, sin vuelta atrás.",
+    "confirm": "¿Programar la eliminación de la comunidad? En 7 días, se borra con todo lo que tiene dentro, sin vuelta atrás. Hasta entonces, queda en solo lectura, y puedes cancelar.",
     "scheduledTitle": "Eliminación programada",
     "scheduled": "La comunidad se eliminará el <date></date>, con todo lo que tiene dentro. Hasta entonces, queda en solo lectura.",
-    "cancel": "Cancelar la eliminación"
+    "cancel": "Cancelar la eliminación",
+    "descriptionLater": "La comunidad queda en solo lectura durante 7 días y después se elimina, con todo lo que tiene dentro. Puedes cancelar en ese plazo.",
+    "confirmNow": "¿Eliminar la comunidad ahora? Ningún torneo empezó, así que se borra en el momento, con todo lo que tiene dentro, sin vuelta atrás."
   },
   "deletionNotice": {
     "title": "Comunidad en eliminación",

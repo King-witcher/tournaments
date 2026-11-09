@@ -779,9 +779,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["preview_tenant_deletion"];
         put?: never;
-        post: operations["schedule_tenant_deletion"];
+        post: operations["request_tenant_deletion"];
         delete: operations["cancel_tenant_deletion"];
         options?: never;
         head?: never;
@@ -3750,6 +3750,13 @@ export interface components {
             /** @description Nota opcional no histórico, até 280 caracteres. */
             comment?: string | null;
         };
+        RequestTenantDeletion: {
+            /**
+             * @description O slug do tenant, digitado para confirmar.
+             * @example quake-br
+             */
+            confirm_slug: string;
+        };
         /** @description O resultado da série que o organizador define: W.O. */
         ResultInput: {
             /** @enum {string} */
@@ -3771,13 +3778,6 @@ export interface components {
         ScheduleAccountDeletion: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
             current_password?: string | null;
-        };
-        ScheduleTenantDeletion: {
-            /**
-             * @description O slug do tenant, digitado para confirmar.
-             * @example quake-br
-             */
-            confirm_slug: string;
         };
         Screenshot: {
             /** Format: date-time */
@@ -4428,6 +4428,24 @@ export interface components {
             report: components["schemas"]["TeamActor"];
             /** @description Vetar mapas e, no modo votação, votar. */
             veto: components["schemas"]["TeamActor"];
+        };
+        /**
+         * @description O que o pedido de exclusão faria agora.
+         * @enum {string}
+         */
+        TenantDeletionEffect: "immediate" | "scheduled" | "blocked";
+        /** @description O que o pedido de exclusão fez. */
+        TenantDeletionOutcome: {
+            /** @enum {string} */
+            outcome: "deleted";
+        } | {
+            /** Format: date-time */
+            deletion_scheduled_for: string;
+            /** @enum {string} */
+            outcome: "scheduled";
+        };
+        TenantDeletionPreview: {
+            effect: components["schemas"]["TenantDeletionEffect"];
         };
         TestDiscord: {
             locale?: components["schemas"]["Locale"] | null;
@@ -8114,7 +8132,57 @@ export interface operations {
             };
         };
     };
-    schedule_tenant_deletion: {
+    preview_tenant_deletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O que `POST` faria agora, para a tela dizer antes de confirmar. Quem decide é o `POST`, na hora dele */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantDeletionPreview"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    request_tenant_deletion: {
         parameters: {
             query?: never;
             header?: never;
@@ -8126,17 +8194,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ScheduleTenantDeletion"];
+                "application/json": components["schemas"]["RequestTenantDeletion"];
             };
         };
         responses: {
-            /** @description Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os links de convite e de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro */
+            /** @description `deleted`: nenhum torneio começou, e a comunidade saiu agora, com tudo o que tem dentro. `scheduled`: há histórico, e ela sai em 7 dias (`deletion_scheduled_for`); até lá é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os links de convite e de inscrição não valem */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyTenant"];
+                    "application/json": components["schemas"]["TenantDeletionOutcome"];
                 };
             };
             /** @description auth.unauthenticated */

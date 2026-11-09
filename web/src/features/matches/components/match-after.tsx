@@ -3,7 +3,6 @@ import { Accordion } from "@/shared/ui/carbon/accordion";
 import type { MatchTarget } from "../lib/match-target";
 import { CorrectionNote } from "./correction-note";
 import { MatchHistory } from "./match-history";
-import { OrganizerPanel } from "./organizer-panel";
 import { PendingMatches } from "./pending-matches";
 import { VetoHistory } from "./veto-history";
 
@@ -19,13 +18,11 @@ type Props = {
 
 /**
  * O fim da página da série: o aviso de correção recusada (organização, série
- * decidida), as outras séries que esperam quem vê e, fechados, o W.O. da
- * organização e o histórico (o da série e o do veto).
+ * decidida), as outras séries que esperam quem vê e, fechado, o histórico (o
+ * da série e o do veto).
  */
 export function MatchAfter({ target, detail, bracket, names }: Props) {
   const s = detail.summary;
-  const r = s.result;
-  const playable = s.state === "ready" || s.state === "completed";
   const basePath = `/${target.tenant}/${target.slug}/matches`;
   return (
     <>
@@ -41,14 +38,6 @@ export function MatchAfter({ target, detail, bracket, names }: Props) {
         <PendingMatches bracket={bracket} basePath={basePath} exclude={s.key} />
       )}
       <Accordion>
-        {detail.can_manage && playable && (
-          // A chave muda a cada resultado: o bloco fecha depois de salvar.
-          <OrganizerPanel
-            key={`${r?.winner}:${r?.walkover}:${r?.a_wins}:${r?.b_wins}`}
-            target={target}
-            names={names}
-          />
-        )}
         <MatchHistory detail={detail} />
         {detail.veto && <VetoHistory veto={detail.veto} names={names} />}
       </Accordion>

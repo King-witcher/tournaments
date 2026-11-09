@@ -27,7 +27,7 @@ type Props = {
  * A fase seguinte à espera, na Visão geral,
  * entre o fim da fase anterior e o início dela: quem entra, na ordem, os
  * suplentes e, com check-in, quem confirmou. A organização abre o check-in e
- * inicia a fase (o Modal mostra quem entra); o jogador de um time candidato
+ * inicia a fase (o Modal mostra quantos entram e quem fica de fora); o jogador de um time candidato
  * faz o check-in ou lê quando o suplente entra. No duelo, sem "time" no
  * texto. Sem fase assim, nada aparece.
  * Busca a fase, então fica em `<Suspense>`.
@@ -48,7 +48,6 @@ export async function NextStage({ tenant, tournament, organizer }: Props) {
         candidate.team.members.some((member) => member.user_id === user.id),
       )
     : undefined;
-  const placement = stage.format === "placement";
   const tdm = tournament.mode === "tdm";
   const enters = entering(entry).length;
   const waiting = substitutes(entry).length;
@@ -110,9 +109,7 @@ export async function NextStage({ tenant, tournament, organizer }: Props) {
               stage={entry.number}
               openCheckIn={entry.check_in && entry.status === "pending"}
               blocker={blocker}
-              details={
-                <StageStartDetails entry={entry} placement={placement} />
-              }
+              details={<StageStartDetails entry={entry} tdm={tdm} />}
             />
           )}
           <Accordion title={t("list.title", { number: entry.number })}>

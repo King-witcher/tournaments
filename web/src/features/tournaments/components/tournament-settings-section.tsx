@@ -11,6 +11,7 @@ import { SettingsLanguagesSection } from "./settings-languages-section";
 import { SettingsMapsSection } from "./settings-maps-section";
 import { SettingsRegistrationSection } from "./settings-registration-section";
 import { SettingsResultsSection } from "./settings-results-section";
+import { TournamentInviteSettings } from "./tournament-invite-settings";
 
 type Props = { tenant: string; slug: string; section: SettingsSection };
 
@@ -38,7 +39,17 @@ export async function TournamentSettingsSection({
       );
     }
     case "registration":
-      return <SettingsRegistrationSection />;
+      return (
+        <SettingsRegistrationSection
+          invite={
+            <TournamentInviteSettings
+              tenant={tenant}
+              tournament={loaded.tournament}
+              deletionScheduled={loaded.me.deletion_scheduled_for != null}
+            />
+          }
+        />
+      );
     case "format":
       return <SettingsFormatSection />;
     case "maps":

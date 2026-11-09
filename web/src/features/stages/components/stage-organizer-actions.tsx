@@ -21,7 +21,7 @@ type Props = {
   openCheckIn: boolean;
   /** Por que não dá para iniciar agora (já traduzido); sem ele, dá. */
   blocker?: string;
-  /** Quem entra, na ordem, e os suplentes: o que o Modal mostra antes de iniciar. */
+  /** Quantos entram e quem fica de fora: o que o Modal mostra antes de iniciar. */
   details: ReactNode;
 };
 
@@ -29,7 +29,8 @@ type Props = {
  * Para organizer e owner, o próximo passo da fase seguinte, um de cada vez e
  * como primário (como o próximo passo do torneio no cabeçalho): abrir o
  * check-in, se a fase pede e ele não abriu; depois, iniciar, com o Modal que
- * mostra quem entra. O motivo de não dar para iniciar fica embaixo do botão.
+ * mostra quantos entram e quem fica de fora. O motivo de não dar para iniciar
+ * fica embaixo do botão.
  * Depois de cada passo o botão some, e o foco vai para o título do torneio.
  */
 export function StageOrganizerActions({

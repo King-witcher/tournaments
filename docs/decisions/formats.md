@@ -112,7 +112,7 @@ Assumido:
 
 Um torneio em fases, uma depois da outra: o caso que motivou é todos contra todos md2 → disputa de posições md3 pela tabela, talvez em outro dia. Do usuário (06 e 07/11):
 
-- **Início manual de cada fase**: "Iniciar fase N" depois que a anterior terminou (todas as séries decididas e nenhum empate do fim esperando). Entre as fases o torneio continua em andamento; encerra quando a última termina. A fase 1 nasce no "Iniciar" do torneio, como antes.
+- **Início manual de cada fase**: "Iniciar fase N" depois que a anterior terminou (todas as séries decididas e nenhum empate do fim esperando). Entre as fases o torneio continua em andamento; encerra quando a última termina. A fase 1 nasce no "Iniciar" do torneio, como antes. O Modal mostra só quantos entram e quem fica de fora (suplentes e sem check-in); do usuário, 09/11: a lista inteira e os pares inundavam o Modal com muitos inscritos, e os pares se veem na chave logo depois, com o início ainda desfazível enquanto nada foi jogado.
 - **Check-in opcional por fase**, ligado na configuração dela, **sem data própria**: a organização o abre pelo botão (com a fase anterior terminada) e ele fecha quando a fase começa. Motivo: permitir pausa ou outro dia entre as fases sem marcar hora no site.
 - **Corte**: a fase recebe todos ou os N melhores da anterior.
 - **Quem entra**: os que jogaram a fase anterior, **sem os desistentes** ("não tem por que ocupar vaga para não jogar") e, com check-in, só os que confirmaram, na ordem da classificação da anterior, até o corte. O check-in abre para todos que seguem no torneio: quem está abaixo do corte é **suplente** e sobe se alguém de cima não confirmar. Sem check-in, o próximo da tabela entra direto.

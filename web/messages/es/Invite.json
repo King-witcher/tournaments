@@ -35,16 +35,19 @@
     "notFound": "Invitación no encontrada. Revisa el código."
   },
   "communityLink": {
-    "open": "Invitar",
-    "title": "Invitar a entrar en {name}",
     "note": "Quien entra con este enlace queda como jugador.",
     "link": "Enlace de invitación",
-    "rotateConfirm": "El enlace actual deja de valer, y quien ya entró sigue en la comunidad."
+    "rotateConfirm": "El enlace actual deja de valer, y quien ya entró sigue en la comunidad.",
+    "copy": "Copiar enlace de invitación"
   },
   "tournamentLink": {
-    "open": "Enlace de inscripción",
     "note": "Inscribe en el torneo y suma a la comunidad a quien es de afuera. Vale con la inscripción abierta.",
     "full": "Los cupos se agotaron. El enlace solo inscribe de nuevo cuando se libere un cupo.",
-    "rotateConfirm": "El enlace actual deja de valer, y quien ya se inscribió sigue inscrito."
-  }
+    "rotateConfirm": "El enlace actual deja de valer, y quien ya se inscribió sigue inscrito.",
+    "title": "Enlace de inscripción",
+    "copy": "Copiar enlace de inscripción",
+    "copiedFull": "Enlace copiado. Los cupos se agotaron, y solo inscribe de nuevo cuando se libere un cupo."
+  },
+  "copied": "Enlace copiado.",
+  "copyFailed": "No se pudo copiar. El enlace está en Configuración."
 }

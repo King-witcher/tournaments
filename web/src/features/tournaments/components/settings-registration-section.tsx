@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { useSettingsSection } from "../hooks/use-settings-section";
@@ -12,12 +13,12 @@ import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentStartField } from "./tournament-start-field";
 
 /**
- * Início e inscrições, numa coluna na largura de leitura: o início (o único
- * sem padrão, por isso logo depois de Geral), o tipo de inscrição e o
- * check-in. Depois de começar, só a inscrição muda (o motivo diz o que não
- * muda); encerrado, nada.
+ * Início e inscrições, na largura de leitura: o início (o único sem padrão,
+ * por isso logo depois de Geral), o tipo de inscrição e o check-in e, ao lado,
+ * o link de inscrição (`invite`), que não entra no Salvar. Depois de começar,
+ * só a inscrição muda (o motivo diz o que não muda); encerrado, nada.
  */
-export function SettingsRegistrationSection() {
+export function SettingsRegistrationSection({ invite }: { invite: ReactNode }) {
   const tSettings = useTranslations("TournamentSettings");
   const tReview = useTranslations("TournamentForm.review");
   const summary = useValuesSummary();
@@ -50,7 +51,7 @@ export function SettingsRegistrationSection() {
       }
       readOnly={finished}
       onSave={form.submit}
-      reading
+      aside={invite}
     >
       <TournamentStartField
         values={values}

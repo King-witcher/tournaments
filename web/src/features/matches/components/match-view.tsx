@@ -25,9 +25,8 @@ type Props = { tenant: string; slug: string; matchKey: string };
  * embaixo, como terminou), os passos (Pronto, Mapas e Campeões com veto no
  * torneio, e uma partida por passo, cada uma num cartão com o envio ou o
  * resultado e o que dá para fazer nela), o aviso de correção recusada, as
- * outras séries que esperam quem vê e, fechados no fim, o W.O. da
- * organização e o histórico (o da série e o do veto). Lê a sessão: fica em
- * `<Suspense>`.
+ * outras séries que esperam quem vê e, fechado no fim, o histórico (o da
+ * série e o do veto). Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
   // Os screenshots de cada partida (GameScreenshots) saem deste pedido:

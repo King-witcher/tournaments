@@ -9,6 +9,7 @@ import { useSideNames } from "../hooks/use-side-names";
 import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
 import { MatchStatusLine } from "./match-status-line";
 import { VetoSoundToggle } from "./veto-sound-toggle";
+import { WalkoverButton } from "./walkover-button";
 
 type Props = {
   tenant: string;
@@ -25,8 +26,9 @@ type Props = {
  * na chave) com os dois lados e, depois da primeira partida enviada, o
  * placar entre eles (o das confirmadas enquanto corre), o estado (o empate no
  * lugar de "Decidida") e o que ela espera de quem vê, a parte, a rodada e o
- * melhor de N e, embaixo, como ela terminou (ou por que ainda não começou). Com
- * a série em andamento e veto no torneio, o botão que silencia os sons do veto.
+ * melhor de N e, embaixo, como ela terminou (ou por que ainda não começou). Nas
+ * ações, o W.O. da organização e, com a série em andamento e veto no torneio, o
+ * botão que silencia os sons do veto.
  */
 export function MatchHeader({
   tenant,
@@ -80,6 +82,10 @@ export function MatchHeader({
       : null;
   const sides = { code: code(s.key), a: side("a"), b: side("b") };
   const drawn = s.state === "completed" && r != null && r.winner == null;
+  // O W.O. vale na série pronta e, no lugar do resultado, na decidida.
+  const canWalkover =
+    detail.can_manage && (s.state === "ready" || s.state === "completed");
+  const sound = s.state === "ready" && detail.veto != null;
 
   return (
     <PageHeader
@@ -118,7 +124,20 @@ export function MatchHeader({
         </>
       }
       meta={`${label} · ${t("bestOf", { count: s.best_of })}`}
-      actions={s.state === "ready" && detail.veto && <VetoSoundToggle />}
+      actions={
+        (canWalkover || sound) && (
+          <>
+            {canWalkover && (
+              <WalkoverButton
+                target={{ tenant, slug, matchKey: s.key }}
+                names={names}
+                decided={s.state === "completed"}
+              />
+            )}
+            {sound && <VetoSoundToggle />}
+          </>
+        )
+      }
     >
       <MatchStatusLine detail={detail} />
     </PageHeader>

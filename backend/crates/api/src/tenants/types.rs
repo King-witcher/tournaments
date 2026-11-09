@@ -43,10 +43,39 @@ pub struct TransferOwnership {
 }
 
 #[derive(Deserialize, ToSchema)]
-pub struct ScheduleTenantDeletion {
+pub struct RequestTenantDeletion {
     /// O slug do tenant, digitado para confirmar.
     #[schema(example = "quake-br")]
     pub confirm_slug: String,
+}
+
+/// O que o pedido de exclusão faria agora.
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum TenantDeletionEffect {
+    /// Nenhum torneio começou (um início desfeito não conta): sai na hora.
+    Immediate,
+    /// Há torneio encerrado: agenda para daqui a 7 dias.
+    Scheduled,
+    /// Há torneio em andamento: o pedido é recusado.
+    Blocked,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct TenantDeletionPreview {
+    pub effect: TenantDeletionEffect,
+}
+
+/// O que o pedido de exclusão fez.
+#[derive(Serialize, ToSchema)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum TenantDeletionOutcome {
+    /// Excluída agora, com tudo o que tem dentro.
+    Deleted,
+    /// Agendada: só leitura até a data.
+    Scheduled {
+        deletion_scheduled_for: DateTime<Utc>,
+    },
 }
 
 /// Um tenant do ponto de vista do usuário logado.

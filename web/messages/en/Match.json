@@ -71,12 +71,13 @@
     "acceptSubmit": "Accept and correct"
   },
   "organizer": {
-    "title": "Organizers",
-    "hint": "To enter or correct a game, use its row above.",
-    "walkover": "Walkover for {name}",
+    "walkover": "Award walkover",
     "walkoverTitle": "Award walkover for match",
-    "walkoverConfirm": "Award walkover to {name}? The match ends without a score. Confirmed games stay, and pending ones are removed.",
-    "comment": "Note in history"
+    "comment": "Note in history",
+    "winner": "Who wins the match?",
+    "walkoverEffect": "{name} wins by walkover, with no score. Confirmed games stay, and pending ones are removed.",
+    "walkoverEffectDecided": "{name} wins by walkover, with no score, replacing the current result. Confirmed games stay, and pending ones are removed.",
+    "walkoverSubmit": "Confirm walkover"
   },
   "correction": {
     "title": "Before correcting this match",

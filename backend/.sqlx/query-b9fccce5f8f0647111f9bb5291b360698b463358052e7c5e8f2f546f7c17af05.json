@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select started_at is not null as \"started!\"\n           from tournaments where tenant_id = $1 for update",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "started!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b9fccce5f8f0647111f9bb5291b360698b463358052e7c5e8f2f546f7c17af05"
+}

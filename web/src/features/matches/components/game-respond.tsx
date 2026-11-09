@@ -104,7 +104,12 @@ export function GameRespond({ target, number, canConfirm }: Props) {
             <Button size="sm" pending={pending} onClick={contest}>
               {t("submitContest")}
             </Button>
-            <Button size="sm" kind="secondary" onClick={cancel}>
+            <Button
+              size="sm"
+              kind="secondary"
+              disabled={pending}
+              onClick={cancel}
+            >
               {t("cancel")}
             </Button>
           </div>
@@ -116,7 +121,13 @@ export function GameRespond({ target, number, canConfirm }: Props) {
               {t("confirm")}
             </Button>
           )}
-          <Button ref={contestButton} size="sm" kind="tertiary" onClick={open}>
+          <Button
+            ref={contestButton}
+            size="sm"
+            kind="tertiary"
+            disabled={pending}
+            onClick={open}
+          >
             {t("contest")}
           </Button>
         </div>

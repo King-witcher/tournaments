@@ -1,6 +1,7 @@
-//! Excluir a comunidade: só o owner agenda, digitando o slug, e cancela; até
-//! a data ela é só leitura (escrita, convites e o que o agendador faria
-//! sozinho); torneio em andamento impede; na data, o agendador apaga tudo.
+//! Excluir a comunidade: só o owner, digitando o slug. Sem torneio iniciado ou
+//! encerrado, sai na hora. Com histórico, agenda, e ele cancela; até a data ela
+//! é só leitura (escrita, convites e o que o agendador faria sozinho); torneio
+//! em andamento impede; na data, o agendador apaga tudo.
 
 use api::realtime;
 use axum::{
@@ -24,11 +25,115 @@ fn scheduled() -> (StatusCode, Value) {
     (StatusCode::CONFLICT, err("tenant.deletion_scheduled"))
 }
 
+/// Um torneio encerrado em `quake-br`: a comunidade tem histórico.
+async fn history(app: &Router, db: &sqlx::PgPool, ana: &User, bia: &User) {
+    start(app, ana, copa(single(1, 1)), &[ana, bia]).await;
+    set_status(db, "copa", "finished").await;
+}
+
+async fn effect(app: &Router, by: &User) -> Value {
+    let (status, body) = get(app, DELETION, by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["effect"].clone()
+}
+
+async fn tenants(db: &sqlx::PgPool) -> Vec<String> {
+    sqlx::query_scalar!("select slug from tenants")
+        .fetch_all(db)
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn without_history_it_goes_at_once() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let olga = organizer(&app, &db, &ana, "Olga").await;
+    create_tournament(&app, &ana, duel("rascunho")).await;
+    create_tournament(&app, &ana, duel("aberta")).await;
+    publish(&app, &ana, "aberta").await;
+    let registration = "/tenants/quake-br/tournaments/aberta/registration";
+    let (status, body) = post_empty(&app, registration, &bia).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+
+    // Só o owner sabe e pede; o slug errado também não apaga.
+    let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
+    assert_eq!(get(&app, DELETION, &olga).await, forbidden);
+    assert_eq!(schedule(&app, &olga, "quake-br").await, forbidden);
+    assert_eq!(schedule(&app, &bia, "quake-br").await, forbidden);
+    assert_eq!(
+        schedule(&app, &ana, "quake").await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("tenant.confirmation_mismatch")
+        )
+    );
+    assert_eq!(tenants(&db).await, ["quake-br"]);
+
+    assert_eq!(effect(&app, &ana).await, "immediate");
+    clear(&db).await;
+    assert_eq!(
+        schedule(&app, &ana, "quake-br").await,
+        (StatusCode::OK, json!({ "outcome": "deleted" }))
+    );
+    assert!(tenants(&db).await.is_empty());
+    for table in ["tournaments", "participants", "tenant_members"] {
+        let sql = format!("select count(*) from {table}");
+        let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+            .fetch_one(&db)
+            .await
+            .unwrap();
+        assert_eq!(n, 0, "{table}");
+    }
+    let events = outbox(&db).await;
+    for who in [&ana, &bia, &olga] {
+        let lost = json!({ "kind": "access_lost", "user": who.id, "tenant": "quake-br" });
+        assert!(events.contains(&lost), "{events:?}");
+    }
+    assert_eq!(
+        get(&app, "/tenants/quake-br", &ana).await,
+        (StatusCode::NOT_FOUND, err("tenant.not_found"))
+    );
+}
+
+#[tokio::test]
+async fn an_undone_start_is_not_history() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    start(&app, &ana, copa(single(3, 3)), &[&ana, &bia]).await;
+    let (status, body) = delete(&app, &format!("{COPA}/start"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    assert_eq!(effect(&app, &ana).await, "immediate");
+    assert_eq!(
+        schedule(&app, &ana, "quake-br").await,
+        (StatusCode::OK, json!({ "outcome": "deleted" }))
+    );
+    assert!(tenants(&db).await.is_empty());
+}
+
+#[tokio::test]
+async fn with_history_it_is_scheduled() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    history(&app, &db, &ana, &bia).await;
+
+    assert_eq!(effect(&app, &ana).await, "scheduled");
+    let (status, body) = schedule(&app, &ana, "quake-br").await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["outcome"], "scheduled");
+    assert!(body["deletion_scheduled_for"].is_string(), "{body}");
+    assert_eq!(tenants(&db).await, ["quake-br"]);
+    // O owner continua lendo enquanto ela não sai.
+    assert_eq!(effect(&app, &ana).await, "scheduled");
+}
+
 #[tokio::test]
 async fn only_the_owner_schedules_and_cancels() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
+    history(&app, &db, &ana, &bia).await;
 
     assert_eq!(
         schedule(&app, &olga, "quake-br").await,
@@ -47,7 +152,6 @@ async fn only_the_owner_schedules_and_cancels() {
     let due: chrono::DateTime<Utc> =
         serde_json::from_value(body["deletion_scheduled_for"].clone()).unwrap();
     assert!(due >= before + Duration::days(7) - Duration::seconds(5));
-    assert_eq!(body["role"], "owner");
     // Todos os membros veem a data, na comunidade e na lista.
     let (_, seen) = get(&app, "/tenants/quake-br", &bia).await;
     assert_eq!(
@@ -90,6 +194,7 @@ async fn the_community_is_read_only_until_the_deletion() {
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     let token = invite(&app, &ana, "quake-br").await;
+    history(&app, &db, &ana, &bia).await;
     create_tournament(&app, &ana, duel("aberta")).await;
     publish(&app, &ana, "aberta").await;
     let (status, body) = schedule(&app, &ana, "quake-br").await;
@@ -150,7 +255,10 @@ async fn the_scheduler_waits_while_it_is_read_only() {
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
+    let bia = user(&db, "Bia").await;
     create(&app, &ana, "quake-br").await;
+    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
+    history(&app, &db, &ana, &bia).await;
     for slug in ["janela", "hora"] {
         create_tournament(&app, &ana, duel(slug)).await;
         publish(&app, &ana, slug).await;
@@ -182,7 +290,8 @@ async fn the_owner_is_reminded_the_day_before() {
     let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
-    let (_, ana, _) = quake_br(&db).await;
+    let (_, ana, bia) = quake_br(&db).await;
+    history(&app, &db, &ana, &bia).await;
     let (status, body) = schedule(&app, &ana, "quake-br").await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let due = body["deletion_scheduled_for"].clone();
@@ -226,17 +335,19 @@ async fn not_with_a_tournament_in_progress() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     start(&app, &ana, copa(single(3, 3)), &[&ana, &bia]).await;
+    create_tournament(&app, &ana, duel("aberta")).await;
+    publish(&app, &ana, "aberta").await;
+    assert_eq!(effect(&app, &ana).await, "blocked");
     assert_eq!(
         schedule(&app, &ana, "quake-br").await,
         (StatusCode::CONFLICT, err("tenant.tournament_in_progress"))
     );
-    // Desfeito o início, agenda.
-    let (status, body) = delete(&app, &format!("{COPA}/start"), &ana).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
+    // Encerrado, agenda; e, agendada, nenhum outro começa.
+    set_status(&db, "copa", "finished").await;
     let (status, body) = schedule(&app, &ana, "quake-br").await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
-        post_empty(&app, &format!("{COPA}/start"), &ana).await,
+        post_empty(&app, "/tenants/quake-br/tournaments/aberta/start", &ana).await,
         scheduled()
     );
 }

@@ -155,8 +155,10 @@ async fn after_the_start_only_the_owner_deletes_it() {
 #[tokio::test]
 async fn read_only_with_the_community_being_deleted() {
     let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, _) = quake_br(&db).await;
-    create_tournament(&app, &ana, duel("copa")).await;
+    let (app, ana, bia) = quake_br(&db).await;
+    // Com um encerrado, a exclusão fica agendada em vez de sair na hora.
+    start(&app, &ana, copa(single(1, 1)), &[&ana, &bia]).await;
+    set_status(&db, "copa", "finished").await;
     let confirm_slug = json!({ "confirm_slug": "quake-br" });
     post(&app, "/tenants/quake-br/deletion", &ana, confirm_slug).await;
     assert_eq!(

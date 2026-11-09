@@ -71,12 +71,13 @@
     "acceptSubmit": "Aceitar e corrigir"
   },
   "organizer": {
-    "title": "Organização",
-    "hint": "Para lançar ou corrigir uma partida, use a linha dela acima.",
-    "walkover": "W.O. para {name}",
+    "walkover": "Dar W.O.",
     "walkoverTitle": "Dar W.O. na série",
-    "walkoverConfirm": "Dar W.O. para {name}? A série acaba sem placar. As partidas confirmadas ficam e as pendentes saem.",
-    "comment": "Nota no histórico"
+    "comment": "Nota no histórico",
+    "winner": "Quem vence a série?",
+    "walkoverEffect": "{name} vence por W.O., sem placar. As partidas confirmadas ficam e as pendentes saem.",
+    "walkoverEffectDecided": "{name} vence por W.O., sem placar, no lugar do resultado atual. As partidas confirmadas ficam e as pendentes saem.",
+    "walkoverSubmit": "Confirmar W.O."
   },
   "correction": {
     "title": "Antes de corrigir esta série",

@@ -112,7 +112,12 @@ export function GameOrganizerActions({
         </Button>
       )}
       {contested && (
-        <Button size="sm" kind="tertiary" onClick={() => setEditing(true)}>
+        <Button
+          size="sm"
+          kind="tertiary"
+          disabled={pending}
+          onClick={() => setEditing(true)}
+        >
           {t("other")}
         </Button>
       )}

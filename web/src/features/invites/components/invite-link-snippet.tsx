@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
+import { useIsClient } from "@/shared/hooks/use-is-client";
 import { CodeSnippet } from "@/shared/ui/code-snippet";
 import { isShortCode } from "../lib/invite-input";
 import styles from "./invite-link-snippet.module.scss";
@@ -15,22 +16,25 @@ type Props = {
   disabled: boolean;
 };
 
-/** O botão de copiar, que o Modal foca ao abrir: o próximo passo é copiar. */
-export const COPY_BUTTON = `.${styles.link} button:not(:disabled)`;
-
 /**
  * O link, com o botão de copiar do Carbon, e o código para digitar no
  * aplicativo, quando o convite é do formato curto. Vai sem idioma: o proxy do
- * next-intl manda cada pessoa para o seu. Só existe dentro do Modal, no
- * navegador, então já sabe o endereço do site. Terminada a troca, o foco volta
- * para o copiar, que não recebe foco enquanto está desabilitado.
+ * next-intl manda cada pessoa para o seu. O endereço do site só existe no
+ * navegador, então a primeira pintura mostra o caminho. Terminada a troca, o
+ * foco volta para o copiar, que não recebe foco enquanto está desabilitado.
  */
 export function InviteLinkSnippet({ token, label, disabled }: Props) {
   const t = useTranslations("Invite");
   const wrapper = useRef<HTMLDivElement>(null);
+  const wasDisabled = useRef(disabled);
+  const isClient = useIsClient();
+  const origin = isClient ? window.location.origin : "";
 
   useEffect(() => {
-    if (!disabled) wrapper.current?.querySelector("button")?.focus();
+    if (wasDisabled.current && !disabled) {
+      wrapper.current?.querySelector("button")?.focus();
+    }
+    wasDisabled.current = disabled;
   }, [disabled]);
 
   return (
@@ -42,7 +46,7 @@ export function InviteLinkSnippet({ token, label, disabled }: Props) {
           aria-label={label}
           disabled={disabled}
         >
-          {`${window.location.origin}/invite/${token}`}
+          {`${origin}/invite/${token}`}
         </CodeSnippet>
       </div>
       {isShortCode(token) && (

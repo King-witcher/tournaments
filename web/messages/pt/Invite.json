@@ -35,16 +35,19 @@
     "notFound": "Convite não encontrado. Confira o código."
   },
   "communityLink": {
-    "open": "Convidar",
-    "title": "Convidar para {name}",
     "note": "Quem entra por este link vira jogador.",
     "link": "Link de convite",
-    "rotateConfirm": "O link atual deixa de valer, e quem já entrou continua na comunidade."
+    "rotateConfirm": "O link atual deixa de valer, e quem já entrou continua na comunidade.",
+    "copy": "Copiar link de convite"
   },
   "tournamentLink": {
-    "open": "Link de inscrição",
     "note": "Inscreve no torneio e coloca na comunidade quem é de fora. Vale com a inscrição aberta.",
     "full": "As vagas acabaram. O link só inscreve de novo quando abrir vaga.",
-    "rotateConfirm": "O link atual deixa de valer, e quem já se inscreveu continua inscrito."
-  }
+    "rotateConfirm": "O link atual deixa de valer, e quem já se inscreveu continua inscrito.",
+    "title": "Link de inscrição",
+    "copy": "Copiar link de inscrição",
+    "copiedFull": "Link copiado. As vagas acabaram, e ele só inscreve de novo quando abrir vaga."
+  },
+  "copied": "Link copiado.",
+  "copyFailed": "Não deu para copiar. O link está nas Configurações."
 }

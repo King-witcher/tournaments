@@ -14,20 +14,28 @@ import { useApiErrorMessage } from "./use-api-error-message";
  * quem precisa reagir ao erro (recarregar os dados de uma tela que ficou para
  * trás). Com um pedido no ar, outro `run` do mesmo hook é ignorado (o clique
  * duplo antes de o botão ficar pendente).
+ *
+ * Vários botões no mesmo hook: `runAs(chave, chamada, aoDarCerto, aoFalhar?)`
+ * e, em cada botão, `{...buttonFor(chave)}`. Só o botão da chave em andamento
+ * mostra o indicador; os outros ficam desabilitados, sem ele, como o Carbon
+ * desabilita as demais ações enquanto uma carrega.
  */
 export function useApiAction() {
   const errorMessage = useApiErrorMessage();
   const [pending, startAction] = useTransition();
   const [error, setError] = useState<string>();
+  const [runningKey, setRunningKey] = useState<string>();
   const busy = useRef(false);
 
-  function run<T>(
+  function runAs<T>(
+    key: string | undefined,
     request: () => Promise<ApiResponse<T>>,
     onSuccess: (data: T) => void,
     onError?: (code: string) => void,
   ) {
     if (busy.current) return;
     busy.current = true;
+    setRunningKey(key);
     startAction(async () => {
       let outcome: ApiOutcome<T>;
       try {
@@ -48,5 +56,21 @@ export function useApiAction() {
     });
   }
 
-  return { run, pending, error };
+  function run<T>(
+    request: () => Promise<ApiResponse<T>>,
+    onSuccess: (data: T) => void,
+    onError?: (code: string) => void,
+  ) {
+    runAs(undefined, request, onSuccess, onError);
+  }
+
+  /** As props de um botão de um grupo (`Button`, `ConfirmButton`). */
+  function buttonFor(key: string) {
+    return {
+      pending: pending && runningKey === key,
+      disabled: pending && runningKey !== key,
+    };
+  }
+
+  return { run, runAs, buttonFor, pending, error };
 }

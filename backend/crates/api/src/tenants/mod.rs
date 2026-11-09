@@ -3,8 +3,9 @@
 //! reescreve o caminho nos avisos guardados), transferir a posse (o owner rebaixa
 //! a si mesmo a organizer e promove outro membro, numa transação, dentro do
 //! limite de tenants por owner) e excluir (`deletion`:
-//! o owner agenda para 7 dias, a comunidade fica só leitura até lá, o
-//! agendador avisa o owner na véspera e apaga na data). Também é a base de
+//! sem torneio iniciado ou encerrado, na hora; com histórico, o owner agenda
+//! para 7 dias, a comunidade fica só leitura até lá, o agendador avisa o
+//! owner na véspera e apaga na data). Também é a base de
 //! todo dado de tenant:
 //! `TenantId`, `Role`, o extractor `TenantMember` (que recusa escrita na
 //! comunidade com a exclusão agendada; `DuringDeletion` passa; `Memberships`
@@ -40,7 +41,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::get_tenant, handlers::update_tenant))
         .routes(routes!(handlers::transfer_ownership))
         .routes(routes!(
-            deletion::schedule_tenant_deletion,
+            deletion::preview_tenant_deletion,
+            deletion::request_tenant_deletion,
             deletion::cancel_tenant_deletion
         ))
 }

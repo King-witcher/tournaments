@@ -32,7 +32,7 @@ export function gameInput(g: { map: string; a: number; b: number }) {
 /** Id do passo de uma partida: o foco vai para ele depois de agir nela. */
 export const gameRowId = (number: number) => `game-${number}`;
 
-/** Id da linha do resultado da série, embaixo do cabeçalho: o foco vai para ela depois do W.O., que fecha o bloco da organização. */
+/** Id da linha do resultado da série, embaixo do cabeçalho: o foco vai para ela depois do W.O., que fecha o Modal. */
 export const SCORE_ID = "match-score";
 
 /** Id do passo à vista: o foco vai para ele depois de uma ação cujo botão some e quando o passo muda sozinho. */

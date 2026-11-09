@@ -1,6 +1,6 @@
 # Excluir conta, comunidade e torneio
 
-Excluir torneio é imediato (seção no fim). Conta e comunidade, do usuário: as duas são agendadas para 7 dias; a conta é anonimizada (não apagada), entrar de novo no prazo cancela, e quem é owner não pede (transfere a posse ou exclui a comunidade antes); a comunidade fica só leitura até a data, e só o owner pede, digitando o slug, e cancela. O "(assumido)" é decisão minha, fácil de mudar. Migration `20261114000000_account_and_tenant_deletion`.
+Excluir torneio é imediato (seção no fim). Conta e comunidade, do usuário: as duas são agendadas para 7 dias (a comunidade sem histórico sai na hora, ver abaixo); a conta é anonimizada (não apagada), entrar de novo no prazo cancela, e quem é owner não pede (transfere a posse ou exclui a comunidade antes); a comunidade fica só leitura até a data, e só o owner pede, digitando o slug, e cancela. O "(assumido)" é decisão minha, fácil de mudar. Migration `20261114000000_account_and_tenant_deletion`.
 
 ## Conta
 
@@ -14,7 +14,8 @@ Excluir torneio é imediato (seção no fim). Conta e comunidade, do usuário: a
 
 ## Comunidade
 
-- `POST /tenants/{slug}/deletion` (owner, `confirm_slug`) grava `tenants.deletion_due_at` (agora + 7 dias) e `deletion_requested_by` (sempre o owner atual); `DELETE` cancela.
+- **Sem histórico, na hora** (do usuário, 09/11): sem torneio em andamento ou encerrado (`tournaments.started_at`, que desfazer o início limpa: um início desfeito não conta), `POST /tenants/{slug}/deletion` apaga na hora, pela mesma confirmação do slug, com o `access_lost` e a cascata do agendador (imagens e screenshots pelas filas de sempre). O servidor decide, com os torneios e o tenant travados nessa ordem (a do início de um torneio, para os dois não se travarem), e a resposta diz o que fez: `outcome` `deleted` ou `scheduled` (com a data). `GET` na mesma rota diz antes o que faria (`immediate`, `scheduled`, `blocked`), para o Modal dizer a consequência real e o botão travar com torneio em andamento. Saiu na hora, o dono vai para o Início.
+- Com histórico, o `POST` (owner, `confirm_slug`) grava `tenants.deletion_due_at` (agora + 7 dias) e `deletion_requested_by` (sempre o owner atual); `DELETE` cancela.
 - **Só leitura**: o extractor `TenantMember` recusa todo método que não é de leitura com 409 `tenant.deletion_scheduled`, o que cobre toda rota de escrita sem mexer nelas; passam só cancelar e sair da comunidade (`DuringDeletion`). Fora do extractor (assumido): a prévia e o aceite de convites respondem o mesmo código; o agendador não abre o check-in nem avisa a hora de iniciar, e o que venceu nesse meio-tempo acontece na primeira passada depois de cancelar.
 - Recusada com torneio em andamento (409 `tenant.tournament_in_progress`; assumido): só leitura congelaria a partida no meio. O banco confere nos dois sentidos (`tenants_deletion_in_progress`, `tournaments_tenant_deleting`).
 - Os membros veem o aviso com a data no topo (o owner, com o caminho para cancelar nas configurações, onde a transferência de posse some até lá); as páginas recarregam ao agendar e cancelar. Os membros não recebem aviso por push nem email (do usuário, 01/11). O owner recebe, na véspera (24 h antes), o aviso `tenant.deletion_due` (sininho, toast e Web Push, que leva às configurações), uma vez (`tenants.deletion_reminded_at`, limpo ao cancelar).

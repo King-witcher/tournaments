@@ -15,7 +15,8 @@ type Props<V extends string> = {
   /** A pergunta do grupo (vira a `legend`). */
   legendText: ReactNode;
   options: Option<V>[];
-  value: V;
+  /** `undefined`: nada marcado, para a pessoa escolher (o W.O. da série). */
+  value: V | undefined;
   onChange: (value: V) => void;
   /** `horizontal` só para opções curtas (duas ou três palavras). */
   orientation?: "horizontal" | "vertical";

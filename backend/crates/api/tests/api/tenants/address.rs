@@ -10,6 +10,7 @@ use sqlx::PgPool;
 
 use crate::common::*;
 use crate::discord::{TOKEN, WEBHOOK};
+use crate::matches::{copa, single, start};
 use crate::realtime::{clear, me, outbox, tenant};
 
 const URI: &str = "/tenants/quake-br";
@@ -114,7 +115,9 @@ async fn the_rules_are_the_ones_of_the_creation() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(outbox(&db).await, [tenant("quake-br")]);
 
-    // Só leitura com a exclusão agendada.
+    // Só leitura com a exclusão agendada (com histórico, para não sair na hora).
+    start(&app, &ana, copa(single(1, 1)), &[&ana, &bia]).await;
+    set_status(&db, "copa", "finished").await;
     let confirm = json!({ "confirm_slug": "quake-br" });
     let (status, body) = post(&app, &format!("{URI}/deletion"), &ana, confirm).await;
     assert_eq!(status, StatusCode::OK, "{body}");

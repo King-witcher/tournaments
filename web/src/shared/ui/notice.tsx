@@ -11,6 +11,12 @@ type Props = {
   title?: string;
   /** Um botão ou link depois do texto (`Link`, `Button kind="ghost"`). */
   action?: ReactNode;
+  /**
+   * `id` do título do `Callout` (`info`, `warning`) com link no meio do texto:
+   * o link aponta para ele em `aria-describedby`. Sem isso o Carbon lança um
+   * erro e a página cai.
+   */
+  titleId?: string;
   children?: ReactNode;
 };
 
@@ -24,7 +30,13 @@ type Props = {
  * abaixo do aviso (o `InlineNotification` recusa link ou botão dentro dele,
  * e `children` também não leva). Serve em Server e em Client Component.
  */
-export function Notice({ kind = "info", title, action, children }: Props) {
+export function Notice({
+  kind = "info",
+  title,
+  action,
+  titleId,
+  children,
+}: Props) {
   const t = useTranslations("Common.notice");
   // `subtitle` só aceita texto; o resto (negrito, quebra) vai como filho.
   const text = typeof children === "string" ? children : undefined;
@@ -35,6 +47,7 @@ export function Notice({ kind = "info", title, action, children }: Props) {
         className={styles.notice}
         lowContrast
         title={title}
+        titleId={titleId}
         subtitle={text}
         statusIconDescription={t(kind)}
       >

@@ -37,7 +37,7 @@ O alvo página a página está em `docs/design.md`; o guia de código, em `web/C
 
 ## Comportamento
 
-- **Carregamento**: toda página que busca dado mostra na hora o lugar do conteúdo (esqueleto pulsando, "Carregando…"); todo botão que chama a API fica com indicador girando até a resposta.
+- **Carregamento**: toda página que busca dado mostra na hora o lugar do conteúdo (esqueleto pulsando, "Carregando…"); todo botão que chama a API fica com indicador girando até a resposta. Vários botões no mesmo `useApiAction` (do usuário, 09/11): só o clicado mostra o indicador e os outros ficam desabilitados, como o Carbon faz com as demais ações enquanto uma carrega (`runAs` e `buttonFor` no hook; o `pending` continua para quem tem um botão só).
 - **Links e texto**: item de lista que abre página é a linha inteira, com o nome sublinhado na cor de link; links soltos e botões-link sempre sublinhados. Texto secundário numa cor própria com contraste AA, nunca opacidade.
 - **Foco depois de agir**: botão pendente não recebe `disabled` (o navegador tiraria o foco e quem usa teclado voltaria ao começo da página): `aria-disabled`, ignorando clique e Enter. Depois de ação cujo botão some no refresh, o foco vai para o bloco afetado (linha do mapa, bloco da inscrição, quadro da organização). O `ConfirmButton` devolve o foco ao fechar.
 - **Tela desatualizada**: sem tempo real, quem confirma um mapa que a organização já confirmou recebe o erro e a tela recarrega com o estado de agora.

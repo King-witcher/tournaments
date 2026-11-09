@@ -77,12 +77,13 @@
   },
   "deletion": {
     "title": "Delete community",
-    "description": "The community is deleted 7 days after the request, with everything in it. Until then, it's read-only, and you can cancel. If any tournament is in progress, end it or undo its start first.",
     "submit": "Delete community",
-    "confirm": "Schedule the community's deletion? On that date, it's permanently erased, with everything in it.",
+    "confirm": "Schedule the community's deletion? In 7 days, it's permanently erased, with everything in it. Until then, it's read-only, and you can cancel.",
     "scheduledTitle": "Deletion scheduled",
     "scheduled": "The community will be deleted on <date></date>, with everything in it. Until then, it's read-only.",
-    "cancel": "Cancel deletion"
+    "cancel": "Cancel deletion",
+    "descriptionLater": "The community stays read-only for 7 days and is then deleted, with everything in it. You can cancel during that time.",
+    "confirmNow": "Delete the community now? No tournament has started, so it's erased right away, with everything in it, for good."
   },
   "deletionNotice": {
     "title": "Community being deleted",

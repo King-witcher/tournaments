@@ -77,12 +77,13 @@
   },
   "deletion": {
     "title": "Excluir comunidade",
-    "description": "A comunidade é excluída 7 dias depois do pedido, com tudo o que tem dentro. Até lá, ela fica só leitura, e você pode cancelar. Se algum torneio estiver em andamento, encerre ou desfaça o início antes.",
     "submit": "Excluir comunidade",
-    "confirm": "Agendar a exclusão da comunidade? Na data, ela é apagada com tudo o que tem dentro, sem volta.",
+    "confirm": "Agendar a exclusão da comunidade? Em 7 dias, ela é apagada com tudo o que tem dentro, sem volta. Até lá, fica só leitura, e você pode cancelar.",
     "scheduledTitle": "Exclusão agendada",
     "scheduled": "A comunidade vai ser excluída em <date></date>, com tudo o que tem dentro. Até lá, ela fica só leitura.",
-    "cancel": "Cancelar exclusão"
+    "cancel": "Cancelar exclusão",
+    "descriptionLater": "A comunidade fica só leitura por 7 dias e depois sai, com tudo o que tem dentro. Você pode cancelar nesse prazo.",
+    "confirmNow": "Excluir a comunidade agora? Nenhum torneio começou, então ela é apagada na hora, com tudo o que tem dentro, sem volta."
   },
   "deletionNotice": {
     "title": "Comunidade em exclusão",

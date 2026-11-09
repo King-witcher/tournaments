@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select coalesce(bool_or(started_at is not null), false) as \"started!\",\n                  coalesce(bool_or(status = 'in_progress'), false) as \"in_progress!\"\n           from tournaments where tenant_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "started!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "in_progress!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "7cca0ffd41929c8954e5ac7214b518eabb98375642c0b8de326ac38805a83f1d"
+}

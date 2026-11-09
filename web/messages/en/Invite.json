@@ -35,16 +35,19 @@
     "notFound": "Invite not found. Check the code."
   },
   "communityLink": {
-    "open": "Invite",
-    "title": "Invite to {name}",
     "note": "Anyone who joins through this link becomes a player.",
     "link": "Invite link",
-    "rotateConfirm": "The current link will stop working. Anyone who already joined stays in the community."
+    "rotateConfirm": "The current link will stop working. Anyone who already joined stays in the community.",
+    "copy": "Copy invite link"
   },
   "tournamentLink": {
-    "open": "Registration link",
     "note": "Registers people in the tournament and adds outsiders to the community. Works while registration is open.",
     "full": "All spots are taken. The link will register people again when a spot opens.",
-    "rotateConfirm": "The current link will stop working. Anyone who already registered stays registered."
-  }
+    "rotateConfirm": "The current link will stop working. Anyone who already registered stays registered.",
+    "title": "Registration link",
+    "copy": "Copy registration link",
+    "copiedFull": "Link copied. All spots are taken, and it will register people again when a spot opens."
+  },
+  "copied": "Link copied.",
+  "copyFailed": "Couldn't copy it. The link is in Settings."
 }

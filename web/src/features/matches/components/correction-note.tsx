@@ -18,6 +18,9 @@ type Props = {
   basePath: string;
 };
 
+/** O título do aviso, para os links no meio do texto apontarem para ele. */
+const TITLE_ID = "match-correction-title";
+
 /**
  * Para a organização, numa série decidida cujo vencedor (ou perdedor) já
  * jogou uma partida seguinte que também está decidida: o aviso, abaixo dos
@@ -40,13 +43,13 @@ export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
   const links = later.map((m, i) => (
     <Fragment key={m.key}>
       {i > 0 && ", "}
-      <Link href={`${basePath}/${m.key}`} inline>
+      <Link href={`${basePath}/${m.key}`} inline aria-describedby={TITLE_ID}>
         {code(m.key)}
       </Link>
     </Fragment>
   ));
   return (
-    <Notice kind="warning" title={t("title")}>
+    <Notice kind="warning" title={t("title")} titleId={TITLE_ID}>
       <Stack gap={3}>
         <p>{t.rich("why", { matches: () => links })}</p>
         <p>

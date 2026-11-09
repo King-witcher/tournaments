@@ -6,6 +6,53 @@ use sqlx::{PgConnection, PgPool};
 
 use crate::{shared::ApiError, tenants::TenantId};
 
+/// O que os torneios do tenant dizem sobre excluí-lo.
+pub struct TournamentHistory {
+    /// Algum está em andamento ou encerrado (um início desfeito não conta).
+    pub started: bool,
+    pub in_progress: bool,
+}
+
+pub async fn tournament_history(
+    db: &PgPool,
+    tenant: TenantId,
+) -> Result<TournamentHistory, sqlx::Error> {
+    sqlx::query_as!(
+        TournamentHistory,
+        r#"select coalesce(bool_or(started_at is not null), false) as "started!",
+                  coalesce(bool_or(status = 'in_progress'), false) as "in_progress!"
+           from tournaments where tenant_id = $1"#,
+        tenant.get()
+    )
+    .fetch_one(db)
+    .await
+}
+
+/// Trava os torneios e o tenant até o fim da transação e diz se algum torneio
+/// começou. `None`: o tenant já não existe. Os torneios vêm antes, na mesma
+/// ordem do início (o torneio e, no trigger, o tenant), para os dois ao mesmo
+/// tempo não se travarem um esperando o outro.
+pub async fn lock_for_deletion(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+) -> Result<Option<bool>, sqlx::Error> {
+    let started = sqlx::query_scalar!(
+        r#"select started_at is not null as "started!"
+           from tournaments where tenant_id = $1 for update"#,
+        tenant.get()
+    )
+    .fetch_all(&mut *conn)
+    .await?;
+    let exists = sqlx::query_scalar!(
+        "select id from tenants where id = $1 for update",
+        tenant.get()
+    )
+    .fetch_optional(conn)
+    .await?
+    .is_some();
+    Ok(exists.then(|| started.contains(&true)))
+}
+
 /// Agenda a exclusão do tenant para daqui a `days` dias, pedida pelo owner
 /// `by`, e devolve a data. Torneio em andamento → 409
 /// `tenant.tournament_in_progress`: a regra é do banco

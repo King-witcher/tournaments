@@ -22,6 +22,9 @@ type Session = components["schemas"]["SessionInfo"];
 /** O título da seção, para onde o foco vai quando o botão que agiu some. */
 const SECTION_ID = "account-sessions";
 
+/** A chave de "Encerrar as outras" no grupo de botões (as linhas usam o id). */
+const ALL_OTHERS = "others";
+
 /**
  * As sessões abertas da conta: a desta requisição primeiro e marcada (sai
  * pelo "Sair" do menu, não por aqui), as outras com "Encerrar" e, ao lado do
@@ -31,7 +34,7 @@ const SECTION_ID = "account-sessions";
 export function SessionList({ sessions }: { sessions: Session[] }) {
   const t = useTranslations("Account.sessions");
   const router = useRouter();
-  const { run, pending, error } = useApiAction();
+  const { runAs, buttonFor, error } = useApiAction();
   const others = sessions.filter((s) => !s.current);
 
   const done = () => {
@@ -39,7 +42,8 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
     focusIfLost(SECTION_ID);
   };
   const endOne = (id: string) =>
-    run(
+    runAs(
+      id,
       () => api.DELETE("/auth/sessions/{id}", { params: { path: { id } } }),
       done,
       // Já encerrada em outro lugar: a lista está velha.
@@ -47,7 +51,8 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
         if (code === "auth.session_not_found") router.refresh();
       },
     );
-  const endOthers = () => run(() => api.DELETE("/auth/sessions"), done);
+  const endOthers = () =>
+    runAs(ALL_OTHERS, () => api.DELETE("/auth/sessions"), done);
 
   const device = (session: Session) => {
     const { browser, os } = parseUserAgent(session.user_agent);
@@ -78,7 +83,7 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
           others.length > 0 && (
             <ConfirmButton
               size="md"
-              pending={pending}
+              {...buttonFor(ALL_OTHERS)}
               question={t("endOthersConfirm")}
               onConfirm={endOthers}
             >
@@ -98,7 +103,7 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
               session.current ? null : (
                 <ConfirmButton
                   key="end"
-                  pending={pending}
+                  {...buttonFor(session.id)}
                   question={t("endConfirm")}
                   onConfirm={() => endOne(session.id)}
                 >
