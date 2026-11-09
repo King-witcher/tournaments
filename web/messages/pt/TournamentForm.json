@@ -149,6 +149,7 @@
       "tournament_extended": "Torneio (estendido)",
       "ranked": "Ranked",
       "tdm": "TDM",
+      "all": "Todos",
       "custom": "Personalizado"
     },
     "seconds": "Tempo de cada passo",

@@ -149,6 +149,7 @@
       "tournament_extended": "Tournament (extended)",
       "ranked": "Ranked",
       "tdm": "TDM",
+      "all": "All",
       "custom": "Custom"
     },
     "seconds": "Time per step",

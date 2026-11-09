@@ -37,9 +37,10 @@ const forTdm = (slugs: string[]) =>
 
 /**
  * Os modelos de pool de mapas, na ordem do `Select`, com os mapas por modalidade
- * (`null`: não aparece nela; `"catalog"`: o catálogo sem `NOT_IN_TDM`). A API
- * só guarda o pool; o modelo vive aqui e sai dele. Modelo novo: uma linha aqui
- * e o nome em `TournamentForm.veto.poolTemplates`, nos três idiomas.
+ * (`null`: não aparece nela; `"catalog"`: o catálogo sem `NOT_IN_TDM`; `"all"`:
+ * todos os mapas ativos). A API só guarda o pool; o modelo vive aqui e sai
+ * dele. Modelo novo: uma linha aqui e o nome em
+ * `TournamentForm.veto.poolTemplates`, nos três idiomas.
  */
 const TEMPLATES = [
   { id: "ragecon", duel: RAGECON, tdm: RAGECON },
@@ -47,6 +48,7 @@ const TEMPLATES = [
   { id: "tournament_extended", duel: EXTENDED, tdm: forTdm(EXTENDED) },
   { id: "ranked", duel: RANKED, tdm: RANKED },
   { id: "tdm", duel: null, tdm: "catalog" },
+  { id: "all", duel: "all", tdm: "all" },
 ] as const;
 
 export type MapPoolTemplateId = (typeof TEMPLATES)[number]["id"];
@@ -65,11 +67,11 @@ export function mapPoolTemplates(
     const slugs = tdm ? pools.tdm : pools.duel;
     if (slugs === null) return [];
     const pool = maps
-      .filter((m) =>
-        slugs === "catalog"
-          ? !NOT_IN_TDM.includes(m.slug)
-          : slugs.includes(m.slug),
-      )
+      .filter((m) => {
+        if (slugs === "all") return true;
+        if (slugs === "catalog") return !NOT_IN_TDM.includes(m.slug);
+        return slugs.includes(m.slug);
+      })
       .map((m) => m.slug);
     return pool.length > 0 ? [{ id, pool }] : [];
   });

@@ -41,13 +41,15 @@ type Props = {
 
 /**
  * O pool de mapas do torneio: um `Select` de modelo (`lib/map-pool-templates`)
- * e, com um modelo, os nomes dos mapas; a grade de imagens só em Personalizado,
- * quando há o que marcar. O modelo sai do pool. `picked` guarda a escolha da
- * sessão: Personalizado continua nele com o pool igual a um modelo, e o mesmo
- * vale depois de marcar um mapa, para a grade não sumir no meio da marcação.
- * O pool escolhido fica lembrado neste navegador para a comunidade (o próximo
- * torneio novo começa com ele); o modelo igual ao padrão esquece o lembrado. Só para
- * leitura, só os mapas do pool, sem o `Select`.
+ * e a grade de imagens, sempre à vista, porque identificar um mapa pela imagem
+ * é mais rápido que ler a lista. Escolher um modelo marca os mapas dele e
+ * reparte a grade entre os do modelo e os de fora; marcar um mapa faz o `Select`
+ * seguir o pool (Personalizado, ou o modelo que ele voltou a formar). `picked`
+ * guarda a escolha explícita: Personalizado continua nele com o pool igual a um
+ * modelo, até marcar um mapa. O pool escolhido fica lembrado neste navegador
+ * para a comunidade (o próximo torneio novo começa com ele); o modelo igual ao
+ * padrão esquece o lembrado. Só para leitura, só os mapas do pool, sem o
+ * `Select`.
  */
 export function MapPoolField({
   tenant,
@@ -60,6 +62,7 @@ export function MapPoolField({
 }: Props) {
   const t = useTranslations("TournamentForm.veto");
   const [picked, setPicked] = useState<MapPoolChoice>();
+  const [templatePool, setTemplatePool] = useState<string[]>();
   const pool = poolOf(values, maps);
   const min = longestSeries(values);
   const templates = mapPoolTemplates(maps, isTdm(values));
@@ -70,12 +73,13 @@ export function MapPoolField({
     setPicked(next);
     const template = templates.find((item) => item.id === next);
     if (!template) return; // Personalizado parte do pool de agora.
+    setTemplatePool(template.pool);
     onChange({ mapPool: template.pool });
     if (isDefaultPool(template.pool, maps)) forgetPool(tenant);
     else rememberPool(tenant, template.pool);
   };
   const toggled = (mapPool: string[]) => {
-    setPicked("custom");
+    setPicked(undefined);
     onChange({ mapPool });
   };
 
@@ -87,8 +91,6 @@ export function MapPoolField({
           <FormRow columns={4}>
             <Select
               labelText={t("poolTemplate")}
-              // Com a grade, o foco do erro vai para a primeira caixa.
-              name={choice === "custom" ? undefined : "mapPool"}
               value={choice}
               onChange={(e) => choose(e.target.value as MapPoolChoice)}
             >
@@ -101,25 +103,17 @@ export function MapPoolField({
             </Select>
           </FormRow>
         )}
-        {choice === "custom" || readOnly ? (
-          <MapPoolPicker
-            tenant={tenant}
-            maps={maps}
-            pool={pool}
-            min={min}
-            hasError={error !== undefined}
-            readOnly={readOnly}
-            savedPool={savedPool}
-            onChange={toggled}
-          />
-        ) : (
-          <p className={styles.names}>
-            {maps
-              .filter((m) => pool.includes(m.slug))
-              .map((m) => m.name)
-              .join(", ")}
-          </p>
-        )}
+        <MapPoolPicker
+          tenant={tenant}
+          maps={maps}
+          pool={pool}
+          min={min}
+          hasError={error !== undefined}
+          readOnly={readOnly}
+          savedPool={savedPool}
+          templatePool={templatePool}
+          onChange={toggled}
+        />
         {error && <ErrorText>{error}</ErrorText>}
       </Stack>
     </FormGroup>

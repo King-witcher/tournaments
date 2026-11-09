@@ -16,15 +16,17 @@ type Props = {
   readOnly: boolean;
   /** Ver `MapPoolField`. */
   savedPool?: string[];
+  /** O modelo escolhido por último: divide os mapas no lugar do pool salvo. */
+  templatePool?: string[];
   onChange: (mapPool: string[]) => void;
 };
 
 /**
- * A grade do Personalizado (e do só leitura), que existe só enquanto a pessoa
- * escolhe mapa a mapa: sem `savedPool`, o pool de quando ela apareceu divide
- * os mapas. Cada marca ou desmarca fica lembrada neste navegador. Os mapas de
- * fora começam atrás de um botão (eram dois terços do grupo aberto) e aparecem
- * sozinhos quando o pool não basta ou quando algum deles está marcado.
+ * A grade do pool. Divide os mapas pelo modelo escolhido por último; sem ele,
+ * pelo `savedPool` e, sem este, pelo pool de quando ela apareceu. Cada marca
+ * ou desmarca fica lembrada neste navegador. Os mapas de fora começam atrás de
+ * um botão (eram dois terços do grupo aberto) e aparecem sozinhos quando o
+ * pool não basta ou quando algum deles está marcado.
  */
 export function MapPoolPicker({
   tenant,
@@ -34,12 +36,13 @@ export function MapPoolPicker({
   hasError,
   readOnly,
   savedPool,
+  templatePool,
   onChange,
 }: Props) {
   const outHeadingId = useId();
   const [outOpen, setOutOpen] = useState(false);
   const [initialPool] = useState(pool);
-  const base = savedPool ?? initialPool;
+  const base = templatePool ?? savedPool ?? initialPool;
   const outShown =
     outOpen ||
     pool.length < min ||

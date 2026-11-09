@@ -6,8 +6,3 @@
 
   color: theme.$text-secondary;
 }
-
-// Com um modelo, o conteúdo do pool, em corpo: não é dica.
-.names {
-  @include type.type-style("body-compact-01");
-}
