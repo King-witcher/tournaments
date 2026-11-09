@@ -6,6 +6,7 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 
 - **Excluir usuário** é recusado se for owner de algum tenant ou tiver participado de torneio iniciado (a chave antiga não perde um lado). Logins vão junto; as sessões no Redis ficam sem efeito até expirar. A autoria (quem inscreveu, marcou check-in, enviou, contestou, confirmou, agiu no histórico) fica nula. A "Excluir conta" da interface **anonimiza** em vez de apagar a linha (`deletion.md`).
 - **Excluir tenant** apaga tudo dentro (pela API, agendado: `deletion.md`). **Excluir torneio** também, com resultados, mapas e histórico (quem pode é regra da API: `deletion.md`).
+- **Guarda de imutabilidade deixa passar o `set null` da autoria** (`stage_tie_decisions.decided_by`, `match_veto_events.actor`): o `set null` é um UPDATE, e recusá-lo impedia apagar o autor e a comunidade dele.
 - **Inscrito, time e fase de torneio iniciado** não saem avulsos, só com o torneio ou o tenant; também ninguém entra e seed e check-in não mudam. Por isso o membro inscrito num torneio iniciado não sai do tenant: sair mantendo o histórico é ficar inativo, não linha apagada.
 
 ## Regras de estado

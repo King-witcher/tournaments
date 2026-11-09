@@ -107,6 +107,59 @@ async fn decisions_need_the_organizer_mode_and_a_full_order() {
     }
 }
 
+/// Apagar a comunidade apaga os membros, e o `set null` de `decided_by` é um
+/// UPDATE que a guarda de "não muda" precisa deixar passar.
+#[tokio::test]
+async fn deleting_the_tenant_takes_a_decision_that_still_has_its_author() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (_, ana, tenant, t, teams) = started(&db, "organizer").await;
+    let rows = [(1, teams[1]), (2, teams[0])];
+    exec(&db, &decision(tenant, t, ana.id, &rows))
+        .await
+        .unwrap();
+
+    exec(&db, &format!("delete from tenants where id = {tenant}"))
+        .await
+        .unwrap();
+
+    for table in ["stage_tie_decisions", "stage_tie_decision_teams"] {
+        assert_eq!(
+            count(&db, &format!("select count(*) from {table}")).await,
+            0,
+            "{table}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn a_decision_only_changes_by_losing_its_author() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, tenant, t, teams) = started(&db, "organizer").await;
+    let olga = member(&app, &db, &ana, "Olga").await;
+    let rows = [(1, teams[1]), (2, teams[0])];
+    exec(&db, &decision(tenant, t, olga.id, &rows))
+        .await
+        .unwrap();
+
+    let immutable = rule(CHECK, "stage_tie_decisions_immutable");
+    for change in [
+        format!("decided_by = {}", ana.id),
+        "decided_by = null, reason = 'x'".to_owned(),
+    ] {
+        let sql = format!("update stage_tie_decisions set {change}");
+        assert_eq!(rejected(exec(&db, &sql).await), immutable, "{change}");
+    }
+
+    // Quem decidiu sai da comunidade: a decisão fica, sem autor, e não ganha
+    // outro.
+    let leave = format!("delete from tenant_members where user_id = {}", olga.id);
+    assert_eq!(exec(&db, &leave).await.unwrap(), 1);
+    let orphans = "select count(*) from stage_tie_decisions where decided_by is null";
+    assert_eq!(count(&db, orphans).await, 1);
+    let sql = format!("update stage_tie_decisions set decided_by = {}", ana.id);
+    assert_eq!(rejected(exec(&db, &sql).await), immutable);
+}
+
 #[tokio::test]
 async fn nothing_waits_on_the_seed_and_undoing_the_start_clears_it() {
     let (db, _lease) = crate::db::test_db().await;

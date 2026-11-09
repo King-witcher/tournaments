@@ -183,6 +183,45 @@ async fn veto_events_keep_their_shape_and_order() {
     exec(&db, "delete from match_veto_events").await.unwrap();
 }
 
+/// O `set null` de `actor` é um UPDATE que a guarda do histórico deixa passar.
+#[tokio::test]
+async fn an_event_only_changes_by_losing_its_author() {
+    let (db, _lease) = crate::db::test_db().await;
+    let t = started(&db).await;
+    // Membro sem inscrição: o único tipo de conta que sai com a linha.
+    let bia: i64 = sqlx::query_scalar("select id from users where display_name = 'Bia'")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    let ready = event(t, "ready", ", side, actor", &format!(", 'a', {bia}"));
+    exec(&db, &ready).await.unwrap();
+
+    let immutable = rule(CHECK, "match_veto_events_immutable");
+    for change in [
+        "actor = (select min(id) from users)",
+        "actor = null, side = 'b'",
+    ] {
+        let sql = format!("update match_veto_events set {change}");
+        assert_eq!(rejected(exec(&db, &sql).await), immutable, "{change}");
+    }
+
+    exec(&db, &format!("delete from users where id = {bia}"))
+        .await
+        .unwrap();
+    let orphans = "select count(*) from match_veto_events where actor is null";
+    assert_eq!(count(&db, orphans).await, 1);
+    assert_eq!(
+        rejected(
+            exec(
+                &db,
+                "update match_veto_events set actor = (select min(id) from users)"
+            )
+            .await
+        ),
+        immutable
+    );
+}
+
 #[tokio::test]
 async fn the_veto_order_is_one_of_two_and_defaults_to_alternating() {
     let (db, _lease) = crate::db::test_db().await;
