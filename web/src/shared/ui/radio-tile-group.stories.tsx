@@ -175,6 +175,25 @@ export const ReadOnly: Story = {
   },
 };
 
+/**
+ * Só leitura com `columns` e desenho: o tile fica na largura de coluna que
+ * teria na fileira, sem esticar o desenho; numa coluna só, ele some.
+ */
+export const ReadOnlyColumns: Story = {
+  args: {
+    name: "radio-tile-group-read-only-columns",
+    options: described.map((option) => ({
+      ...option,
+      media: (
+        <Lines d="M.5 5.5h24v8H.5M.5 25.5h24v8H.5M24.5 9.5h26v20h-26M50.5 19.5h29" />
+      ),
+    })),
+    value: "double",
+    readOnly: true,
+    columns: 3,
+  },
+};
+
 /** No celular, uma coluna, com o texto quebrando dentro do tile. */
 export const Phone: Story = {
   args: { name: "radio-tile-group-phone", options: described },

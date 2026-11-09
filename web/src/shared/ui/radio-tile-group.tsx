@@ -21,8 +21,9 @@ type Option<V extends string> = {
    * opção), para achá-la de relance entre opções parecidas, como os formatos
    * de chave. Com a mesma altura em todos os tiles, fica alinhado na fileira
    * (o nome tem uma linha); na cor de ícone secundário do tema (de
-   * desabilitado no tile desabilitado). Some abaixo do `md`, onde os tiles
-   * empilham e ele só alongaria a lista.
+   * desabilitado no tile desabilitado). Some abaixo do `md` e, com `columns`,
+   * quando o grupo fica em uma coluna por falta de largura: os tiles empilham,
+   * ele só alongaria a lista, e um tile largo o estica demais.
    */
   media?: ReactNode;
   disabled?: boolean;
@@ -47,7 +48,8 @@ type Props<V extends string> = Omit<
   name?: string;
   /**
    * Só leitura (o padrão "Read-only states" do Carbon): só a escolhida, num
-   * tile sem interação, como o pool de mapas mostra só os mapas dele.
+   * tile sem interação, como o pool de mapas mostra só os mapas dele. Com
+   * `columns`, ele fica na largura de coluna que teria na fileira.
    */
   readOnly?: boolean;
   /**
@@ -97,26 +99,31 @@ export function RadioTileGroup<V extends string>({
   const generated = useId();
   const groupName = name ?? generated;
   const label = <RequiredLabel required={required}>{legend}</RequiredLabel>;
+  const groupClass = cn(styles.group, columns && styles[`columns${columns}`]);
 
   if (readOnly) {
     const chosen = options.find((option) => option.value === value);
     return (
-      <FormGroup legendText={label}>
-        {chosen && (
-          <Tile>
-            <TileText
-              content={chosen.content}
-              description={chosen.description}
-              media={chosen.media}
-            />
-          </Tile>
-        )}
-      </FormGroup>
+      <div className={groupClass}>
+        <FormGroup legendText={label}>
+          {chosen && (
+            <div>
+              <Tile>
+                <TileText
+                  content={chosen.content}
+                  description={chosen.description}
+                  media={chosen.media}
+                />
+              </Tile>
+            </div>
+          )}
+        </FormGroup>
+      </div>
     );
   }
 
   return (
-    <div className={cn(styles.group, columns && styles[`columns${columns}`])}>
+    <div className={groupClass}>
       <TileGroup<V>
         {...props}
         name={groupName}

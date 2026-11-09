@@ -16,8 +16,6 @@ type Props = {
   /** Só os do pool, sem mudar. */
   readOnly: boolean;
   onToggle: (slug: string, on: boolean) => void;
-  /** O `id` do subtítulo dos escolhidos, alvo do foco quando o controle que a pessoa usou some. */
-  headingId: string;
   /** O `id` do subtítulo dos de fora, alvo do foco depois de "Mostrar". */
   outHeadingId: string;
   /** Os de fora à vista; sem isso, no lugar deles, o botão que os mostra. */
@@ -38,7 +36,6 @@ export function MapPoolGrid({
   base,
   readOnly,
   onToggle,
-  headingId,
   outHeadingId,
   outShown,
   onShowOut,
@@ -48,7 +45,7 @@ export function MapPoolGrid({
     {
       key: "in",
       title: "poolIn",
-      headingId,
+      headingId: undefined,
       maps: maps.filter((m) => base.includes(m.slug)),
     },
     {

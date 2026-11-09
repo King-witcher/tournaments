@@ -12,7 +12,8 @@
 // Os tiles em grade, com o respiro dos exemplos do Carbon; uma coluna por
 // padrão. O `TileGroup` os põe colados, num `div` sem classe, e a classe
 // passada a ele substitui a que zera o `fieldset`: por isso o módulo fica num
-// elemento em volta.
+// elemento em volta. O só leitura, num `FormGroup`, repete a estrutura: o tile
+// único fica na primeira coluna, sem ocupar a linha inteira.
 .group fieldset > div {
   display: grid;
   gap: spacing.$spacing-03;
@@ -28,6 +29,14 @@
 @each $count in (2, 3, 4, 5) {
   .columns#{$count} fieldset > div {
     @include columns.columns($count);
+  }
+
+  // Numa coluna só por falta de largura, o tile fica largo e o desenho, que
+  // estica com ele, deixa de se parecer com o formato.
+  .columns#{$count} .media {
+    @include columns.single-column($count) {
+      display: none;
+    }
   }
 }
 

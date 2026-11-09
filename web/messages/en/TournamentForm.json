@@ -142,7 +142,12 @@
     "poolIn": "In pool ({count})",
     "poolOut": "Out of pool ({count})",
     "showPoolOut": "Show {count, plural, one {the map} other {# maps}} out of pool",
-    "useDefaultPool": "Use default pool",
+    "poolTemplate": "Template",
+    "poolTemplates": {
+      "duel_default": "Default duel",
+      "ragecon": "RageCon",
+      "custom": "Custom"
+    },
     "seconds": "Time per step",
     "secondsHint": "If time runs out, the pick is drawn at random.",
     "secondsHintDraft": "Also applies to champions. If time runs out, the pick is drawn at random.",

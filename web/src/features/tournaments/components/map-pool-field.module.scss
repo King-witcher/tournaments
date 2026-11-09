@@ -1,19 +1,13 @@
-@use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-// A dica e, à direita, o botão de voltar ao padrão; no celular, ele desce.
 .hint {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: spacing.$spacing-03;
-  margin-block-end: spacing.$spacing-03;
-}
-
-.text {
   @include type.type-style("helper-text-01");
 
   color: theme.$text-secondary;
+}
+
+// Com um modelo, o conteúdo do pool, em corpo: não é dica.
+.names {
+  @include type.type-style("body-compact-01");
 }

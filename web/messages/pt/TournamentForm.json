@@ -142,7 +142,12 @@
     "poolIn": "No pool ({count})",
     "poolOut": "Fora do pool ({count})",
     "showPoolOut": "Mostrar {count, plural, one {o mapa} other {os # mapas}} fora do pool",
-    "useDefaultPool": "Usar o pool padrão",
+    "poolTemplate": "Modelo",
+    "poolTemplates": {
+      "duel_default": "Duelo padrão",
+      "ragecon": "RageCon",
+      "custom": "Personalizado"
+    },
     "seconds": "Tempo de cada passo",
     "secondsHint": "Se o tempo acabar, a escolha é sorteada.",
     "secondsHintDraft": "Vale também para os campeões. Se o tempo acabar, a escolha é sorteada.",

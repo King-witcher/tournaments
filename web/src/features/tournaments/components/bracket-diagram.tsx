@@ -53,7 +53,8 @@ const STRAIGHT: BracketDiagramFormat[] = ["single", "double", "placement"];
  * Chaveamento, para achá-lo de relance (o nome do tile já diz qual é: fica
  * fora do leitor de tela). Traço fino e uniforme, sem preenchimento, na cor
  * que o tile dá (`currentColor`); na largura do tile e na mesma altura em
- * todos, para ficar alinhado na fileira.
+ * todos, para ficar alinhado na fileira. Estica com o tile: só serve em tile
+ * de largura de coluna (o `RadioTileGroup` o esconde quando o tile fica largo).
  */
 export function BracketDiagram({ format }: { format: BracketDiagramFormat }) {
   const dots = DOTS[format];
