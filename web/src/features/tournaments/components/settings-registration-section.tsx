@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 
-import { FormRow } from "@/shared/ui/form-row";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { useSettingsSection } from "../hooks/use-settings-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
@@ -13,10 +12,10 @@ import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentStartField } from "./tournament-start-field";
 
 /**
- * Início e inscrições: o início (o único sem padrão, por isso logo depois de
- * Geral) numa linha e, na de baixo, o tipo de inscrição e o check-in lado a
- * lado. Depois de começar, só a inscrição muda (o motivo diz o que não muda);
- * encerrado, nada.
+ * Início e inscrições, numa coluna na largura de leitura: o início (o único
+ * sem padrão, por isso logo depois de Geral), o tipo de inscrição e o
+ * check-in. Depois de começar, só a inscrição muda (o motivo diz o que não
+ * muda); encerrado, nada.
  */
 export function SettingsRegistrationSection() {
   const tSettings = useTranslations("TournamentSettings");
@@ -51,6 +50,7 @@ export function SettingsRegistrationSection() {
       }
       readOnly={finished}
       onSave={form.submit}
+      reading
     >
       <TournamentStartField
         values={values}
@@ -59,15 +59,13 @@ export function SettingsRegistrationSection() {
         readOnly={scheduleLocked}
         saved={tournament.starts_at ?? null}
       />
-      <FormRow columns={2}>
-        <TournamentRegistrationFields
-          values={values}
-          onChange={onChange}
-          errors={errors}
-          checkInReadOnly={scheduleLocked}
-          admissionReadOnly={finished}
-        />
-      </FormRow>
+      <TournamentRegistrationFields
+        values={values}
+        onChange={onChange}
+        errors={errors}
+        checkInReadOnly={scheduleLocked}
+        admissionReadOnly={finished}
+      />
     </SettingsSection>
   );
 }

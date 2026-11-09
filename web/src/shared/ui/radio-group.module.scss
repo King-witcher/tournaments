@@ -1,8 +1,8 @@
-// Cada opção tem a altura de um controle: 40px no desktop e 48px abaixo de
-// `md` (o token já vale `lg` lá, pela regra de toque do `globals.scss`), para
-// o dedo. Rótulos longos, sem espaço, quebram em qualquer ponto em vez de
-// empurrar as opções para fora da tela; opções horizontais que não cabem
-// descem para a linha de baixo.
+@use "@carbon/react/scss/breakpoint";
+
+// Rótulos longos, sem espaço, quebram em qualquer ponto em vez de empurrar as
+// opções para fora da tela; opções horizontais que não cabem descem para a
+// linha de baixo.
 .group {
   overflow-wrap: anywhere;
 
@@ -10,7 +10,17 @@
     flex-wrap: wrap;
   }
 
-  label {
-    min-block-size: var(--cds-layout-size-height-md);
+  // Abaixo de `md`, cada opção tem os 48px do toque (o token já vale `lg` lá,
+  // pela regra do `globals.scss`). No desktop, empilhadas, o espaço do Carbon.
+  @include breakpoint.breakpoint-down(md) {
+    label {
+      min-block-size: var(--cds-layout-size-height-md);
+    }
   }
+}
+
+// Na horizontal, a opção tem a altura de um controle, para alinhar com o
+// campo ao lado numa `FormRow`.
+.horizontal label {
+  min-block-size: var(--cds-layout-size-height-md);
 }

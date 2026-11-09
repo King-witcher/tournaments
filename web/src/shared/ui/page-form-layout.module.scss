@@ -1,0 +1,12 @@
+@use "@carbon/react/scss/spacing";
+
+// A `FormRow` lê esta variável: numa página, as linhas que quebram ficam com
+// os mesmos 32px dos campos empilhados.
+.layout {
+  --form-row-gap: #{spacing.$spacing-07};
+}
+
+// Com o gap de 32px do `Stack`, dá os 48px entre o último campo e os botões.
+.footer {
+  margin-block-start: spacing.$spacing-05;
+}

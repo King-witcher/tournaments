@@ -16,10 +16,10 @@ import {
   invalidProps,
 } from "@/shared/lib/form-result";
 import { Form } from "@/shared/ui/carbon/form";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
+import { PageFormLayout } from "@/shared/ui/page-form-layout";
 import { TextInput } from "@/shared/ui/text-input";
 
 /** O apelido que a API gravou, para dizer "salvo" enquanto o campo não muda. */
@@ -66,7 +66,15 @@ export function NicknameForm({
 
   return (
     <Form ref={ref} action={submit}>
-      <Stack gap={6}>
+      <PageFormLayout
+        footer={
+          <>
+            {general && <FormError>{general}</FormError>}
+            {saved && <Notice kind="success">{t("saved")}</Notice>}
+            <FormActions pending={pending} disabled={!canSubmit} />
+          </>
+        }
+      >
         <TextInput
           id={fieldId(prefix, "nickname")}
           labelText={t("label")}
@@ -78,10 +86,7 @@ export function NicknameForm({
           onChange={(event) => setValue(event.target.value)}
           {...invalidProps(result, "nickname")}
         />
-        {general && <FormError>{general}</FormError>}
-        {saved && <Notice kind="success">{t("saved")}</Notice>}
-        <FormActions pending={pending} disabled={!canSubmit} />
-      </Stack>
+      </PageFormLayout>
     </Form>
   );
 }

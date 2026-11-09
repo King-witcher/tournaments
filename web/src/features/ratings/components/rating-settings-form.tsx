@@ -17,12 +17,13 @@ import {
   invalidProps,
 } from "@/shared/lib/form-result";
 import { Form } from "@/shared/ui/carbon/form";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
+import { FormRow } from "@/shared/ui/form-row";
 import { Notice } from "@/shared/ui/notice";
 import { NumberInput } from "@/shared/ui/number-input";
+import { PageFormLayout } from "@/shared/ui/page-form-layout";
 
 type Settings = components["schemas"]["RatingSettings"];
 type Field = keyof Settings;
@@ -142,20 +143,30 @@ export function RatingSettingsForm({
           setAsking(true);
         }}
       >
-        <Stack gap={6}>
-          {field("initial", t("initial"))}
-          {field("k_max", t("kMax"), t("kMaxHint"))}
-          {/* O mínimo vai até o inicial: o campo já cobra a ordem dos dois. */}
-          {field("k_min", t("kMin"), t("kMinHint"), kMinCeiling(values))}
-          {field("k_decay", t("kDecay"), t("kDecayHint"))}
-          {general && <FormError>{general}</FormError>}
-          {saved && <Notice kind="success">{t("saved")}</Notice>}
-          <FormActions
-            submitRef={submitButton}
-            pending={pending}
-            disabled={!canSubmit}
-          />
-        </Stack>
+        <PageFormLayout
+          footer={
+            <>
+              {general && <FormError>{general}</FormError>}
+              {saved && <Notice kind="success">{t("saved")}</Notice>}
+              <FormActions
+                submitRef={submitButton}
+                pending={pending}
+                disabled={!canSubmit}
+              />
+            </>
+          }
+        >
+          {/* Números curtos: cada campo em meia largura, para não esticar. */}
+          <FormRow columns={2}>{field("initial", t("initial"))}</FormRow>
+          <FormRow columns={2}>
+            {field("k_max", t("kMax"), t("kMaxHint"))}
+            {/* O mínimo vai até o inicial: o campo já cobra a ordem dos dois. */}
+            {field("k_min", t("kMin"), t("kMinHint"), kMinCeiling(values))}
+          </FormRow>
+          <FormRow columns={2}>
+            {field("k_decay", t("kDecay"), t("kDecayHint"))}
+          </FormRow>
+        </PageFormLayout>
       </Form>
       <ConfirmModal
         open={asking}

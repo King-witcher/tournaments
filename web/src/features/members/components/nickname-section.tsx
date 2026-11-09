@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getTenant } from "@/features/tenants/server";
+import { FormRow } from "@/shared/ui/form-row";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { NicknameForm } from "./nickname-form";
@@ -19,7 +20,9 @@ export async function NicknameSection({ slug }: { slug: string }) {
   return (
     <Panel>
       <Section title={t("title")}>
-        <NicknameForm slug={slug} nickname={loaded.tenant.nickname} />
+        <FormRow columns={2}>
+          <NicknameForm slug={slug} nickname={loaded.tenant.nickname} />
+        </FormRow>
       </Section>
     </Panel>
   );

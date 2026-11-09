@@ -17,11 +17,11 @@
     "title": "About"
   },
   "details": {
-    "title": "Name and description",
+    "title": "General",
     "name": "Name",
     "description": "Description",
     "descriptionHint": "Shows on the community home page and on the invite page.",
-    "saved": "Name and description saved."
+    "saved": "Saved."
   },
   "address": {
     "title": "Address",
@@ -47,7 +47,12 @@
     "removeConfirm": "Remove {name} from the community? {name} loses access, leaves registrations in tournaments that haven't started and, in tournaments in progress, loses pending matches by walkover. History stays, and {name} can rejoin with an invite, as a player."
   },
   "settings": {
-    "loading": "Loading settings…"
+    "loading": "Loading settings…",
+    "sections": {
+      "general": "General",
+      "rating": "Rating",
+      "discord": "Discord"
+    }
   },
   "nickname": {
     "title": "Your nickname",

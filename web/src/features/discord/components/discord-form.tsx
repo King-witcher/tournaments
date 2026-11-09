@@ -21,15 +21,17 @@ import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/carbon/form";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { CheckboxGroup } from "@/shared/ui/checkbox-group";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { ErrorText } from "@/shared/ui/error-text";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
-import { FormSection } from "@/shared/ui/form-section";
 import { InfoTip } from "@/shared/ui/info-tip";
 import { Notice } from "@/shared/ui/notice";
+import { PageFormLayout } from "@/shared/ui/page-form-layout";
 import { Select } from "@/shared/ui/select";
 import { TextInput } from "@/shared/ui/text-input";
+import styles from "./discord-form.module.scss";
 
 type Settings = components["schemas"]["DiscordSettings"];
 type Locale = components["schemas"]["Locale"];
@@ -46,10 +48,10 @@ const URL_PATTERN =
 type Props = { slug: string; settings: Settings };
 
 /**
- * O formulário dos avisos no Discord: o endereço do webhook (colado uma vez e
- * nunca mais mostrado: só o id), os avisos ligados, o idioma e as menções,
- * mais "Enviar teste" e "Remover". Com o webhook quebrado, só o endereço
- * novo resolve.
+ * O formulário dos avisos no Discord, por assunto: a conexão (o endereço do
+ * webhook, colado uma vez e nunca mais mostrado, só o id, com "Remover" ao
+ * lado; o idioma, que o "Enviar teste" logo embaixo já usa), depois os avisos
+ * ligados e as menções. Com o webhook quebrado, só o endereço novo resolve.
  */
 export function DiscordForm({ slug, settings }: Props) {
   const t = useTranslations("Discord");
@@ -107,62 +109,105 @@ export function DiscordForm({ slug, settings }: Props) {
     const key = `events.${code}` as Parameters<typeof t>[0];
     return t.has(key) ? t(key) : code;
   };
-  const toggle = (code: string, on: boolean) =>
-    setEvents((now) => (on ? [...now, code] : now.filter((c) => c !== code)));
 
   return (
     <Form ref={ref} action={submit}>
-      <Stack gap={7}>
+      <PageFormLayout
+        footer={
+          <>
+            {general && <FormError>{general}</FormError>}
+            {result.saved && !pending && (
+              <Notice kind="success">{t("saved")}</Notice>
+            )}
+            <FormActions pending={pending} disabled={!canSubmit} />
+          </>
+        }
+      >
         {webhook?.broken && (
           <Notice kind="error" title={t("broken.title")}>
             {t("broken.body")}
           </Notice>
         )}
-        <Stack gap={5}>
-          {webhook && (
-            <p>
-              {t("current", { id: webhook.webhook_id })}
+        {webhook && (
+          <Stack gap={3}>
+            <div className={styles.webhook}>
+              <span>{t("current", { id: webhook.webhook_id })}</span>
               {!webhook.broken && (
-                <>
-                  {" "}
-                  <Button
-                    kind="ghost"
-                    size="sm"
-                    onClick={() => setReplacing((now) => !now)}
-                  >
-                    {replacing ? t("keep") : t("replace")}
-                  </Button>
-                </>
-              )}
-            </p>
-          )}
-          {asksUrl && (
-            <TextInput
-              id={fieldId(prefix, "url")}
-              name="url"
-              labelText={
-                <InfoTip
-                  term={webhook ? t("url.newLabel") : t("url.label")}
-                  label={t("url.tipLabel")}
+                <Button
+                  kind="ghost"
+                  size="sm"
+                  onClick={() => setReplacing((now) => !now)}
                 >
-                  {t("url.tip")}
-                </InfoTip>
-              }
-              helperText={t("url.hint")}
-              required
-              pattern={URL_PATTERN}
-              patternMessage={t("url.invalid")}
-              autoComplete="off"
-              spellCheck={false}
-              value={url}
-              onChange={(event) => {
-                setUrl(event.target.value);
-                setTested(false);
-              }}
-              {...invalidProps(result, "url")}
-            />
-          )}
-          {/* O teste usa o endereço do campo, salvo ou não. */}
+                  {replacing ? t("keep") : t("replace")}
+                </Button>
+              )}
+              <ConfirmButton
+                kind="danger--ghost"
+                pending={remove.pending}
+                question={t("removeConfirm")}
+                onConfirm={() =>
+                  remove.run(
+                    () =>
+                      api.DELETE("/tenants/{slug}/discord", {
+                        params: { path: { slug } },
+                      }),
+                    () => {
+                      setReplacing(false);
+                      router.refresh();
+                      requestAnimationFrame(() =>
+                        document
+                          .getElementById(fieldId(prefix, "url"))
+                          ?.focus(),
+                      );
+                    },
+                  )
+                }
+              >
+                {t("remove")}
+              </ConfirmButton>
+            </div>
+            {remove.error && <ErrorText>{remove.error}</ErrorText>}
+          </Stack>
+        )}
+        {asksUrl && (
+          <TextInput
+            id={fieldId(prefix, "url")}
+            name="url"
+            labelText={
+              <InfoTip
+                term={webhook ? t("url.newLabel") : t("url.label")}
+                label={t("url.tipLabel")}
+              >
+                {t("url.tip")}
+              </InfoTip>
+            }
+            helperText={t("url.hint")}
+            required
+            pattern={URL_PATTERN}
+            patternMessage={t("url.invalid")}
+            autoComplete="off"
+            spellCheck={false}
+            value={url}
+            onChange={(event) => {
+              setUrl(event.target.value);
+              setTested(false);
+            }}
+            {...invalidProps(result, "url")}
+          />
+        )}
+        <Select
+          labelText={t("language")}
+          value={locale}
+          onChange={(event) => setLocale(event.target.value as Locale)}
+        >
+          {LOCALES.map((l) => (
+            <option key={l} value={l}>
+              {tLocales(l)}
+            </option>
+          ))}
+        </Select>
+        <Stack gap={5}>
+          {/* O teste usa o endereço do campo, salvo ou não, e o idioma acima. */}
           <div>
             <Button
               kind="tertiary"
@@ -189,17 +234,15 @@ export function DiscordForm({ slug, settings }: Props) {
             <Notice kind="success">{t("tested")}</Notice>
           )}
         </Stack>
-        <FormSection legend={t("events.legend")}>
-          {available.map((e) => (
-            <Checkbox
-              key={e.code}
-              id={`${prefix}event-${e.code}`}
-              labelText={label(e.code)}
-              checked={events.includes(e.code)}
-              onChange={(on) => toggle(e.code, on)}
-            />
-          ))}
-        </FormSection>
+        <CheckboxGroup
+          legendText={t("events.legend")}
+          options={available.map((e) => ({
+            value: e.code,
+            label: label(e.code),
+          }))}
+          value={events}
+          onChange={setEvents}
+        />
         <Checkbox
           id={`${prefix}mention`}
           labelText={t("mention.label")}
@@ -207,50 +250,7 @@ export function DiscordForm({ slug, settings }: Props) {
           checked={mention}
           onChange={setMention}
         />
-        <Select
-          labelText={t("language")}
-          value={locale}
-          onChange={(event) => setLocale(event.target.value as Locale)}
-        >
-          {LOCALES.map((l) => (
-            <option key={l} value={l}>
-              {tLocales(l)}
-            </option>
-          ))}
-        </Select>
-        {general && <FormError>{general}</FormError>}
-        {result.saved && !pending && (
-          <Notice kind="success">{t("saved")}</Notice>
-        )}
-        <FormActions pending={pending} disabled={!canSubmit} />
-        {webhook && (
-          <div>
-            <ConfirmButton
-              size="md"
-              pending={remove.pending}
-              question={t("removeConfirm")}
-              onConfirm={() =>
-                remove.run(
-                  () =>
-                    api.DELETE("/tenants/{slug}/discord", {
-                      params: { path: { slug } },
-                    }),
-                  () => {
-                    setReplacing(false);
-                    router.refresh();
-                    requestAnimationFrame(() =>
-                      document.getElementById(fieldId(prefix, "url"))?.focus(),
-                    );
-                  },
-                )
-              }
-            >
-              {t("remove")}
-            </ConfirmButton>
-          </div>
-        )}
-        {remove.error && <ErrorText>{remove.error}</ErrorText>}
-      </Stack>
+      </PageFormLayout>
     </Form>
   );
 }

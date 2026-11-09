@@ -4,11 +4,11 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, type Ref, type RefObject, useEffect } from "react";
 import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/carbon/form";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { Notice } from "@/shared/ui/notice";
+import { PageFormLayout } from "@/shared/ui/page-form-layout";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
@@ -51,6 +51,11 @@ type Props = {
    * metade da direita quando a seção é larga, embaixo quando não é.
    */
   aside?: ReactNode;
+  /**
+   * Poucos campos, um embaixo do outro: o formulário na largura de leitura (a
+   * metade da esquerda), sem `aside` ao lado.
+   */
+  reading?: boolean;
 };
 
 /**
@@ -75,6 +80,7 @@ export function SettingsSection({
   submitRef,
   children,
   aside,
+  reading = false,
 }: Props) {
   const t = useTranslations("TournamentSettings");
   const { goTo, takeArrival } = useSettingsDrafts();
@@ -94,32 +100,43 @@ export function SettingsSection({
         if (!readOnly && !form.pending && form.canSubmit) onSave();
       }}
     >
-      <Stack gap={6}>
+      <PageFormLayout
+        footer={
+          (form.formError || form.done || !readOnly) && (
+            <>
+              {form.formError && (
+                <FormError
+                  action={
+                    fixIn &&
+                    fixIn !== section && (
+                      <Button
+                        kind="ghost"
+                        size="sm"
+                        onClick={() => goTo(fixIn)}
+                      >
+                        {t("goTo", { section: t(`sections.${fixIn}`) })}
+                      </Button>
+                    )
+                  }
+                >
+                  {form.formError.message}
+                </FormError>
+              )}
+              {form.done && <Notice kind="success">{t("saved")}</Notice>}
+              {!readOnly && (
+                <FormActions
+                  submitRef={submitRef}
+                  pending={form.pending}
+                  disabled={!form.canSubmit}
+                />
+              )}
+            </>
+          )
+        }
+      >
         {lock && <Notice kind="info">{lock}</Notice>}
         {children}
-        {form.formError && (
-          <FormError
-            action={
-              fixIn &&
-              fixIn !== section && (
-                <Button kind="ghost" size="sm" onClick={() => goTo(fixIn)}>
-                  {t("goTo", { section: t(`sections.${fixIn}`) })}
-                </Button>
-              )
-            }
-          >
-            {form.formError.message}
-          </FormError>
-        )}
-        {form.done && <Notice kind="success">{t("saved")}</Notice>}
-        {!readOnly && (
-          <FormActions
-            submitRef={submitRef}
-            pending={form.pending}
-            disabled={!form.canSubmit}
-          />
-        )}
-      </Stack>
+      </PageFormLayout>
     </Form>
   );
 
@@ -144,7 +161,7 @@ export function SettingsSection({
         }
         description={summary}
       >
-        {aside ? (
+        {aside || reading ? (
           <div className={styles.halves}>
             <div className={styles.columns}>
               {body}

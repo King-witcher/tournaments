@@ -7,10 +7,11 @@
 }
 
 // Entre as colunas, a calha da grade do Carbon (32px, a dos formulários de
-// duas colunas); entre as linhas, o mesmo respiro dos campos empilhados.
+// duas colunas); entre as linhas, o mesmo respiro dos campos empilhados
+// (24px; num formulário de página, o `PageFormLayout` passa para 32px).
 .grid {
   display: grid;
-  gap: spacing.$spacing-06 spacing.$spacing-07;
+  gap: var(--form-row-gap, #{spacing.$spacing-06}) spacing.$spacing-07;
   align-items: start;
 }
 

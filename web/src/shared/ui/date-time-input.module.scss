@@ -1,9 +1,20 @@
 @use "@carbon/react/scss/spacing";
 
-// A data e, ao lado, a hora com o fuso; no celular, a hora desce.
+// A largura que decide é a do bloco, não a da tela.
+.fit {
+  container-type: inline-size;
+}
+
+// A data e, ao lado, a hora com o fuso; numa coluna estreita ou no celular,
+// a hora desce. Na largura de leitura de um formulário, o fuso encolhe para
+// os três ficarem na mesma linha.
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: spacing.$spacing-05;
+
+  @container (width >= #{3 * spacing.$spacing-13}) {
+    flex-wrap: nowrap;
+  }
 }

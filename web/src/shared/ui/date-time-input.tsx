@@ -93,38 +93,40 @@ export function DateTimeInput({
   };
 
   return (
-    <div className={styles.row}>
-      <DatePicker
-        id={dateId}
-        name={name}
-        labelText={labelText}
-        value={date}
-        onChange={(next) => change({ date: next, time })}
-        minDate={isClient && min ? toZoned(min, zone).date : undefined}
-        required={required || (date === null && time !== "")}
-        disabled={disabled}
-        readOnly={readOnly}
-        helperText={helperText}
-        problem={problem}
-        invalid={invalid}
-        invalidText={invalidText}
-        size={size}
-      />
-      <TimePicker
-        id={`${dateId}-time`}
-        value={time}
-        onChange={(next) => change({ date, time: next })}
-        required={required || (date !== null && time === "")}
-        disabled={disabled}
-        readOnly={readOnly}
-        size={size}
-        timeZone={zone}
-        onTimeZoneChange={(next) => {
-          setChosenZone(next);
-          onTimeZoneChange?.(next);
-          change({ date, time }, next);
-        }}
-      />
+    <div className={styles.fit}>
+      <div className={styles.row}>
+        <DatePicker
+          id={dateId}
+          name={name}
+          labelText={labelText}
+          value={date}
+          onChange={(next) => change({ date: next, time })}
+          minDate={isClient && min ? toZoned(min, zone).date : undefined}
+          required={required || (date === null && time !== "")}
+          disabled={disabled}
+          readOnly={readOnly}
+          helperText={helperText}
+          problem={problem}
+          invalid={invalid}
+          invalidText={invalidText}
+          size={size}
+        />
+        <TimePicker
+          id={`${dateId}-time`}
+          value={time}
+          onChange={(next) => change({ date, time: next })}
+          required={required || (date !== null && time === "")}
+          disabled={disabled}
+          readOnly={readOnly}
+          size={size}
+          timeZone={zone}
+          onTimeZoneChange={(next) => {
+            setChosenZone(next);
+            onTimeZoneChange?.(next);
+            change({ date, time }, next);
+          }}
+        />
+      </div>
     </div>
   );
 }

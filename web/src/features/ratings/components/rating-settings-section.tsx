@@ -1,6 +1,8 @@
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getTenant } from "@/features/tenants/server";
 import { apiErrorMessage } from "@/shared/api/errors";
+import { FormRow } from "@/shared/ui/form-row";
 import { Notice } from "@/shared/ui/notice";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
@@ -8,12 +10,14 @@ import { getRatingSettings } from "../server";
 import { RatingSettingsForm } from "./rating-settings-form";
 
 /**
- * "Rating da comunidade" na aba Configurações, só para o owner: os
- * parâmetros do Elo. Quem não é owner não vê nada. Fica em `<Suspense>`.
+ * A página Rating das Configurações, só do owner, os parâmetros do Elo na
+ * largura de leitura; para os outros papéis ela não existe. Sem acesso, o
+ * cabeçalho da seção já mostra o erro. Fica em `<Suspense>`.
  */
 export async function RatingSettingsSection({ slug }: { slug: string }) {
   const loaded = await getTenant(slug);
-  if (loaded.kind !== "ok" || loaded.tenant.role !== "owner") return null;
+  if (loaded.kind !== "ok") return null;
+  if (loaded.tenant.role !== "owner") notFound();
   const [settings, t] = await Promise.all([
     getRatingSettings(slug),
     getTranslations("Ratings.settings"),
@@ -22,7 +26,9 @@ export async function RatingSettingsSection({ slug }: { slug: string }) {
     <Panel>
       <Section title={t("title")}>
         {settings ? (
-          <RatingSettingsForm slug={slug} initial={settings} />
+          <FormRow columns={2}>
+            <RatingSettingsForm slug={slug} initial={settings} />
+          </FormRow>
         ) : (
           <Notice kind="error">{await apiErrorMessage("internal")}</Notice>
         )}

@@ -1,33 +1,29 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { DiscordSection } from "@/features/discord/components/discord-section";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
 import { NicknameSection } from "@/features/members/components/nickname-section";
-import { RatingSettingsSection } from "@/features/ratings/components/rating-settings-section";
-import { CommunitySettingsColumns } from "@/features/tenants/components/community-settings-columns";
-import { LogoSection } from "@/features/tenants/components/logo-section";
-import { TenantAddressSection } from "@/features/tenants/components/tenant-address-section";
-import { TenantDetailsSection } from "@/features/tenants/components/tenant-details-section";
+import { TenantGeneralSection } from "@/features/tenants/components/tenant-general-section";
 import { TenantHeader } from "@/features/tenants/components/tenant-header";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Panel } from "@/shared/ui/panel";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
 const SKELETON = (
-  <>
+  <Stack gap={7}>
     <Panel>
-      <SectionSkeleton rows={2} />
+      <SectionSkeleton rows={3} />
     </Panel>
     <Panel>
       <SectionSkeleton rows={1} />
     </Panel>
-  </>
+  </Stack>
 );
 
 /**
- * As Configurações da comunidade: à esquerda, o que o dono decide sobre ela
- * (nome e descrição, endereço, logo, rating) e o apelido de quem vê; à
- * direita, os avisos no Discord (só o dono, a seção mais longa); por último,
- * a zona de perigo (`CommunitySettingsColumns`).
+ * Geral, a primeira página das Configurações da comunidade e a única de quem
+ * não é owner: o que o owner decide sobre ela (nome, endereço, descrição e
+ * logo), o apelido de quem vê e, por último, a zona de perigo. Rating e
+ * Discord têm a página deles.
  */
 export default async function TenantSettingsPage({
   params,
@@ -49,46 +45,11 @@ export default async function TenantSettingsPage({
       </Suspense>
       <Suspense fallback={SKELETON}>
         {params.then(({ tenant }) => (
-          <CommunitySettingsColumns
-            slug={tenant}
-            identity={
-              <>
-                <TenantDetailsSection slug={tenant} />
-                <TenantAddressSection slug={tenant} />
-                <Suspense
-                  fallback={
-                    <Panel>
-                      <SectionSkeleton rows={2} />
-                    </Panel>
-                  }
-                >
-                  <LogoSection slug={tenant} />
-                </Suspense>
-                <Suspense
-                  fallback={
-                    <Panel>
-                      <SectionSkeleton rows={4} />
-                    </Panel>
-                  }
-                >
-                  <RatingSettingsSection slug={tenant} />
-                </Suspense>
-                <NicknameSection slug={tenant} />
-              </>
-            }
-            discord={
-              <Suspense
-                fallback={
-                  <Panel>
-                    <SectionSkeleton rows={4} />
-                  </Panel>
-                }
-              >
-                <DiscordSection slug={tenant} />
-              </Suspense>
-            }
-            danger={<CommunityDangerZone slug={tenant} />}
-          />
+          <Stack gap={7}>
+            <TenantGeneralSection slug={tenant} />
+            <NicknameSection slug={tenant} />
+            <CommunityDangerZone slug={tenant} />
+          </Stack>
         ))}
       </Suspense>
     </>

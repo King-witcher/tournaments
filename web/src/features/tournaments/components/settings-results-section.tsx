@@ -33,6 +33,7 @@ export function SettingsResultsSection({ screenshots }: Props) {
       lock={lock && tSettings(`locks.${lock}`)}
       readOnly={lock !== undefined}
       onSave={form.submit}
+      reading
     >
       <TournamentResultsFields
         values={form.values}

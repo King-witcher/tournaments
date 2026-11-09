@@ -6,11 +6,12 @@ import { AppSideNavTitle } from "@/shared/ui/app-side-nav-title";
 import { Avatar } from "@/shared/ui/avatar";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { getTenant } from "../server";
+import { TenantSettingsMenu } from "./tenant-settings-menu";
 
 /**
  * O menu lateral da comunidade: no topo, "Comunidade", o logo, o nome e o
- * papel de quem vê; as seções (Torneios, Ranking, Membros, Configurações).
- * Dentro de um torneio, o menu é o dele (`TournamentsSideNav`). Sem sessão
+ * papel de quem vê; as seções (Torneios, Ranking, Membros, Configurações,
+ * esta com o segundo nível para o owner). Dentro de um torneio, o menu é o dele (`TournamentsSideNav`). Sem sessão
  * ou sem acesso, nada (a página diz o porquê). Fica em `<Suspense>`.
  */
 export async function TenantSideNav({ slug }: { slug: string }) {
@@ -52,9 +53,13 @@ export async function TenantSideNav({ slug }: { slug: string }) {
       <AppSideNavLink href={`/${slug}/members`}>
         {t("tabs.members")}
       </AppSideNavLink>
-      <AppSideNavLink href={`/${slug}/settings`}>
-        {t("tabs.settings")}
-      </AppSideNavLink>
+      {tenant.role === "owner" ? (
+        <TenantSettingsMenu slug={slug} />
+      ) : (
+        <AppSideNavLink href={`/${slug}/settings`}>
+          {t("tabs.settings")}
+        </AppSideNavLink>
+      )}
     </AppSideNav>
   );
 }

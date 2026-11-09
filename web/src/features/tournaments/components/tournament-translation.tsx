@@ -89,7 +89,7 @@ export const TournamentTranslation = memo(function TournamentTranslation({
 
   return (
     <FormGroup legendText={language}>
-      <Stack gap={6}>
+      <Stack gap={7}>
         <TextInput
           id={nameId}
           labelText={t("name")}

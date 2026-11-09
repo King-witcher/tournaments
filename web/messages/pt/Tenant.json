@@ -17,11 +17,11 @@
     "title": "Sobre"
   },
   "details": {
-    "title": "Nome e descrição",
+    "title": "Geral",
     "name": "Nome",
     "description": "Descrição",
     "descriptionHint": "Aparece no início da comunidade e na página do convite.",
-    "saved": "Nome e descrição salvos."
+    "saved": "Salvo."
   },
   "address": {
     "title": "Endereço",
@@ -47,7 +47,12 @@
     "removeConfirm": "Remover {name} da comunidade? {name} perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as séries pendentes. O histórico fica, e {name} pode voltar por um convite, como jogador."
   },
   "settings": {
-    "loading": "Carregando as configurações…"
+    "loading": "Carregando as configurações…",
+    "sections": {
+      "general": "Geral",
+      "rating": "Rating",
+      "discord": "Discord"
+    }
   },
   "nickname": {
     "title": "Seu apelido",

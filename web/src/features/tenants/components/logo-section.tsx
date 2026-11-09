@@ -1,38 +1,32 @@
 import { getTranslations } from "next-intl/server";
 import { ImageField } from "@/features/images/components/image-field";
 import { getImageSettings } from "@/features/images/server";
-import { Column, Grid } from "@/shared/ui/carbon/grid";
-import { Panel } from "@/shared/ui/panel";
-import { Section } from "@/shared/ui/section";
-import { getTenant } from "../server";
+import { FormSection } from "@/shared/ui/form-section";
+
+type Props = {
+  slug: string;
+  /** O logo de agora; nulo sem logo. */
+  url: string | null | undefined;
+};
 
 /**
- * Para o owner, na aba Configurações: o logo da comunidade, que se salva
- * sozinho. Quem não é owner, ou a API sem o bucket público, não vê nada.
- * Fica em `<Suspense>`.
+ * O logo da comunidade, em Geral: um bloco que se salva sozinho, ao lado do
+ * formulário. Sem o bucket público na API, nada. Fica em `<Suspense>`.
  */
-export async function LogoSection({ slug }: { slug: string }) {
-  const [loaded, settings, t] = await Promise.all([
-    getTenant(slug),
+export async function LogoSection({ slug, url }: Props) {
+  const [settings, t] = await Promise.all([
     getImageSettings(),
     getTranslations("Images.logo"),
   ]);
-  if (loaded.kind !== "ok" || loaded.tenant.role !== "owner") return null;
   if (!settings?.enabled) return null;
 
   return (
-    <Grid>
-      <Column sm={4} md={8} lg={8}>
-        <Panel>
-          <Section title={t("title")} description={t("hint")}>
-            <ImageField
-              target={{ kind: "logo", tenant: slug }}
-              url={loaded.tenant.logo_url}
-              maxBytes={settings.max_bytes}
-            />
-          </Section>
-        </Panel>
-      </Column>
-    </Grid>
+    <FormSection legend={t("title")} description={t("hint")}>
+      <ImageField
+        target={{ kind: "logo", tenant: slug }}
+        url={url}
+        maxBytes={settings.max_bytes}
+      />
+    </FormSection>
   );
 }

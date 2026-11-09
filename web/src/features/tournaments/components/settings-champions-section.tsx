@@ -29,6 +29,7 @@ export function SettingsChampionsSection() {
       lock={lock && tSettings(`locks.${lock}`)}
       readOnly={lock !== undefined}
       onSave={form.submit}
+      reading
     >
       <TournamentChampionFields
         values={form.values}

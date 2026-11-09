@@ -45,7 +45,6 @@ export const TournamentRegistrationFields = memo(
             values.admission === "open" ? t("admissionOpenHint") : undefined
           }
           name="admission"
-          orientation="horizontal"
           value={values.admission}
           readOnly={admissionReadOnly}
           options={[

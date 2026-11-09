@@ -8,9 +8,9 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { ErrorText } from "@/shared/ui/error-text";
+import { PageFormLayout } from "@/shared/ui/page-form-layout";
 import { Select } from "@/shared/ui/select";
 
 type Props = {
@@ -41,37 +41,42 @@ export function TransferOwnershipForm({ slug, candidates, focusId }: Props) {
   };
 
   return (
-    <Stack gap={6}>
-      <Select
-        labelText={t("member")}
-        value={userId}
-        onChange={(event) => {
-          setUserId(event.target.value);
-          setMissing(false);
-        }}
-        invalid={missing}
-        invalidText={t("chooseFirst")}
+    <>
+      <PageFormLayout
+        footer={
+          <>
+            <div>
+              <Button
+                ref={trigger}
+                kind="danger--tertiary"
+                pending={pending}
+                onClick={() => (chosen ? setOpen(true) : setMissing(true))}
+              >
+                {t("submit")}
+              </Button>
+            </div>
+            {error && <ErrorText>{error}</ErrorText>}
+          </>
+        }
       >
-        <option value="">{t("choose")}</option>
-        {candidates.map((c) => (
-          <option key={c.userId} value={c.userId}>
-            {c.nickname}
-          </option>
-        ))}
-      </Select>
-      <Stack gap={3}>
-        <div>
-          <Button
-            ref={trigger}
-            kind="danger--tertiary"
-            pending={pending}
-            onClick={() => (chosen ? setOpen(true) : setMissing(true))}
-          >
-            {t("submit")}
-          </Button>
-        </div>
-        {error && <ErrorText>{error}</ErrorText>}
-      </Stack>
+        <Select
+          labelText={t("member")}
+          value={userId}
+          onChange={(event) => {
+            setUserId(event.target.value);
+            setMissing(false);
+          }}
+          invalid={missing}
+          invalidText={t("chooseFirst")}
+        >
+          <option value="">{t("choose")}</option>
+          {candidates.map((c) => (
+            <option key={c.userId} value={c.userId}>
+              {c.nickname}
+            </option>
+          ))}
+        </Select>
+      </PageFormLayout>
       <ConfirmModal
         open={open && chosen !== undefined}
         onClose={close}
@@ -98,6 +103,6 @@ export function TransferOwnershipForm({ slug, candidates, focusId }: Props) {
       >
         {t("confirm", { name: chosen?.nickname ?? "" })}
       </ConfirmModal>
-    </Stack>
+    </>
   );
 }

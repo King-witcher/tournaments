@@ -17,11 +17,11 @@
     "title": "Acerca de"
   },
   "details": {
-    "title": "Nombre y descripción",
+    "title": "General",
     "name": "Nombre",
     "description": "Descripción",
     "descriptionHint": "Aparece en el inicio de la comunidad y en la página de la invitación.",
-    "saved": "Nombre y descripción guardados."
+    "saved": "Guardado."
   },
   "address": {
     "title": "Dirección",
@@ -47,7 +47,12 @@
     "removeConfirm": "¿Quitar a {name} de la comunidad? {name} pierde el acceso, sale de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierde por W.O. las series pendientes. El historial queda, y {name} puede volver con una invitación, como jugador."
   },
   "settings": {
-    "loading": "Cargando la configuración…"
+    "loading": "Cargando la configuración…",
+    "sections": {
+      "general": "General",
+      "rating": "Rating",
+      "discord": "Discord"
+    }
   },
   "nickname": {
     "title": "Tu apodo",

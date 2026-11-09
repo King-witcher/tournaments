@@ -103,7 +103,7 @@ export function TournamentStages({
   };
 
   const fields = (stage: StageValues, index: number) => (
-    <Stack gap={6}>
+    <Stack gap={7}>
       <TournamentFormatFields
         values={values}
         stage={stage}
@@ -150,7 +150,7 @@ export function TournamentStages({
   );
 
   return (
-    <Stack gap={6}>
+    <Stack gap={7}>
       {stages.length === 1 ? (
         fields(stages[0], 0)
       ) : (

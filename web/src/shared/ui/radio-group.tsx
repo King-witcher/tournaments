@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useId } from "react";
-
+import { cn } from "@/shared/lib/cn";
 import { RadioButton, RadioButtonGroup } from "./carbon/radio-button";
 import styles from "./radio-group.module.scss";
 
@@ -46,7 +46,10 @@ export function RadioGroup<V extends string>({
   const groupName = name ?? generated;
   return (
     <RadioButtonGroup
-      className={styles.group}
+      className={cn(
+        styles.group,
+        orientation === "horizontal" && styles.horizontal,
+      )}
       legendText={legendText}
       name={groupName}
       orientation={orientation}
