@@ -103,6 +103,39 @@ async fn each_confirmed_map_is_a_game() {
 }
 
 #[tokio::test]
+async fn provisional_players_come_after_the_others() {
+    let (db, _lease) = crate::db::test_db().await;
+    let f = final_md3(&db, json!({})).await;
+    play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
+    assert_eq!(
+        ranking(&f.app, &f.bia).await["players"][0]["user_id"],
+        f.p1.id
+    );
+
+    // Dez partidas de verdade pediriam dez séries; o ranking só lê o cache.
+    sqlx::query!(
+        "update ratings set games = 10, losses = 10 where user_id = $1",
+        f.p2.id
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+
+    let r = ranking(&f.app, &f.bia).await;
+    assert_eq!(
+        table(&r),
+        [
+            (f.p2.id, 1431, 10, 0, 10, false),
+            (f.p1.id, 1569, 2, 2, 0, true)
+        ]
+    );
+    assert_eq!(r["players"][0]["position"], 1);
+    assert_eq!(r["players"][1]["position"], 2);
+    let p1 = member_rating(&f.app, &f.bia, f.p1.id).await;
+    assert_eq!(p1["standing"]["position"], 2);
+}
+
+#[tokio::test]
 async fn maps_waiting_or_contested_do_not_count() {
     let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;

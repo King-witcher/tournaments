@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update ratings set games = 10, losses = 10 where user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "27a71b1bde5ed00def2cb7f0cedd817e0f3476587d3a472e309fdc1a2116809b"
+}

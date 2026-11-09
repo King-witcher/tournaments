@@ -26,7 +26,7 @@
     "win": "Victoria contra alguien con el mismo rating",
     "after": "El K nunca baja de 32. Después de 40 partidas, ya está cerca.",
     "own": "Cada jugador usa su propio K. Si un novato (K 80) vence a un veterano (K 32) con el mismo rating, gana 40 puntos y el veterano pierde 16.",
-    "provisional": "Con menos de 10 partidas, el rating aparece como provisorio, pero el jugador ya está en el ranking."
+    "provisional": "Con menos de 10 partidas, el rating aparece como provisorio, y el jugador queda en el ranking debajo de todos los que ya tienen 10."
   },
   "counts": {
     "title": "Qué cuenta",

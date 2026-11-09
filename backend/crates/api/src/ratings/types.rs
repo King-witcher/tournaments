@@ -14,14 +14,17 @@ pub struct Ranking {
     #[schema(example = 10)]
     pub provisional_games: u32,
     /// Os membros ativos com rating (algum mapa ou ajuste), do maior para o
-    /// menor; no empate, quem jogou mais e depois o apelido.
+    /// menor, com os provisórios depois de todos os outros; no empate, quem
+    /// jogou mais e depois o apelido.
     pub players: Vec<RankingEntry>,
 }
 
 /// Uma pessoa no ranking.
 #[derive(Serialize, ToSchema, Clone)]
 pub struct RankingEntry {
-    /// 1 é o maior rating; quem empata no rating divide a posição (1, 2, 2, 4).
+    /// 1 é o maior rating entre quem não é provisório; os provisórios seguem a
+    /// contagem depois deles. Quem empata no rating divide a posição (1, 2, 2,
+    /// 4).
     pub position: i64,
     pub user_id: i64,
     pub nickname: String,

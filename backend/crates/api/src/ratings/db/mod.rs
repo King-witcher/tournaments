@@ -59,18 +59,21 @@ pub async fn put_settings(
     Ok(())
 }
 
-/// O ranking: os membros ativos com rating, do maior para o menor.
+/// O ranking: os membros ativos com rating, do maior para o menor, com os
+/// provisórios depois de todos os outros (cinco vitórias seguidas não põem
+/// ninguém no topo).
 pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>, sqlx::Error> {
     let rows = sqlx::query!(
-        r#"select rank() over (order by r.rating desc) as "position!", r.user_id, m.nickname,
+        r#"select rank() over (order by r.games < $2, r.rating desc) as "position!", r.user_id, m.nickname,
                   u.display_name, coalesce(u.avatar_key, u.avatar_url) as avatar_url, r.rating, r.games, r.wins, r.losses,
                   r.last_game_at
            from ratings r
            join tenant_members m on m.tenant_id = r.tenant_id and m.user_id = r.user_id
            join users u on u.id = r.user_id
            where r.tenant_id = $1 and m.left_at is null
-           order by r.rating desc, r.games desc, m.nickname, r.user_id"#,
-        tenant.get()
+           order by r.games < $2, r.rating desc, r.games desc, m.nickname, r.user_id"#,
+        tenant.get(),
+        PROVISIONAL_GAMES as i32
     )
     .fetch_all(db)
     .await?;

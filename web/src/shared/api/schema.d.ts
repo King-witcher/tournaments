@@ -3536,7 +3536,8 @@ export interface components {
             initial: number;
             /**
              * @description Os membros ativos com rating (algum mapa ou ajuste), do maior para o
-             *     menor; no empate, quem jogou mais e depois o apelido.
+             *     menor, com os provisórios depois de todos os outros; no empate, quem
+             *     jogou mais e depois o apelido.
              */
             players: components["schemas"]["RankingEntry"][];
             /**
@@ -3566,7 +3567,9 @@ export interface components {
             nickname: string;
             /**
              * Format: int64
-             * @description 1 é o maior rating; quem empata no rating divide a posição (1, 2, 2, 4).
+             * @description 1 é o maior rating entre quem não é provisório; os provisórios seguem a
+             *     contagem depois deles. Quem empata no rating divide a posição (1, 2, 2,
+             *     4).
              */
             position: number;
             /** @description Menos de `provisional_games` mapas. */

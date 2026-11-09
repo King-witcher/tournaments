@@ -26,7 +26,7 @@
     "win": "Win against someone with the same rating",
     "after": "The K-factor never goes below 32. After 40 games, it's already close.",
     "own": "Each player uses their own K-factor. If a new player (K 80) beats a veteran (K 32) with the same rating, the new player gains 40 points and the veteran loses 16.",
-    "provisional": "With fewer than 10 games, the rating shows as provisional, but the player is already in the ranking."
+    "provisional": "With fewer than 10 games, the rating shows as provisional, and the player is ranked below everyone who already has 10."
   },
   "counts": {
     "title": "What counts",

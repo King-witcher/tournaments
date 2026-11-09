@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select rank() over (order by r.rating desc) as \"position!\", r.user_id, m.nickname,\n                  u.display_name, coalesce(u.avatar_key, u.avatar_url) as avatar_url, r.rating, r.games, r.wins, r.losses,\n                  r.last_game_at\n           from ratings r\n           join tenant_members m on m.tenant_id = r.tenant_id and m.user_id = r.user_id\n           join users u on u.id = r.user_id\n           where r.tenant_id = $1 and m.left_at is null\n           order by r.rating desc, r.games desc, m.nickname, r.user_id",
+  "query": "select rank() over (order by r.games < $2, r.rating desc) as \"position!\", r.user_id, m.nickname,\n                  u.display_name, coalesce(u.avatar_key, u.avatar_url) as avatar_url, r.rating, r.games, r.wins, r.losses,\n                  r.last_game_at\n           from ratings r\n           join tenant_members m on m.tenant_id = r.tenant_id and m.user_id = r.user_id\n           join users u on u.id = r.user_id\n           where r.tenant_id = $1 and m.left_at is null\n           order by r.games < $2, r.rating desc, r.games desc, m.nickname, r.user_id",
   "describe": {
     "columns": [
       {
@@ -106,7 +106,8 @@
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Int8",
+        "Int4"
       ]
     },
     "nullable": [
@@ -122,5 +123,5 @@
       true
     ]
   },
-  "hash": "d1627fee070ed5fedcf030e2f599c491bf63aa082f451ff0b1f86148c289b28b"
+  "hash": "e5bba5deec443e19649a36f24ecd929206be78cfcaa0156e6a592c74edb0daaa"
 }
