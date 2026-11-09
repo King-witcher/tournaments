@@ -37,7 +37,7 @@ export type ValuesSection = Exclude<SettingsSection, "languages">;
  */
 export const SECTION_KEYS = {
   general: ["name", "slug", "description"],
-  registration: ["startsAt", "admission", "checkInMinutes"],
+  registration: ["startsAt", "admission", "checkIn"],
   format: [
     "mode",
     "teamSize",

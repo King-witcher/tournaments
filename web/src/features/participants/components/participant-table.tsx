@@ -80,7 +80,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
   // Antes de abrir, todos estão sem check-in; se o check-in foi desligado e ligado de
   // novo, os que já fizeram continuam marcados.
   const showCheckIn =
-    tournament.check_in_minutes != null &&
+    tournament.check_in &&
     (!["draft", "registration"].includes(status) ||
       participants.some((p) => p.checked_in));
 

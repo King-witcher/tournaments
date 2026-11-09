@@ -38,7 +38,7 @@ async fn stored_at(db: &PgPool, who: &User, path: &str) {
     sqlx::query(
         r#"insert into notifications (user_id, notice)
            values ($1, jsonb_build_object(
-               'code', 'tournament.start_due',
+               'code', 'check_in.opened',
                'params', jsonb_build_object('tournament', 'Liga'),
                'path', $2::text))"#,
     )
@@ -53,7 +53,7 @@ async fn stored_at(db: &PgPool, who: &User, path: &str) {
 async fn stored(db: &PgPool, who: &User, days: i64) {
     sqlx::query(
         r#"insert into notifications (user_id, notice, created_at)
-           values ($1, '{"code": "tournament.start_due", "params": {"tournament": "Liga"}, "path": "/quake-br/liga"}', $2)"#,
+           values ($1, '{"code": "check_in.opened", "params": {"tournament": "Liga"}, "path": "/quake-br/liga"}', $2)"#,
     )
     .bind(who.id)
     .bind(Utc::now() - Duration::days(days))

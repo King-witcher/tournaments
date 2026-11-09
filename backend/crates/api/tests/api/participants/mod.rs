@@ -172,7 +172,13 @@ async fn organizers_change_participants_until_the_start() {
     let remove_bia = format!("{COPA}/participants/{}", bia.id);
     let registration = format!("{COPA}/registration");
 
-    // Já no rascunho.
+    // No rascunho, ninguém entra: a organização também não.
+    assert_eq!(
+        post(&app, &add, &ana, json!({ "user_id": bia.id })).await,
+        (StatusCode::CONFLICT, err("tournament.participants_locked"))
+    );
+
+    publish(&app, &ana, "copa").await;
     let (status, _) = post(&app, &add, &ana, json!({ "user_id": bia.id })).await;
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(
@@ -192,7 +198,6 @@ async fn organizers_change_participants_until_the_start() {
         (StatusCode::BAD_REQUEST, err("request.invalid_path"))
     );
 
-    publish(&app, &ana, "copa").await;
     post_empty(&app, &registration, &bia).await;
     set_status(&db, "copa", "in_progress").await;
     let locked = (StatusCode::CONFLICT, err("tournament.participants_locked"));

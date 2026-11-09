@@ -15,7 +15,7 @@
     },
     "tournament": {
       "title": "Monte o torneio",
-      "body": "Escolha o formato, o pool de mapas e a data. O check-in abre sozinho antes do início."
+      "body": "Escolha o formato e o pool de mapas. Quando estiver tudo certo, abra o check-in e inicie."
     },
     "play": {
       "title": "Deixe a chave andar",

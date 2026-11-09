@@ -250,42 +250,6 @@ async fn the_community_is_read_only_until_the_deletion() {
 }
 
 #[tokio::test]
-async fn the_scheduler_waits_while_it_is_read_only() {
-    let (db, _lease) = crate::db::test_db().await;
-    let state = state(db.clone());
-    let app = app_from(state.clone());
-    let ana = user(&db, "Ana").await;
-    let bia = user(&db, "Bia").await;
-    create(&app, &ana, "quake-br").await;
-    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
-    history(&app, &db, &ana, &bia).await;
-    for slug in ["janela", "hora"] {
-        create_tournament(&app, &ana, duel(slug)).await;
-        publish(&app, &ana, slug).await;
-    }
-    // O check-in da janela abriu; o início da hora passou.
-    starts_in(&db, "janela", 10).await;
-    starts_in(&db, "hora", -1).await;
-    sqlx::query("update tournaments set check_in_minutes = null where slug = 'hora'")
-        .execute(&db)
-        .await
-        .unwrap();
-    let (status, body) = schedule(&app, &ana, "quake-br").await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!((tick.opened, tick.reminded), (0, 0));
-    // Nem ao ler.
-    let (_, t) = get(&app, "/tenants/quake-br/tournaments/janela", &ana).await;
-    assert_eq!(t["status"], "registration");
-
-    let (status, body) = delete(&app, DELETION, &ana).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!((tick.opened, tick.reminded), (1, 1));
-}
-
-#[tokio::test]
 async fn the_owner_is_reminded_the_day_before() {
     let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());

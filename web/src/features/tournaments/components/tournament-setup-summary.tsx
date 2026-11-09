@@ -49,9 +49,9 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const kind = formatKind(stage);
   const bans = tournament.champion_rules.bans_per_series;
   const repeat = repeatScope(tournament.champion_rules);
-  const checkIn = tournament.check_in_minutes;
+  const { check_in: checkIn } = tournament;
   const slots = tournament.max_participants;
-  // O valor junta pedaços em minúscula ("abre 30 min antes do início").
+  // O valor junta pedaços em minúscula ("a organização abre antes do início").
   const value = (text: string) =>
     text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
   const tip = (key: Tip, text: string) => (
@@ -60,12 +60,12 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
     </InfoTip>
   );
   const checkInTip = tdm
-    ? checkIn == null
-      ? "tips.noCheckInTextTdm"
-      : "tips.checkInTextTdm"
-    : checkIn == null
-      ? "tips.noCheckInText"
-      : "tips.checkInText";
+    ? checkIn
+      ? "tips.checkInTextTdm"
+      : "tips.noCheckInTextTdm"
+    : checkIn
+      ? "tips.checkInText"
+      : "tips.noCheckInText";
 
   const rows: { key: string; label: ReactNode; value: string }[] = [
     {
@@ -175,11 +175,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
     {
       key: "checkIn",
       label: tip("checkIn", t(checkInTip)),
-      value: value(
-        checkIn == null
-          ? t("noCheckIn")
-          : t("checkIn", { window: formatMinutes(checkIn) }),
-      ),
+      value: value(checkIn ? t("checkIn") : t("noCheckIn")),
     },
     {
       key: "contest",

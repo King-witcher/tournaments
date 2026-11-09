@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 
 import { PublishTournamentButton } from "@/features/tournaments/components/publish-tournament-button";
-import { startTiming } from "@/features/tournaments/lib/form-values";
 import type { components } from "@/shared/api/schema";
 import { StartButton } from "./start-button";
 import { TransitionButton } from "./transition-button";
@@ -9,38 +8,23 @@ import { TransitionButton } from "./transition-button";
 type Props = {
   tenant: string;
   tournament: components["schemas"]["Tournament"];
-  /** Referência para saber se a data de início ficou para trás. */
-  now: Date;
 };
 
 /**
  * O próximo passo do ciclo, para organizer e owner: publicar (rascunho),
  * abrir o check-in (inscrição com check-in) ou iniciar (inscrição sem
- * check-in, ou no check-in). Em andamento ou encerrado, nada: desfazer o
- * início fica no ⋯ e a correção de resultados, na partida.
+ * check-in, ou no check-in). Em andamento ou encerrado, nada. Voltar atrás
+ * fica no ⋯ (voltar para rascunho, fechar o check-in, desfazer o início) e a
+ * correção de resultados, na partida.
  */
-export function NextStepButton({ tenant, tournament, now }: Props) {
+export function NextStepButton({ tenant, tournament }: Props) {
   const t = useTranslations("Lifecycle");
   const { status, slug } = tournament;
 
   if (status === "draft") {
-    // Data que passou ou ficou perto demais desde que o rascunho foi criado:
-    // a API recusa, então o botão já vem desabilitado, com o motivo.
-    return (
-      <PublishTournamentButton
-        tenant={tenant}
-        tournament={tournament}
-        startBehind={
-          startTiming(
-            tournament.starts_at ?? null,
-            tournament.check_in_minutes ?? null,
-            now,
-          ) ?? undefined
-        }
-      />
-    );
+    return <PublishTournamentButton tenant={tenant} tournament={tournament} />;
   }
-  if (status === "registration" && tournament.check_in_minutes != null) {
+  if (status === "registration" && tournament.check_in) {
     return (
       <TransitionButton
         tenant={tenant}

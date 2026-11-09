@@ -181,10 +181,6 @@ pub enum NoticeKind {
         match_key: String,
         game: i16,
     },
-    /// O início marcado chegou e o torneio não foi iniciado (para organizers e
-    /// owner, uma vez).
-    #[serde(rename = "tournament.start_due")]
-    StartDue { tournament: String },
     /// As séries da fase acabaram com um empate na classificação que espera a
     /// decisão da organização (para organizers e owner, uma vez, quando a fase
     /// passa a esperar).

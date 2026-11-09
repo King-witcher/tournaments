@@ -41,16 +41,16 @@ async fn tournaments_keep_state_and_shape() {
     exec(&db, "update tournaments set starts_at = now()")
         .await
         .unwrap();
-    // Check-in sem janela não existe.
+    // Sem check-in, o status de check-in não existe.
     assert_eq!(
         rejected(
             exec(
                 &db,
-                "update tournaments set status = 'check_in', check_in_minutes = null"
+                "update tournaments set status = 'check_in', check_in = false"
             )
             .await
         ),
-        rule(CHECK, "tournaments_check_in_window")
+        rule(CHECK, "tournaments_check_in_enabled")
     );
 
     // As regras de campeões: faixa, valores e o par da não repetição.
@@ -644,4 +644,37 @@ async fn admission_and_check_in_on_entry() {
     exec(&db, "delete from participants").await.unwrap();
     set_status(&db, "copa", "registration").await;
     assert_eq!(exec(&db, &insert("null")).await.unwrap(), 1);
+}
+
+#[tokio::test]
+async fn a_draft_has_no_participants_either_way() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let tenant = tenant_id(&db, "quake-br").await;
+    let copa = tournament_id(&db, "copa").await;
+    let insert = format!(
+        "insert into participants (tenant_id, tournament_id, user_id)
+         values ({tenant}, {copa}, {})",
+        bia.id
+    );
+
+    // No rascunho ninguém entra.
+    assert_eq!(
+        rejected(exec(&db, &insert).await),
+        rule(CHECK, "participants_not_in_draft")
+    );
+
+    // Publicado, entra; com alguém inscrito, não volta a rascunho.
+    publish(&app, &ana, "copa").await;
+    assert_eq!(exec(&db, &insert).await.unwrap(), 1);
+    let back = "update tournaments set status = 'draft'";
+    assert_eq!(
+        rejected(exec(&db, back).await),
+        rule(CHECK, "tournaments_draft_without_participants")
+    );
+
+    // Sem ninguém, volta.
+    exec(&db, "delete from participants").await.unwrap();
+    assert_eq!(exec(&db, back).await.unwrap(), 1);
 }

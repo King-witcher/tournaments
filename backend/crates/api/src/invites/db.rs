@@ -82,6 +82,8 @@ pub struct StoredInvite {
 }
 
 /// O convite de `token`, numa consulta só, pelo índice único de cada escopo.
+/// O link de torneio em rascunho, que não recebe ninguém, não conta: responde
+/// como link inexistente, sem mostrar o torneio.
 pub async fn find_by_token(
     db: impl PgExecutor<'_>,
     token: &str,
@@ -91,7 +93,7 @@ pub async fn find_by_token(
                select id as tenant_id, null::bigint as tournament_id
                from tenants where invite_token = $1
                union all
-               select tenant_id, id from tournaments where invite_token = $1
+               select tenant_id, id from tournaments where invite_token = $1 and status <> 'draft'
            )
            select t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name,
                   tr.slug as "tournament_slug?",

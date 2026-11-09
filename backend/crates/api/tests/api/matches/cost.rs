@@ -318,7 +318,7 @@ async fn what_my_tournaments_cost() {
     register(&app, "times", &[a, b2]).await;
     create(&app, a, "argentina").await;
     let liga = "/tenants/argentina/tournaments/liga";
-    let body = with(duel("liga"), json!({ "check_in_minutes": null }));
+    let body = with(duel("liga"), json!({ "check_in": false }));
     let (status, body) = post(&app, "/tenants/argentina/tournaments", a, body).await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
     assert_eq!(

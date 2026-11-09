@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, admission,\n                max_participants, bans_per_series, mirror, same_team, no_repeat_who,\n                no_repeat_scope, starts_at, check_in, contest_minutes,\n                counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,\n                team_size, team_pick_seconds, veto_order, pick_order, invite_token,\n                veto_by, ban_by, pick_by, report_by)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,\n                   $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Int2",
+        "Bool",
+        "Bool",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Bool",
+        "Int4",
+        "Bool",
+        "Text",
+        "Bool",
+        "Int4",
+        "Bool",
+        "Int2",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b44ec45d727055b9c50ec1457eeea04088b11c98026afcafbbc2410003515718"
+}

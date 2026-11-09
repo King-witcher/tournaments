@@ -19,8 +19,6 @@ type Props = {
   /** A comunidade, com o papel de quem vê. */
   me: Schemas["MyTenant"];
   tournament: Schemas["Tournament"];
-  /** Referência para saber se a abertura do check-in já passou. */
-  now: Date;
 };
 
 /**
@@ -32,12 +30,7 @@ type Props = {
  * fazer não sumir ao trocar de seção. Para quem joga, depois do início, a
  * situação numa linha, com a próxima série.
  */
-export function TournamentSectionHeader({
-  tenant,
-  me,
-  tournament,
-  now,
-}: Props) {
+export function TournamentSectionHeader({ tenant, me, tournament }: Props) {
   const locale = useLocale();
   const organizer = me.role !== "player";
 
@@ -60,7 +53,6 @@ export function TournamentSectionHeader({
           tenant={tenant}
           tournament={tournament}
           organizer={organizer}
-          now={now}
         />
       }
       overflow={

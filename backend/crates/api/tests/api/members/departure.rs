@@ -161,15 +161,14 @@ async fn leaving_drops_open_registrations_and_keeps_the_links() {
     let olga = organizer(&app, &db, &ana, "Olga").await;
     // Em andamento, com a Olga na chave.
     start(&app, &ana, copa(single(3, 3)), &[&olga, &bia]).await;
-    // Rascunho (o organizador inscreve), inscrição e check-in.
-    for slug in ["rascunho", "aberta", "janela"] {
+    // Inscrição e check-in, inscrita pelo organizador.
+    for slug in ["aberta", "janela"] {
         create_tournament(&app, &ana, duel(slug)).await;
+        publish(&app, &ana, slug).await;
         let uri = format!("/tenants/quake-br/tournaments/{slug}/participants");
         let (status, body) = post(&app, &uri, &ana, json!({ "user_id": olga.id })).await;
         assert_eq!(status, StatusCode::CREATED, "{body}");
     }
-    publish(&app, &ana, "aberta").await;
-    publish(&app, &ana, "janela").await;
     let (status, body) = post_empty(
         &app,
         "/tenants/quake-br/tournaments/janela/check-in/open",
@@ -185,7 +184,7 @@ async fn leaving_drops_open_registrations_and_keeps_the_links() {
 
     assert_eq!(leave(&app, &olga).await, GONE);
 
-    for slug in ["rascunho", "aberta", "janela"] {
+    for slug in ["aberta", "janela"] {
         let uri = format!("/tenants/quake-br/tournaments/{slug}/participants");
         let (status, list) = get(&app, &uri, &ana).await;
         assert_eq!((status, list), (StatusCode::OK, json!([])), "{slug}");

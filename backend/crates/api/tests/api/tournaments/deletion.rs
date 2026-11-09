@@ -223,7 +223,7 @@ async fn a_started_duel_goes_with_everything() {
             duel("liga"),
             with(
                 single(1, 1),
-                json!({ "check_in_minutes": null, "screenshots_required": false }),
+                json!({ "check_in": false, "screenshots_required": false }),
             ),
         ),
     )
@@ -436,7 +436,7 @@ async fn links_and_withdrawals_do_not_hold_it() {
 async fn store_notice(db: &PgPool, who: &User, path: &str, read: bool) {
     sqlx::query(
         "insert into notifications (user_id, notice, read_at)
-         values ($1, jsonb_build_object('code', 'tournament.start_due',
+         values ($1, jsonb_build_object('code', 'check_in.opened',
                                         'params', jsonb_build_object('tournament', 'Copa'),
                                         'path', $2::text),
                  case when $3 then now() end)",
@@ -498,7 +498,7 @@ async fn nothing_keeps_leading_to_it_and_nobody_is_told() {
         "kind": "notice",
         "users": [bia.id],
         "notice": {
-            "code": "tournament.start_due",
+            "code": "check_in.opened",
             "params": { "tournament": "Copa" },
             "path": "/quake-br/copa"
         }

@@ -1,86 +1,30 @@
-//! Data de início e janela de check-in: limites, o que o PATCH muda e a
-//! abertura automática do check-in, que `db::find` e `db::list` aplicam ao
-//! ler (não há job em segundo plano). As transições manuais ficam no domínio
+//! Data de início e check-in: o que o PATCH muda e a conta da "hora de
+//! iniciar". A data é só informação: nada acontece por ela. O check-in se liga
+//! ou desliga por torneio e abre só pelo botão da organização, no domínio
 //! `lifecycle`.
 
-use std::ops::RangeInclusive;
-
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 
 use super::status::TournamentStatus;
 use crate::shared::ApiError;
 
-/// Janela de check-in aceita, em minutos (o mesmo check está na tabela).
-const CHECK_IN_MINUTES: RangeInclusive<i32> = 5..=1440;
-/// Janela quando a criação não diz.
-pub const DEFAULT_CHECK_IN_MINUTES: i32 = 30;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Schedule {
-    /// Início previsto, em UTC. Opcional em qualquer status: sem data o check-in não abre sozinho
-    /// (o organizador abre) e não há aviso de hora de iniciar.
+    /// Início previsto, em UTC. Opcional em qualquer status, até no passado.
     pub starts_at: Option<DateTime<Utc>>,
-    /// Minutos antes do início em que o check-in abre; `None`: sem check-in.
-    pub check_in_minutes: Option<i32>,
+    /// Se o torneio tem check-in; sem ele, a inscrição vai direto para em
+    /// andamento.
+    pub check_in: bool,
 }
 
 impl Schedule {
-    /// 422 `tournament.check_in_minutes_invalid` `{min, max}`.
-    pub fn check(&self) -> Result<(), ApiError> {
-        match self.check_in_minutes {
-            Some(minutes) if !CHECK_IN_MINUTES.contains(&minutes) => Err(ApiError::invalid(
-                "tournament.check_in_minutes_invalid",
-            )
-            .with_params([
-                ("min", i64::from(*CHECK_IN_MINUTES.start())),
-                ("max", i64::from(*CHECK_IN_MINUTES.end())),
-            ])),
-            _ => Ok(()),
-        }
-    }
-
-    /// A data de início deixa tempo para a inscrição e o check-in: está no
-    /// futuro e a janela de check-in (contada a partir dela) ainda não abriu
-    /// em `now`. Sem data, nada a conferir. Erros: 422
-    /// `tournament.starts_at_past` e `tournament.starts_at_too_soon` com
-    /// `minutes` (a janela, que é a antecedência mínima).
-    pub fn check_start(&self, now: DateTime<Utc>) -> Result<(), ApiError> {
-        let Some(starts_at) = self.starts_at else {
-            return Ok(());
-        };
-        if starts_at <= now {
-            return Err(ApiError::invalid("tournament.starts_at_past"));
-        }
-        match self.check_in_minutes {
-            Some(minutes) if starts_at - Duration::minutes(i64::from(minutes)) <= now => {
-                Err(ApiError::invalid("tournament.starts_at_too_soon")
-                    .with_params([("minutes", i64::from(minutes))]))
-            }
-            _ => Ok(()),
-        }
-    }
-
     pub const fn has_check_in(&self) -> bool {
-        self.check_in_minutes.is_some()
-    }
-
-    /// Quando o check-in abre sozinho; `None` sem data ou sem check-in.
-    pub fn check_in_opens_at(&self) -> Option<DateTime<Utc>> {
-        Some(self.starts_at? - Duration::minutes(i64::from(self.check_in_minutes?)))
-    }
-
-    /// Abertura automática: a inscrição vira check-in quando a janela abre.
-    /// Só anda para a frente: adiar o início com o check-in aberto não o
-    /// fecha (desligar o check-in e ligar de novo, sim).
-    pub fn check_in_due(&self, status: TournamentStatus, now: DateTime<Utc>) -> bool {
-        status == TournamentStatus::Registration
-            && self.check_in_opens_at().is_some_and(|opens| opens <= now)
+        self.check_in
     }
 
     /// O início marcado chegou em `now` com o torneio por iniciar (inscrição
-    /// ou check-in): ele espera a organização. É o critério do aviso
-    /// `tournament.start_due` (que sai uma vez) e de `GET /me/organizing`,
-    /// também nas queries deles (`starts_to_remind`, `audience`).
+    /// ou check-in): ele espera a organização. É o critério de `GET
+    /// /me/organizing`, também nas queries dele (`audience`).
     pub fn start_due(&self, status: TournamentStatus, now: DateTime<Utc>) -> bool {
         matches!(
             status,
@@ -88,22 +32,18 @@ impl Schedule {
         ) && self.starts_at.is_some_and(|starts| starts <= now)
     }
 
-    /// O PATCH da data e da janela (`Some(None)` limpa). `Some` só quando
+    /// O PATCH da data (`Some(None)` limpa) e do check-in. `Some` só quando
     /// muda de fato, então reenviar os valores atuais passa em qualquer
-    /// status. A data só é conferida (`check_start` em `now`) quando muda:
-    /// editar outra coisa de um torneio cuja data já passou continua
-    /// permitido. Erros: 409 `tournament.schedule_locked` (depois de começar)
-    /// e os de `check` e `check_start`.
+    /// status. Erro: 409 `tournament.schedule_locked` (depois de começar).
     pub fn edit(
         self,
         status: TournamentStatus,
         starts_at: Option<Option<DateTime<Utc>>>,
-        check_in_minutes: Option<Option<i32>>,
-        now: DateTime<Utc>,
+        check_in: Option<bool>,
     ) -> Result<Option<Self>, ApiError> {
         let next = Self {
             starts_at: starts_at.unwrap_or(self.starts_at),
-            check_in_minutes: check_in_minutes.unwrap_or(self.check_in_minutes),
+            check_in: check_in.unwrap_or(self.check_in),
         };
         if next == self {
             return Ok(None);
@@ -111,16 +51,14 @@ impl Schedule {
         if !status.setup_editable() {
             return Err(ApiError::conflict("tournament.schedule_locked"));
         }
-        next.check()?;
-        if next.starts_at != self.starts_at {
-            next.check_start(now)?;
-        }
         Ok(Some(next))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use chrono::Duration;
+
     use super::*;
     use TournamentStatus::*;
 
@@ -128,23 +66,10 @@ mod tests {
         DateTime::from_timestamp(1_800_000_000, 0).unwrap() + Duration::minutes(minute)
     }
 
-    /// Começa no minuto 60, check-in de 30: abre no minuto 30.
     fn schedule() -> Schedule {
         Schedule {
             starts_at: Some(at(60)),
-            check_in_minutes: Some(30),
-        }
-    }
-
-    #[test]
-    fn check_in_opens_with_the_window() {
-        let s = schedule();
-        assert_eq!(s.check_in_opens_at(), Some(at(30)));
-        assert!(!s.check_in_due(Registration, at(29)));
-        assert!(s.check_in_due(Registration, at(30)));
-        assert!(s.check_in_due(Registration, at(90)));
-        for status in [Draft, CheckIn, InProgress, Finished] {
-            assert!(!s.check_in_due(status, at(45)));
+            check_in: true,
         }
     }
 
@@ -165,40 +90,31 @@ mod tests {
     }
 
     #[test]
-    fn no_check_in_or_no_date_never_opens() {
-        let off = Schedule {
-            check_in_minutes: None,
-            ..schedule()
-        };
-        let undated = Schedule {
-            starts_at: None,
-            ..schedule()
-        };
-        for s in [off, undated] {
-            assert_eq!(s.check_in_opens_at(), None);
-            assert!(!s.check_in_due(Registration, at(90)));
-        }
-    }
-
-    #[test]
     fn edit_changes_only_what_came() {
         let s = schedule();
-        let now = at(-1000);
-        let same = s.edit(InProgress, Some(Some(at(60))), Some(Some(30)), now);
+        let same = s.edit(InProgress, Some(Some(at(60))), Some(true));
         assert_eq!(same.unwrap(), None);
         assert_eq!(
-            s.edit(CheckIn, None, Some(None), now).unwrap(),
+            s.edit(CheckIn, None, Some(false)).unwrap(),
             Some(Schedule {
-                check_in_minutes: None,
+                check_in: false,
                 ..s
             })
         );
-        // Tirar a data vale em qualquer status até começar.
+        // Tirar a data, ou pôr uma no passado, vale em qualquer status até
+        // começar.
         for status in [Draft, Registration, CheckIn] {
             assert_eq!(
-                s.edit(status, Some(None), None, now).unwrap(),
+                s.edit(status, Some(None), None).unwrap(),
                 Some(Schedule {
                     starts_at: None,
+                    ..s
+                })
+            );
+            assert_eq!(
+                s.edit(status, Some(Some(at(-1000))), None).unwrap(),
+                Some(Schedule {
+                    starts_at: Some(at(-1000)),
                     ..s
                 })
             );
@@ -206,74 +122,16 @@ mod tests {
     }
 
     #[test]
-    fn edit_errors() {
+    fn edit_is_locked_once_started() {
         let s = schedule();
-        let now = at(-1000);
         let code = |r: Result<Option<Schedule>, ApiError>| r.unwrap_err().code;
         assert_eq!(
-            code(s.edit(InProgress, Some(Some(at(90))), None, now)),
+            code(s.edit(InProgress, Some(Some(at(90))), None)),
             "tournament.schedule_locked"
         );
         assert_eq!(
-            code(s.edit(Finished, None, Some(None), now)),
+            code(s.edit(Finished, None, Some(false))),
             "tournament.schedule_locked"
         );
-        let err = s.edit(Draft, None, Some(Some(4)), now).unwrap_err();
-        assert_eq!(
-            (err.code, err.params),
-            (
-                "tournament.check_in_minutes_invalid",
-                vec![("min", 5), ("max", 1440)]
-            )
-        );
-        assert!(s.edit(Draft, None, Some(Some(1440)), now).is_ok());
-    }
-
-    #[test]
-    fn the_start_needs_the_check_in_window_ahead() {
-        let s = schedule();
-        let err = |now| s.check_start(now).unwrap_err();
-        // Começa no minuto 60, janela de 30: o limite é o minuto 30.
-        assert!(s.check_start(at(29)).is_ok());
-        let soon = err(at(30));
-        assert_eq!(
-            (soon.code, soon.params),
-            ("tournament.starts_at_too_soon", vec![("minutes", 30)])
-        );
-        assert_eq!(err(at(60)).code, "tournament.starts_at_past");
-        assert_eq!(err(at(90)).code, "tournament.starts_at_past");
-        // Sem check-in, só não pode ser passada; sem data, nada a conferir.
-        let off = Schedule {
-            check_in_minutes: None,
-            ..s
-        };
-        assert!(off.check_start(at(59)).is_ok());
-        assert_eq!(
-            off.check_start(at(60)).unwrap_err().code,
-            "tournament.starts_at_past"
-        );
-        let undated = Schedule {
-            starts_at: None,
-            ..s
-        };
-        assert!(undated.check_start(at(90)).is_ok());
-    }
-
-    #[test]
-    fn edit_checks_the_start_only_when_it_changes() {
-        let s = schedule();
-        let now = at(45);
-        // Mesma data (já dentro da janela): passa, mesmo mudando a janela.
-        let kept = s.edit(Registration, Some(Some(at(60))), Some(Some(15)), now);
-        assert!(kept.is_ok());
-        // Mover a data para dentro da janela ou para o passado: recusa.
-        let code = |start| {
-            s.edit(Registration, Some(Some(start)), None, now)
-                .unwrap_err()
-                .code
-        };
-        assert_eq!(code(at(70)), "tournament.starts_at_too_soon");
-        assert_eq!(code(at(40)), "tournament.starts_at_past");
-        assert!(s.edit(Registration, Some(Some(at(80))), None, now).is_ok());
     }
 }

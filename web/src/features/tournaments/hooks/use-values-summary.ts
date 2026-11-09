@@ -128,9 +128,7 @@ export function useValuesSummary() {
     registration: (v: TournamentValues) =>
       line([
         tForm(`admissionOptions.${v.admission}`),
-        v.checkInMinutes === null
-          ? t("noCheckIn")
-          : t("checkIn", { window: formatMinutes(v.checkInMinutes) }),
+        v.checkIn ? t("checkIn") : t("noCheckIn"),
       ]),
     /** `screenshots`: a API tem capturas de tela; sem elas, o campo não aparece e o valor não conta. */
     results: (v: TournamentValues, screenshots: boolean) =>

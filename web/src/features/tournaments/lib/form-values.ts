@@ -51,12 +51,12 @@ export type TournamentValues = {
   noRepeatWho: Schemas["NoRepeatWho"];
   /** TDM: colegas de time podem usar o mesmo campeão na partida. */
   sameTeam: boolean;
-  /** Início em ISO (UTC); `null` sem data, só no rascunho. */
+  /** Início em ISO (UTC), só informativo; `null` sem data. */
   startsAt: string | null;
   /** Quem age pelo time: só vale nos times, e no duelo vai como está. */
   teamRules: Schemas["TeamRules"];
-  /** Janela de check-in em minutos; `null` sem check-in. */
-  checkInMinutes: number | null;
+  /** O torneio tem check-in (a organização abre pelo botão). */
+  checkIn: boolean;
   /** Janela de contestação de resultado, em minutos. */
   contestMinutes: number;
   /** Cada partida atualiza o rating dos jogadores (muda até começar). */
@@ -135,7 +135,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     sameTeam: false,
     teamRules: TEAM_PRESETS.balanced,
     startsAt: null,
-    checkInMinutes: 30,
+    checkIn: true,
     contestMinutes: 10,
     countsForRating: true,
     mapMode: "veto",
@@ -175,7 +175,7 @@ export function valuesFrom(
     sameTeam: rules.same_team,
     teamRules: tournament.team_rules,
     startsAt: tournament.starts_at ?? null,
-    checkInMinutes: tournament.check_in_minutes ?? null,
+    checkIn: tournament.check_in,
     contestMinutes: tournament.contest_minutes,
     countsForRating: tournament.counts_for_rating,
     mapMode: tournament.veto.map_mode,
@@ -397,36 +397,6 @@ export function noRepeatChoices(stages: number): NoRepeatChoice[] {
 }
 
 /**
- * Se a data de início não deixa tempo para inscrição e check-in: `past` (já
- * passou) ou `window` (a janela de check-in, contada a partir do início, já
- * abriu em `now`). `null` sem data ou com tempo de sobra. É a mesma conta da
- * API (`Schedule::check_start`).
- */
-export function startTiming(
-  startsAt: string | null,
-  checkInMinutes: number | null,
-  now: Date,
-): "past" | "window" | null {
-  if (startsAt === null) return null;
-  const start = new Date(startsAt).getTime();
-  if (start <= now.getTime()) return "past";
-  if (
-    checkInMinutes !== null &&
-    start - checkInMinutes * 60_000 <= now.getTime()
-  ) {
-    return "window";
-  }
-  return null;
-}
-
-/** O primeiro minuto cheio em que o início passa em `startTiming`: a janela depois de `now`. */
-export function earliestStart(checkInMinutes: number, now: Date) {
-  const minute = 60_000;
-  const edge = now.getTime() + checkInMinutes * minute;
-  return new Date(Math.floor(edge / minute) * minute + minute);
-}
-
-/**
  * Corpo da criação sem origem: o mínimo (nome, endereço, idioma e
  * modalidade), com os padrões da API, e o pool lembrado da comunidade, se
  * houver. Sempre rascunho.
@@ -511,11 +481,11 @@ function textsBody(values: TournamentValues) {
   };
 }
 
-/** Data de início e janela de check-in no formato da API. */
+/** Data de início e check-in no formato da API. */
 function scheduleBody(values: TournamentValues) {
   return {
     starts_at: values.startsAt,
-    check_in_minutes: values.checkInMinutes,
+    check_in: values.checkIn,
   };
 }
 

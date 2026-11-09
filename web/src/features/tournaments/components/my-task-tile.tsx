@@ -8,7 +8,6 @@ import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { ActionTile } from "@/shared/ui/action-tile";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { MetaLines } from "@/shared/ui/meta-lines";
 import { localizedName } from "../lib/localize";
 import { playerTask } from "../lib/my-tournaments";
@@ -34,7 +33,6 @@ export function MyTaskTile({ entry, avatar, focusAfter }: Props) {
   const tStages = useTranslations("Stages.checkIn");
   const locale = useLocale();
   const { tournament } = entry;
-  const startsAt = tournament.starts_at;
   const task = playerTask(entry);
   const teamName = useTeamName();
 
@@ -85,16 +83,7 @@ export function MyTaskTile({ entry, avatar, focusAfter }: Props) {
     <ActionTile
       avatar={avatar}
       title={localizedName(tournament, locale)}
-      meta={
-        <>
-          {entry.tenant_name}
-          {startsAt && " · "}
-          {startsAt &&
-            t.rich("checkInUntil", {
-              date: () => <LocalDateTime value={startsAt} />,
-            })}
-        </>
-      }
+      meta={entry.tenant_name}
       action={
         <CheckInButton
           tenant={entry.tenant_slug}

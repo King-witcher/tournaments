@@ -50,7 +50,7 @@ pub async fn get_tournament_invite_link(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só no rascunho ou até o início), tenant.deletion_scheduled"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só depois de publicar e até o início), tenant.deletion_scheduled"),
     )
 )]
 pub async fn rotate_tournament_invite_link(

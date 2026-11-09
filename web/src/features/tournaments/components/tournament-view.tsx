@@ -39,12 +39,11 @@ export async function TournamentView({ tenant, slug, children }: Props) {
   }
 
   const { me, tournament } = loaded;
-  const now = new Date();
-  const header = { tenant, me, tournament, now };
+  const header = { tenant, me, tournament };
   return (
     <>
       <TournamentHeaderSwitch
-        overview={<TournamentHeader {...header} />}
+        overview={<TournamentHeader {...header} now={new Date()} />}
         section={<TournamentSectionHeader {...header} />}
       />
       <TournamentTabs

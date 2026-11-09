@@ -17,7 +17,7 @@ use crate::{
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Check-in aberto antes da hora da abertura automática"),
+        (status = OK, body = Tournament, description = "Check-in aberto, e os inscritos avisados"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
@@ -30,6 +30,30 @@ pub async fn open_check_in(
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<Tournament>, ApiError> {
     run(&state, &member, &path.tournament, Transition::OpenCheckIn).await
+}
+
+#[utoipa::path(
+    delete,
+    path = "/tenants/{slug}/tournaments/{tournament}/check-in/open",
+    tag = "lifecycle",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    responses(
+        (status = OK, body = Tournament, description = "Check-in fechado (abriu por engano): volta para a inscrição, e os check-ins feitos ficam"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.check_in_closed"),
+    )
+)]
+pub async fn close_check_in(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+) -> Result<Json<Tournament>, ApiError> {
+    run(&state, &member, &path.tournament, Transition::CloseCheckIn).await
 }
 
 #[utoipa::path(
@@ -94,7 +118,7 @@ pub async fn undo_start(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou check-in depois de começar), tournament.max_participants_below_registered {registered}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação"),
     )
 )]

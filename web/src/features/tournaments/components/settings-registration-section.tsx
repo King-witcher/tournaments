@@ -58,12 +58,10 @@ export function SettingsRegistrationSection({ invite }: { invite: ReactNode }) {
         onChange={onChange}
         errors={errors}
         readOnly={scheduleLocked}
-        saved={tournament.starts_at ?? null}
       />
       <TournamentRegistrationFields
         values={values}
         onChange={onChange}
-        errors={errors}
         checkInReadOnly={scheduleLocked}
         admissionReadOnly={finished}
       />

@@ -100,7 +100,6 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
           tenant={tenant}
           tournament={tournament}
           organizer={organizer}
-          now={now}
         />
       }
       overflow={

@@ -10,7 +10,8 @@
     "action": "Start",
     "startedAt": "Start scheduled for <date></date>",
     "checkedIn": "{checkedIn} of {registered} checked in",
-    "registered": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, no check-in"
+    "registered": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, no check-in",
+    "checkInNotOpen": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, check-in not open"
   },
   "pendingTies": {
     "title": "Tie to decide",

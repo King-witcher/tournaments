@@ -140,7 +140,7 @@ async fn a_member_sees_another_members_tournaments() {
     );
 
     // No check-in, a situação é pelo check-in do membro, não de quem vê.
-    starts_in(&db, "aberto", 10).await;
+    open_check_in(&app, &ana, "aberto").await;
     let check_in = "/tenants/quake-br/tournaments/aberto/check-in";
     let (status, _) = post_empty(&app, check_in, &bia).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
@@ -211,15 +211,16 @@ async fn players_see_what_the_tournament_list_shows() {
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
 
-    // Rascunho sem data, de inscrição fechada e de inscrição aberta, criados
-    // nessa ordem; Caio inscrito nos três pelo organizador.
+    // Sem data, de inscrição fechada e de inscrição aberta, criados nessa
+    // ordem; Caio inscrito nos três pelo organizador.
     create_tournament(
         &app,
         &ana,
-        with(duel("rascunho"), json!({ "starts_at": null })),
+        with(duel("sem-data"), json!({ "starts_at": null })),
     )
     .await;
-    add(&app, &ana, "rascunho", &caio).await;
+    publish(&app, &ana, "sem-data").await;
+    add(&app, &ana, "sem-data", &caio).await;
     create_tournament(
         &app,
         &ana,
@@ -232,21 +233,19 @@ async fn players_see_what_the_tournament_list_shows() {
     publish(&app, &ana, "aberto").await;
     add(&app, &ana, "aberto", &caio).await;
 
-    // Os jogadores veem os publicados, estejam ou não inscritos, mas não o
-    // rascunho.
+    // Todos veem os publicados, estejam ou não inscritos: o sem data primeiro,
+    // depois, com o mesmo início, o criado por último.
     for viewer in [&bia, &caio] {
         assert_eq!(
             slugs(&profile(&app, viewer, &caio).await),
-            ["aberto", "fechado"]
+            ["sem-data", "aberto", "fechado"]
         );
     }
-    // O owner vê todos: o sem data primeiro, depois, com o mesmo início, o
-    // criado por último.
     let all = profile(&app, &ana, &caio).await;
     assert_eq!(
         situations(&all),
         [
-            ("rascunho".to_owned(), "registered".to_owned()),
+            ("sem-data".to_owned(), "registered".to_owned()),
             ("aberto".to_owned(), "registered".to_owned()),
             ("fechado".to_owned(), "registered".to_owned()),
         ]

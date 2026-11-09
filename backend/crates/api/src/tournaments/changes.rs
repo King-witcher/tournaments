@@ -1,15 +1,14 @@
 //! O que o torneio emite no outbox: a mudança (a comunidade, por causa da
 //! lista; quem está na página do torneio; "Seus torneios" dos inscritos; e a
-//! home da organização enquanto ele espera ser iniciado) e os avisos de
-//! check-in aberto (inscritos) e de hora de iniciar (organizers e owner). As
-//! partidas emitem pelo `matches`, a partir da chave.
+//! home da organização enquanto ele espera ser iniciado) e o aviso de check-in
+//! aberto (inscritos). As partidas emitem pelo `matches`, a partir da chave.
 
 use sqlx::PgConnection;
 
 use super::db::{self, Audience, TournamentId};
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
-    tenants::{self, TenantId},
+    tenants,
 };
 
 /// O torneio mudou (dados, status, inscrições, check-ins, seeding).
@@ -71,8 +70,7 @@ pub async fn moved(
     outbox::emit(conn, moved).await
 }
 
-/// O check-in abriu (pelo organizador, pela hora ao ler ou pelo agendador):
-/// a mudança e o aviso aos inscritos.
+/// O organizador abriu o check-in: a mudança e o aviso aos inscritos.
 pub async fn check_in_opened(conn: &mut PgConnection, id: TournamentId) -> Result<(), sqlx::Error> {
     let a = db::audience(conn, id).await?;
     emit_changed(conn, &a, &[]).await?;
@@ -83,23 +81,4 @@ pub async fn check_in_opened(conn: &mut PgConnection, id: TournamentId) -> Resul
         path: a.path(),
     };
     outbox::emit(conn, Event::notice(a.participants.iter().copied(), notice)).await
-}
-
-/// O início marcado chegou sem o torneio iniciar: aviso para organizers e
-/// owner, e a home deles, onde o torneio passa a estar no que espera a
-/// organização.
-pub async fn start_due(
-    conn: &mut PgConnection,
-    tenant: TenantId,
-    id: TournamentId,
-) -> Result<(), sqlx::Error> {
-    let a = db::audience(conn, id).await?;
-    let staff = tenants::staff(conn, tenant).await?;
-    let path = a.path();
-    let notice = Notice {
-        kind: NoticeKind::StartDue { tournament: a.name },
-        path,
-    };
-    outbox::emit(conn, Event::me(staff.iter().copied())).await?;
-    outbox::emit(conn, Event::notice(staff, notice)).await
 }

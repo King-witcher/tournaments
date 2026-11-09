@@ -143,10 +143,10 @@ mod tests {
 
     #[test]
     fn organizers_add_until_the_tournament_starts() {
-        for status in [Draft, Registration, CheckIn] {
+        for status in [Registration, CheckIn] {
             assert_eq!(code(status, InviteOnly, Entry::Organizer(1)), "ok");
         }
-        for status in [InProgress, Finished] {
+        for status in [Draft, InProgress, Finished] {
             assert_eq!(
                 code(status, Open, Entry::Organizer(1)),
                 "tournament.participants_locked"

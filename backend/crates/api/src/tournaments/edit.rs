@@ -2,7 +2,6 @@
 //! que o status ainda deixa mudar. A checagem de campeões fica para quem
 //! chama, com o pool lido na mesma transação.
 
-use chrono::{DateTime, Utc};
 use engine::stages::StageSetup;
 
 use super::{
@@ -35,7 +34,7 @@ pub struct Edit {
     /// Com as fases mudadas depois do início: a fase atual, já terminada,
     /// ficou sendo a última, e o torneio encerra.
     pub finishes: bool,
-    /// `Some` só quando a data de início ou a janela de check-in mudam.
+    /// `Some` só quando a data de início ou o check-in mudam.
     pub schedule: Option<Schedule>,
     /// `Some` só quando a janela de contestação muda.
     pub contest_minutes: Option<i32>,
@@ -60,8 +59,6 @@ pub struct Current<'a> {
     pub started_stages: usize,
     /// A última fase começada já terminou.
     pub current_finished: bool,
-    /// O relógio da requisição, para conferir a data de início nova.
-    pub now: DateTime<Utc>,
 }
 
 /// Erros: 409 `tournament.slug_locked` (endereço fora do rascunho), 409
@@ -90,7 +87,6 @@ pub fn apply(
         counts_for_rating: current_counts_for_rating,
         started_stages,
         current_finished,
-        now,
     } = current;
     let slug = patch.slug.filter(|slug| slug != current_slug);
     if let Some(slug) = &slug {
@@ -159,7 +155,7 @@ pub fn apply(
         )?;
     }
     let setup = (rest_changed || stages_changed).then_some(setup);
-    let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes, now)?;
+    let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in)?;
     let check_in_off = schedule.is_some_and(|s| !s.has_check_in());
     let contest_minutes = patch
         .contest_minutes
@@ -269,7 +265,7 @@ mod tests {
     fn schedule() -> Schedule {
         Schedule {
             starts_at: chrono::DateTime::from_timestamp(1_800_000_000, 0),
-            check_in_minutes: Some(30),
+            check_in: true,
         }
     }
 
@@ -286,7 +282,7 @@ mod tests {
             champion_rules: None,
             stages: None,
             starts_at: None,
-            check_in_minutes: None,
+            check_in: None,
             contest_minutes: None,
             counts_for_rating: None,
             veto: None,
@@ -318,7 +314,6 @@ mod tests {
             counts_for_rating: true,
             started_stages,
             current_finished,
-            now: DateTime::from_timestamp(1_700_000_000, 0).unwrap(),
         };
         apply(current, None, patch)
     }
@@ -335,11 +330,11 @@ mod tests {
     #[test]
     fn turning_check_in_off_during_check_in_reopens_registration() {
         let off = || UpdateTournament {
-            check_in_minutes: Some(None),
+            check_in: Some(false),
             ..patch()
         };
         let edit = run(TournamentStatus::CheckIn, off()).unwrap();
-        assert_eq!(edit.schedule.unwrap().check_in_minutes, None);
+        assert!(!edit.schedule.unwrap().check_in);
         assert_eq!(edit.status, Some(TournamentStatus::Registration));
         let edit = run(TournamentStatus::Registration, off()).unwrap();
         assert_eq!(edit.status, None);

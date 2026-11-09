@@ -16,7 +16,7 @@ type Props = {
 /**
  * O ⋯ do cabeçalho, com o que é raro ou destrutivo e vale agora: desfazer o
  * próprio check-in, cancelar a própria inscrição e, para a organização, criar
- * outro torneio a partir deste (o Modal da criação, com ele em "Começar de"), desfazer o início (com a conta dos resultados
+ * outro torneio a partir deste (o Modal da criação, com ele em "Começar de"), fechar o check-in, voltar para rascunho, desfazer o início (com a conta dos resultados
  * que ele apaga, lida da chave; com várias fases, apaga todas) e, na fase 2 em
  * diante sem nada jogado, só o início dela e excluir (antes de começar, a organização;
  * depois, só o owner). Sem nada, não aparece.
@@ -32,6 +32,7 @@ export async function TournamentOverflow({
   const flags = {
     undoCheckIn: status === "check_in" && registered && checkedIn,
     withdrawRegistration: registrationOpen(status) && registered,
+    closeCheckIn: organizer && status === "check_in",
     canDelete: started ? owner : organizer,
   };
   let undoStart:
@@ -44,7 +45,7 @@ export async function TournamentOverflow({
     const results = loaded.kind === "ok" ? loaded.data.results : 0;
     undoStart = {
       results,
-      hasCheckIn: tournament.check_in_minutes != null,
+      hasCheckIn: tournament.check_in,
       several: startedStages(tournament).length > 1,
     };
     // Desfazer só o início da fase 2 em diante, e só sem nada jogado nela.
@@ -66,6 +67,11 @@ export async function TournamentOverflow({
       tenant={tenant}
       slug={tournament.slug}
       copySource={organizer ? tournament : undefined}
+      unpublish={
+        organizer && status === "registration"
+          ? tournament.participants
+          : undefined
+      }
       undoStart={undoStart}
       undoStage={undoStage}
       inviteOnly={tournament.admission === "invite_only"}

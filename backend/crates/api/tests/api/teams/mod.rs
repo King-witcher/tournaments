@@ -24,7 +24,7 @@ pub fn tdm(size: u8, changes: Value) -> Value {
                 json!({
                     "mode": "tdm",
                     "team_size": size,
-                    "check_in_minutes": null,
+                    "check_in": false,
                     "team_rules": {
                         "veto": "anyone", "ban": "anyone", "pick": "each_player", "report": "anyone"
                     }

@@ -64,7 +64,7 @@ export async function getSeedingSummary(
 ): Promise<{ text?: string; editable: boolean } | undefined> {
   if (hasStarted(tournament.status)) return undefined;
   const t = await getTranslations("Participants.seeding");
-  const hasCheckIn = tournament.check_in_minutes != null;
+  const hasCheckIn = tournament.check_in;
   if (!seedingOpen(tournament)) {
     const key = hasCheckIn ? "summary.atCheckIn" : "summary.atRegistration";
     return { text: t(key), editable: false };

@@ -3,8 +3,7 @@
 //! sockets (`Realtime`, em `hub`), o despachante que tira os eventos do
 //! outbox, publica, guarda os avisos no sininho e manda os Web Push
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
-//! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
-//! exclusões de comunidade e de conta, a rotina diária dos screenshots,
+//! (`scheduler`: confirmação por tempo, exclusões de comunidade e de conta, a rotina diária dos screenshots,
 //! rating das comunidades marcadas, notificações vencidas) e o relógio dos
 //! passos do veto (`clock`), que dorme até o próximo prazo e, ao acordar, relê
 //! só os torneios que os eventos alcançaram ou cujo prazo venceu. Fica acima

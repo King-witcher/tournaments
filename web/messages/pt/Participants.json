@@ -59,9 +59,7 @@
     "stage_check_in_pending": "Falta o seu check-in na fase {stage}"
   },
   "checkIn": {
-    "opensAt": "O check-in abre <date></date>. Quem não fizer fica fora da chave.",
     "open": "Check-in aberto. Faça seu check-in para confirmar presença e entrar na chave.",
-    "until": "Até <date></date> (faltam <countdown></countdown>).",
     "do": "Fazer check-in",
     "undo": "Desfazer check-in",
     "mark": "Marcar check-in",

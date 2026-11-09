@@ -146,14 +146,6 @@ pub const CATALOG: &[Spec] = &[
         )
     },
     spec(
-        "tournament.start_due",
-        true,
-        To::Staff,
-        "{to} **{tournament}** chegou ao horário marcado e ainda não foi iniciado.\n{link}",
-        "{to} **{tournament}** llegó a la hora marcada y aún no se inició.\n{link}",
-        "{to} **{tournament}** has reached its scheduled time and hasn't started yet.\n{link}",
-    ),
-    spec(
         "tournament.tie_pending",
         true,
         To::Staff,

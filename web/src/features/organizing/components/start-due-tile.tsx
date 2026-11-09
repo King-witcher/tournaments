@@ -39,12 +39,14 @@ export function StartDueTile({
                 date: () => <LocalDateTime value={item.starts_at} />,
               })}
             </>,
-            item.has_check_in
-              ? t("checkedIn", {
-                  checkedIn: item.checked_in,
-                  registered: item.registered,
-                })
-              : t("registered", { registered: item.registered }),
+            !item.has_check_in
+              ? t("registered", { registered: item.registered })
+              : item.status === "check_in"
+                ? t("checkedIn", {
+                    checkedIn: item.checked_in,
+                    registered: item.registered,
+                  })
+                : t("checkInNotOpen", { registered: item.registered }),
           ]}
         />
       }

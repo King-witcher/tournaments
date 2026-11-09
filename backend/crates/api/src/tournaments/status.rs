@@ -9,8 +9,9 @@ use crate::shared::ApiError;
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TournamentStatus {
-    /// Só organizer e owner veem. Único status em que o endereço muda e em
-    /// que excluir não pede o endereço digitado.
+    /// Só organizer e owner veem, e só configuração: ninguém entra. Único
+    /// status em que o endereço muda e em que excluir não pede o endereço
+    /// digitado.
     Draft,
     Registration,
     CheckIn,
@@ -44,8 +45,8 @@ impl TournamentStatus {
         }
     }
 
-    /// Vagas, regra de campeões, fases, data de início e janela de check-in
-    /// só mudam antes de o torneio começar.
+    /// Vagas, regra de campeões, fases, data de início e check-in só mudam
+    /// antes de o torneio começar.
     pub const fn setup_editable(self) -> bool {
         matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
     }
@@ -72,15 +73,17 @@ impl TournamentStatus {
         matches!(self, Self::Registration | Self::CheckIn)
     }
 
-    /// O organizador inscreve e tira participantes até o torneio começar.
+    /// O organizador inscreve e tira participantes depois de publicar, até o
+    /// torneio começar. O rascunho é só configuração, sem inscritos (o banco
+    /// também recusa: `participants_not_in_draft`).
     pub const fn participants_editable(self) -> bool {
-        matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
+        matches!(self, Self::Registration | Self::CheckIn)
     }
 
-    /// O link de inscrição aparece e se troca: já no rascunho (para mandar
-    /// antes de publicar) e até o início.
+    /// O link de inscrição aparece e se troca: depois de publicar, até o
+    /// início.
     pub const fn invites_allowed(self) -> bool {
-        matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
+        matches!(self, Self::Registration | Self::CheckIn)
     }
 }
 
@@ -111,11 +114,11 @@ mod tests {
         );
         assert_eq!(
             allows(TournamentStatus::participants_editable),
-            [true, true, true, false, false]
+            [false, true, true, false, false]
         );
         assert_eq!(
             allows(TournamentStatus::invites_allowed),
-            [true, true, true, false, false]
+            [false, true, true, false, false]
         );
         assert_eq!(
             allows(TournamentStatus::check_in_open),

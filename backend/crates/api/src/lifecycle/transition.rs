@@ -1,22 +1,21 @@
 //! As transições manuais de status depois de publicar, num lugar só: de onde
-//! cada uma sai, para onde vai e o que faz junto. Publicar fica em
-//! `tournaments` (só mexe no torneio) e a abertura automática do check-in em
-//! `tournaments::schedule`, aplicada ao ler. Iniciar congela o rating dos
-//! times (`start_rating`) e gera a chave, e desfazer a descarta, com os
-//! resultados (`matches::start`, `matches::discard`), apaga o rating congelado
-//! e tira as inscrições de quem desistiu ou saiu da comunidade; em andamento ↔
-//! encerrado anda sozinho conforme a chave, em `matches`.
+//! cada uma sai, para onde vai e o que faz junto. Publicar e voltar para
+//! rascunho ficam em `tournaments` (só mexem no torneio). Iniciar congela o
+//! rating dos times (`start_rating`) e gera a chave, e desfazer a descarta, com
+//! os resultados (`matches::start`, `matches::discard`), apaga o rating
+//! congelado e tira as inscrições de quem desistiu ou saiu da comunidade; em
+//! andamento ↔ encerrado anda sozinho conforme a chave, em `matches`.
 //!
 //! ```text
-//! com check-in: inscrição ──abrir check-in (ou a hora)──▶ check-in ──iniciar──▶ em andamento
-//!                                                      ◀─────desfazer──────
-//! sem check-in: inscrição ──────────────────iniciar────────────────────────────▶ em andamento
-//!                         ◀─────────────────desfazer─────────────────────────────
+//! com check-in: inscrição ──abrir check-in──▶ check-in ──iniciar──▶ em andamento
+//!                         ◀──fechar check-in──         ◀──desfazer──
+//! sem check-in: inscrição ──────────────iniciar──────────────────────▶ em andamento
+//!                         ◀─────────────desfazer─────────────────────
 //! ```
 //!
-//! A inscrição fica aberta até o início, também durante o check-in; por isso
-//! não há transição de volta do check-in para a inscrição (desligar o check-in
-//! pela edição faz isso).
+//! Nada aqui anda sozinho: a data de início é só informação. A inscrição fica
+//! aberta até o início, também durante o check-in, e fechar o check-in (aberto
+//! por engano) não apaga os check-ins feitos.
 
 use chrono::Utc;
 use engine::core::ParticipantId;
@@ -35,8 +34,11 @@ const MIN_TO_START: usize = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Transition {
-    /// Inscrição → check-in, antes da hora da abertura automática.
+    /// Inscrição → check-in.
     OpenCheckIn,
+    /// Check-in → inscrição, para quando se abriu por engano. Os check-ins
+    /// feitos ficam.
+    CloseCheckIn,
     /// Check-in (ou inscrição, sem check-in) → em andamento.
     Start,
     /// Em andamento → check-in (ou inscrição, sem check-in), para quando se
@@ -47,7 +49,7 @@ pub enum Transition {
 impl Transition {
     /// O status depois da transição, saindo de `from`. Erros (409):
     /// `tournament.not_registration`, `tournament.check_in_disabled`,
-    /// `tournament.not_published`,
+    /// `tournament.check_in_closed`, `tournament.not_published`,
     /// `tournament.check_in_not_open`, `tournament.already_started` e
     /// `tournament.not_in_progress`.
     pub fn target(
@@ -61,6 +63,8 @@ impl Transition {
             (Self::OpenCheckIn, Registration) if has_check_in => Ok(CheckIn),
             (Self::OpenCheckIn, Registration) => Err(err("tournament.check_in_disabled")),
             (Self::OpenCheckIn, _) => Err(err("tournament.not_registration")),
+            (Self::CloseCheckIn, CheckIn) => Ok(Registration),
+            (Self::CloseCheckIn, _) => Err(err("tournament.check_in_closed")),
             (Self::Start, CheckIn) => Ok(InProgress),
             (Self::Start, Registration) if !has_check_in => Ok(InProgress),
             (Self::Start, Registration) => Err(err("tournament.check_in_not_open")),
@@ -94,11 +98,12 @@ pub async fn apply(
         Transition::UndoStart => {
             matches::discard(conn, tournament).await?;
         }
-        Transition::OpenCheckIn => {}
+        Transition::OpenCheckIn | Transition::CloseCheckIn => {}
     }
     tournaments::set_status(conn, tournament.id, to).await?;
     match transition {
         Transition::OpenCheckIn => tournaments::check_in_opened(conn, tournament.id).await?,
+        Transition::CloseCheckIn => tournaments::changed(conn, tournament.id).await?,
         Transition::UndoStart => {
             // A mudança sai antes, com os inscritos de agora: "Seus torneios"
             // de quem sai a seguir também muda.
@@ -120,7 +125,7 @@ pub async fn apply(
     let organizing = match transition {
         Transition::Start => start_was_due,
         Transition::UndoStart => true,
-        Transition::OpenCheckIn => false,
+        Transition::OpenCheckIn | Transition::CloseCheckIn => false,
     };
     if organizing {
         tenants::organizing_changed(conn, tournament.tenant).await?;
@@ -150,6 +155,15 @@ mod tests {
         assert_eq!(
             targets(Transition::OpenCheckIn, false)[1],
             Err("tournament.check_in_disabled")
+        );
+    }
+
+    #[test]
+    fn close_check_in() {
+        let not = Err("tournament.check_in_closed");
+        assert_eq!(
+            targets(Transition::CloseCheckIn, true),
+            [not, not, Ok(Registration), not, not]
         );
     }
 

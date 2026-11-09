@@ -6,7 +6,6 @@ use axum::{
     Router,
     http::{Method, StatusCode},
 };
-use chrono::Utc;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
@@ -38,6 +37,25 @@ async fn published(app: &Router, db: &PgPool, ana: &User, slug: &str, who: &[&Us
     publish(app, ana, slug).await;
     register(app, slug, who).await;
     starts_in(db, slug, minutes).await;
+}
+
+#[tokio::test]
+async fn going_back_to_draft_leaves_the_organization_home() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    published(&app, &db, &ana, "copa", &[], -5).await;
+    assert_eq!(
+        organizing(&app, &ana).await["start_due"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    clear(&db).await;
+    let (status, body) = delete(&app, &format!("{COPA}/publish"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(has_me(&db, &[&ana]).await);
+    assert_eq!(organizing(&app, &ana).await, empty());
 }
 
 #[tokio::test]
@@ -118,6 +136,7 @@ async fn start_due_with_the_check_ins() {
     starts_in(&db, "livre", -30).await;
     // Com check-in, a hora passou há 5 minutos e um dos dois fez.
     published(&app, &db, &ana, "copa", &[&bia, &caio], -5).await;
+    open_check_in(&app, &ana, "copa").await;
     let (status, _) = post_empty(&app, &format!("{COPA}/check-in"), &bia).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
 
@@ -167,7 +186,7 @@ async fn only_communities_organized_now() {
     let token = invite(&app, &bia, "argentina").await;
     join(&app, &ana, &token).await;
     join(&app, &olga, &token).await;
-    let liga = json!({ "slug": "liga", "check_in_minutes": null });
+    let liga = json!({ "slug": "liga", "check_in": false });
     let (status, body) = post(
         &app,
         "/tenants/argentina/tournaments",
@@ -248,8 +267,7 @@ async fn contests_reach_the_organization_home() {
 #[tokio::test]
 async fn the_start_reaches_the_organization_home() {
     let (db, _lease) = crate::db::test_db().await;
-    let state = state(db.clone());
-    let app = app_from(state.clone());
+    let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     create(&app, &ana, "quake-br").await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
@@ -257,6 +275,7 @@ async fn the_start_reaches_the_organization_home() {
     let caio = member(&app, &db, &ana, "Caio").await;
     let staff = [&ana, &olga];
     published(&app, &db, &ana, "copa", &[&bia, &caio], 10).await;
+    open_check_in(&app, &ana, "copa").await;
 
     // Antes da hora, o check-in não muda a home da organização.
     clear(&db).await;
@@ -264,15 +283,10 @@ async fn the_start_reaches_the_organization_home() {
     assert_eq!(status, StatusCode::NO_CONTENT);
     assert!(!has_me(&db, &staff).await);
 
-    // A hora chega: o agendador avisa e a home recarrega.
+    // A hora chega: nada avisa, e a home mostra o torneio quando abre.
     starts_in(&db, "copa", -1).await;
     clear(&db).await;
-    let tick = api::realtime::tick(&state, Utc::now())
-        .await
-        .unwrap()
-        .unwrap();
-    assert_eq!(tick.reminded, 1);
-    assert!(has_me(&db, &staff).await);
+    assert!(!has_me(&db, &staff).await);
 
     // Depois da hora, cada check-in muda a contagem.
     clear(&db).await;

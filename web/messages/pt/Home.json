@@ -3,7 +3,6 @@
   "loading": "Carregando o início…",
   "waiting": {
     "title": "Esperando você",
-    "checkInUntil": "Check-in até <date></date>",
     "action": {
       "veto": "Fazer o veto",
       "ready": "Ficar pronto",

@@ -44,6 +44,53 @@ async fn create_with_publish_without_a_date_stays_in_registration() {
 }
 
 #[tokio::test]
+async fn back_to_draft_only_without_participants() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let copa = format!("{URI}/copa");
+    let back = format!("{copa}/publish");
+    create_tournament(&app, &ana, duel("copa")).await;
+    // Já é rascunho.
+    let not_registration = (StatusCode::CONFLICT, err("tournament.not_registration"));
+    assert_eq!(delete(&app, &back, &ana).await, not_registration);
+    publish(&app, &ana, "copa").await;
+
+    // Com inscrito, não volta.
+    register(&app, "copa", &[&bia]).await;
+    assert_eq!(
+        delete(&app, &back, &ana).await,
+        (StatusCode::CONFLICT, err("tournament.has_participants"))
+    );
+    assert_eq!(
+        delete(&app, &back, &bia).await,
+        (StatusCode::FORBIDDEN, err("tenant.forbidden"))
+    );
+
+    // Sem ninguém, volta: some para os membros e o endereço destrava.
+    let (status, _) = delete(&app, &format!("{copa}/registration"), &bia).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (status, draft) = delete(&app, &back, &ana).await;
+    assert_eq!(status, StatusCode::OK, "{draft}");
+    assert_eq!(draft["status"], "draft");
+    assert_eq!(
+        get(&app, &copa, &bia).await,
+        (StatusCode::NOT_FOUND, err("tournament.not_found"))
+    );
+    let (status, renamed) = patch(&app, &copa, &ana, json!({ "slug": "liga" })).await;
+    assert_eq!(status, StatusCode::OK, "{renamed}");
+    assert_eq!(renamed["slug"], "liga");
+
+    // No check-in, também não volta.
+    let liga = format!("{URI}/liga");
+    publish(&app, &ana, "liga").await;
+    open_check_in(&app, &ana, "liga").await;
+    assert_eq!(
+        delete(&app, &format!("{liga}/publish"), &ana).await,
+        not_registration
+    );
+}
+
+#[tokio::test]
 async fn create_in_english_keeps_the_locale() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
@@ -171,7 +218,7 @@ async fn create_with_only_the_name_address_and_mode_uses_the_defaults() {
             "check_in_opened_at": null
         }])
     );
-    assert_eq!(created["check_in_minutes"], 30);
+    assert_eq!(created["check_in"], true);
     assert_eq!(created["contest_minutes"], 10);
     assert_eq!(created["counts_for_rating"], true);
     assert_eq!(created["veto"]["map_mode"], "veto");

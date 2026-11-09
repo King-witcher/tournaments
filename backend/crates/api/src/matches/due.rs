@@ -1,9 +1,8 @@
 //! Confirmação por tempo: mapa pendente sem resposta confirma sozinho
 //! ao fim da janela de contestação. A API aplica ao ler a chave ou uma
-//! partida e antes de cada ação sobre ela (como a abertura automática do
-//! check-in), e o agendador do tempo real aplica nos torneios com mapa
-//! vencido que ninguém leu (`confirm_all_due`), para a chave andar e os
-//! jogadores serem avisados. Os passos de veto vencidos entram junto
+//! partida e antes de cada ação sobre ela, e o agendador do tempo real aplica
+//! nos torneios com mapa vencido que ninguém leu (`confirm_all_due`), para a
+//! chave andar e os jogadores serem avisados. Os passos de veto vencidos entram junto
 //! (`current`, `lock_stage`).
 
 use chrono::{DateTime, Utc};

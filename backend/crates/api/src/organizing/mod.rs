@@ -1,7 +1,7 @@
 //! `GET /me/organizing`: o que espera a organização em todas as comunidades
 //! em que quem vê é organizer ou owner ativo, com o caminho de cada item:
 //! mapas contestados a resolver, torneios cujo início marcado chegou sem
-//! terem sido iniciados (o critério do aviso `tournament.start_due`) e
+//! terem sido iniciados (`Schedule::start_due`) e
 //! torneios com empate do fim da fase esperando a decisão dela
 //! (`stage_pending_ties`, o critério do aviso `tournament.tie_pending`) ou
 //! com uma fase pronta para iniciar (a anterior terminou). É o
@@ -18,7 +18,7 @@
 //! organização da comunidade (`tenants::organizing_changed`): a chave quando
 //! o conjunto de mapas contestados muda (`matches::changes`), o torneio
 //! quando muda na hora de iniciar (`tournaments::changes`), e o iniciar, o
-//! desfazer, o adiar e o aviso do agendador.
+//! desfazer, o adiar e o voltar para rascunho.
 
 mod db;
 mod handlers;

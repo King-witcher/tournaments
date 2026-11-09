@@ -344,12 +344,12 @@ pub async fn organizer(app: &Router, db: &PgPool, owner: &User, name: &str) -> U
     who
 }
 
-/// Início dos torneios de `duel`: longe o bastante para o check-in nunca
-/// abrir sozinho nos testes que não mexem nele.
+/// Início dos torneios de `duel`: longe o bastante para a "hora de iniciar"
+/// (`GET /me/organizing`) não chegar nos testes que não mexem nela.
 pub const FAR_START: &str = "2099-01-01T20:00:00Z";
 
 /// Duelo público em dupla com reset, md3/md5, 16 vagas, 1 ban, sem não
-/// repetição, começando em `FAR_START` com check-in de 30 minutos (o padrão).
+/// repetição, começando em `FAR_START`, com check-in (o padrão).
 pub fn duel(slug: &str) -> Value {
     json!({
         "slug": slug,
@@ -395,6 +395,13 @@ pub async fn publish(app: &Router, by: &User, slug: &str) {
     assert_eq!(status, StatusCode::OK, "{body}");
 }
 
+/// O organizador abre o check-in do torneio `slug` de `quake-br`.
+pub async fn open_check_in(app: &Router, by: &User, slug: &str) {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/check-in/open");
+    let (status, body) = post_empty(app, &uri, by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+}
+
 /// Inscreve cada um de `who` no torneio `slug` de `quake-br` pelo botão.
 pub async fn register(app: &Router, slug: &str, who: &[&User]) {
     let uri = format!("/tenants/quake-br/tournaments/{slug}/registration");
@@ -405,7 +412,7 @@ pub async fn register(app: &Router, slug: &str, who: &[&User]) {
 }
 
 /// Põe o início do torneio `slug` a `minutes` de agora (negativo: já
-/// passou), para a janela de check-in abrir sem esperar.
+/// passou).
 pub async fn starts_in(db: &PgPool, slug: &str, minutes: i32) {
     sqlx::query!(
         "update tournaments set starts_at = now() + make_interval(mins => $2) where slug = $1",

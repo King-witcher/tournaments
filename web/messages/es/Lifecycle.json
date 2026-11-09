@@ -1,10 +1,11 @@
 {
   "title": "Estado del torneo",
-  "opensAt": "El check-in abre solo <date></date>.",
   "noCheckIn": "Sin check-in. Al iniciar, entran todos los inscritos.",
   "checkInOpen": "Al iniciar, solo quien hizo check-in entra en la llave.",
   "finished": "Los resultados aún se pueden corregir en la página de cada serie.",
-  "openCheckIn": "Abrir check-in ahora",
+  "openCheckIn": "Abrir check-in",
+  "closeCheckIn": "Cerrar check-in",
+  "closeCheckInConfirm": "¿Cerrar el check-in? El torneo vuelve a las inscripciones, y los check-ins hechos se mantienen.",
   "start": "Iniciar torneo",
   "startConfirm": "¿Iniciar el torneo? Inscripciones y check-ins se congelan y quien no hizo check-in queda fuera.",
   "startConfirmCount": "¿Iniciar el torneo? {in, plural, =0 {Nadie entra} one {# inscrito entra} other {# inscritos entran}} en la llave y {out, plural, =0 {nadie queda afuera} one {# queda afuera (sin check-in)} other {# quedan afuera (sin check-in)}}. Las inscripciones y los check-ins se congelan.",

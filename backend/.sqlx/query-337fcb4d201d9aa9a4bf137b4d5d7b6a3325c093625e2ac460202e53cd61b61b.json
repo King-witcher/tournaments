@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.tenant_id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status,\n                  t.admission, t.max_participants, t.starts_at, t.check_in_minutes, t.created_at,\n                  t.cover_key,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = any($1)\n             and (t.status <> 'draft' or t.tenant_id = any($3))\n           group by t.id\n           order by t.created_at desc, t.id desc",
+  "query": "select t.id, t.tenant_id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status,\n                  t.admission, t.max_participants, t.starts_at, t.created_at,\n                  t.cover_key,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = any($1)\n             and (t.status <> 'draft' or t.tenant_id = any($3))\n           group by t.id\n           order by t.created_at desc, t.id desc",
   "describe": {
     "columns": [
       {
@@ -126,17 +126,6 @@
       },
       {
         "ordinal": 11,
-        "name": "check_in_minutes",
-        "type_info": "Int4",
-        "origin": {
-          "Table": {
-            "table": "tournaments",
-            "name": "check_in_minutes"
-          }
-        }
-      },
-      {
-        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -147,7 +136,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 12,
         "name": "cover_key",
         "type_info": "Text",
         "origin": {
@@ -158,31 +147,31 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 13,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 14,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 16,
+        "ordinal": 15,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 17,
+        "ordinal": 16,
         "name": "translation_locales!",
         "type_info": "TextArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 18,
+        "ordinal": 17,
         "name": "translation_names!",
         "type_info": "TextArray",
         "origin": "Expression"
@@ -207,7 +196,6 @@
       false,
       false,
       true,
-      true,
       false,
       true,
       null,
@@ -217,5 +205,5 @@
       null
     ]
   },
-  "hash": "4a7cb47e3e4c347cf66b691dda511d22058177e49958203d9d3e48c2c213407c"
+  "hash": "337fcb4d201d9aa9a4bf137b4d5d7b6a3325c093625e2ac460202e53cd61b61b"
 }

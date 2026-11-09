@@ -308,7 +308,7 @@ mod tests {
         );
         assert_eq!(c.deliver(&Event::me([3]).into()), Delivery::Skip);
         let notice = Notice {
-            kind: NoticeKind::StartDue {
+            kind: NoticeKind::CheckInOpened {
                 tournament: "Copa".into(),
             },
             path: "/quake-br/copa".into(),

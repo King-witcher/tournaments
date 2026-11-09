@@ -14,10 +14,7 @@ const STEPS: Status[] = [
 ];
 
 type Props = {
-  tournament: Pick<
-    components["schemas"]["Tournament"],
-    "status" | "check_in_minutes"
-  >;
+  tournament: Pick<components["schemas"]["Tournament"], "status" | "check_in">;
   /** Linha curta embaixo de um passo ("3 de 7 séries decididas"). */
   secondary?: Partial<Record<Status, string>>;
 };
@@ -34,7 +31,7 @@ export function TournamentProgress({ tournament, secondary }: Props) {
   const steps = STEPS.filter(
     (step) =>
       step !== "check_in" ||
-      tournament.check_in_minutes != null ||
+      tournament.check_in ||
       tournament.status === "check_in",
   );
   const current =

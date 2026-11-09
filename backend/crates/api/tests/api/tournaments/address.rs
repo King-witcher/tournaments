@@ -51,7 +51,9 @@ async fn the_organization_moves_a_draft() {
         ]
     );
 
-    // O link de inscrição usa o token e continua valendo; o antigo fica livre.
+    // O link de inscrição usa o token: publicado, vale com o endereço novo; o
+    // antigo fica livre.
+    publish(&app, &carla, "liga").await;
     let dani = user(&db, "Dani").await;
     let token = link["token"].as_str().unwrap();
     let (status, preview) = get(&app, &format!("/invites/{token}"), &dani).await;

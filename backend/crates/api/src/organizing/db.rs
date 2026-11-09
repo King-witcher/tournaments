@@ -67,8 +67,8 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
 }
 
 /// Os torneios das comunidades que `user` organiza que estão na inscrição ou
-/// no check-in com o início marcado já passado em `now` (o critério do aviso
-/// `tournament.start_due`, sem o "uma vez"), do início mais antigo.
+/// no check-in com o início marcado já passado em `now` (`Schedule::start_due`),
+/// do início mais antigo.
 pub async fn start_due(
     db: &PgPool,
     user: i64,
@@ -82,7 +82,7 @@ pub async fn start_due(
                   coalesce((select array_agg(tr.name order by tr.locale)
                             from tournament_translations tr where tr.tournament_id = t.id),
                            '{}') as "translation_names!",
-                  t.status, t.starts_at as "starts_at!", t.check_in_minutes,
+                  t.status, t.starts_at as "starts_at!", t.check_in,
                   (select count(*) from participants p
                    where p.tournament_id = t.id) as "registered!",
                   (select count(*) from participants p
@@ -110,7 +110,7 @@ pub async fn start_due(
             },
             status: TournamentStatus::from_db(&r.status)?,
             starts_at: r.starts_at,
-            has_check_in: r.check_in_minutes.is_some(),
+            has_check_in: r.check_in,
             registered: r.registered,
             checked_in: r.checked_in,
         })

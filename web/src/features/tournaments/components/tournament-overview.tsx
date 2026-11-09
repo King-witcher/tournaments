@@ -41,7 +41,6 @@ export async function TournamentOverview({ tenant, slug }: Props) {
 
   const { me, tournament } = loaded;
   const organizer = me.role !== "player";
-  const now = new Date();
   // A chave da fase atual: as pendências, o andamento e o campeão (a mesma
   // busca da seção Chave).
   const loadedBracket = hasStarted(tournament.status)
@@ -62,7 +61,6 @@ export async function TournamentOverview({ tenant, slug }: Props) {
             tenant={tenant}
             tournament={tournament}
             organizer={organizer}
-            now={now}
           />
           {pendingStage(tournament) && (
             <Suspense fallback={<SectionSkeleton rows={2} />}>
@@ -104,7 +102,6 @@ export async function TournamentOverview({ tenant, slug }: Props) {
             tournament={tournament}
             bracket={bracket}
             organizer={organizer}
-            now={now}
           />
         </Panel>
       }

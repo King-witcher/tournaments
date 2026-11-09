@@ -15,7 +15,7 @@
     },
     "tournament": {
       "title": "Arma el torneo",
-      "body": "Elige el formato, el pool de mapas y la fecha. El check-in se abre solo antes del inicio."
+      "body": "Elige el formato y el pool de mapas. Cuando todo esté listo, abre el check-in e inicia."
     },
     "play": {
       "title": "Deja que la llave avance",

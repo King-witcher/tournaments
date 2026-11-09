@@ -194,9 +194,16 @@ async fn tournament_link_joins_the_tenant_and_registers() {
     let invite_only = with(duel("copa"), json!({ "admission": "invite_only" }));
     create_tournament(&app, &ana, invite_only).await;
 
-    // O torneio nasce com o link, já no rascunho, para mandar antes de publicar.
+    // O torneio nasce com o link, mas no rascunho ele responde como link que
+    // não existe: não mostra o torneio nem deixa entrar na comunidade.
     let token = copa_invite(&app, &ana).await;
     assert_ne!(token, invite(&app, &ana, "quake-br").await);
+    assert_eq!(preview(&app, &token).await, not_found());
+    let accept = format!("/invites/{token}/accept");
+    assert_eq!(post_empty(&app, &accept, &caio).await, not_found());
+    assert_eq!(get(&app, "/tenants", &caio).await.1, json!([]));
+
+    publish(&app, &ana, "copa").await;
     assert_eq!(
         preview(&app, &token).await,
         (
@@ -213,22 +220,13 @@ async fn tournament_link_joins_the_tenant_and_registers() {
                     "slug": "copa", "locale": "pt", "name": "Copa de Outubro",
                     "description": "Duelo **aberto**.", "rules": "- md3\n- md5 na grande final",
                     "mode": "duel", "team_size": 1, "translations": [],
-                    "status": "draft", "max_participants": 16, "participants": 0,
+                    "status": "registration", "max_participants": 16, "participants": 0,
                     "starts_at": "2099-01-01T20:00:00Z", "cover_url": null
                 },
                 "viewer": null
             })
         )
     );
-    // Sem a inscrição aberta, aceitar não entra nem no tenant.
-    let accept = format!("/invites/{token}/accept");
-    assert_eq!(
-        post_empty(&app, &accept, &caio).await,
-        (StatusCode::CONFLICT, err("tournament.registration_closed"))
-    );
-    assert_eq!(get(&app, "/tenants", &caio).await.1, json!([]));
-
-    publish(&app, &ana, "copa").await;
     let accepted = json!({
         "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": null, "role": "player", "nickname": "Caio", "deletion_scheduled_for": null, "logo_url": null, "cover_url": null },
         "tournament": "copa"
@@ -321,15 +319,24 @@ async fn tournament_links_only_before_the_start() {
         closed
     );
 
-    // Excluir o rascunho apaga o link dele.
-    create_tournament(&app, &ana, duel("rascunho")).await;
-    let draft = "/tenants/quake-br/tournaments/rascunho";
-    let (_, created) = get(&app, &format!("{draft}/invite"), &ana).await;
-    assert_eq!(delete(&app, draft, &ana).await.0, StatusCode::NO_CONTENT);
-    assert_eq!(
-        preview(&app, created["token"].as_str().unwrap()).await,
-        not_found()
-    );
+    // Excluir o torneio apaga o link dele.
+    create_tournament(&app, &ana, duel("outra")).await;
+    publish(&app, &ana, "outra").await;
+    let outra = "/tenants/quake-br/tournaments/outra";
+    let (_, created) = get(&app, &format!("{outra}/invite"), &ana).await;
+    let link = created["token"].as_str().unwrap();
+    assert_eq!(preview(&app, link).await.0, StatusCode::OK);
+    let confirm = json!({ "confirm_slug": "outra" });
+    let (status, body) = call(
+        &app,
+        axum::http::Method::DELETE,
+        outra,
+        Some(&ana),
+        Some(confirm),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    assert_eq!(preview(&app, link).await, not_found());
 }
 
 /// `viewer` da prévia como `who` a vê.

@@ -1,7 +1,9 @@
+import { getLocale } from "next-intl/server";
 import { Suspense } from "react";
 
 import { TeamsSection } from "@/features/teams/components/teams-section";
 import { loadTournament } from "@/features/tournaments/server";
+import { redirect } from "@/i18n/navigation";
 import { preload } from "@/shared/lib/preload";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
@@ -22,6 +24,10 @@ export async function ParticipantsView({ tenant, slug }: Props) {
   preload(getParticipants(tenant, slug));
   const loaded = await loadTournament(tenant, slug);
   if (loaded.kind !== "ok") return null;
+  // O rascunho não tem inscritos: a seção nem aparece no menu.
+  if (loaded.tournament.status === "draft") {
+    redirect({ href: `/${tenant}/${slug}`, locale: await getLocale() });
+  }
 
   const table = <ParticipantTable tenant={tenant} slug={slug} />;
   if (loaded.tournament.mode !== "tdm") return table;

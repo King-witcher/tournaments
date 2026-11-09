@@ -16,7 +16,7 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 - **Owner**: exatamente um por tenant e membro. "No máximo um" vale na hora (índice único parcial); "pelo menos um", no commit.
 - Quem inscreveu e quem marcou check-in são membros do mesmo tenant (FK composta).
 - **Link de convite**: um por comunidade e um por torneio, sempre (`invite_token not null unique`, nas duas tabelas, e nunca o mesmo entre elas, por trigger), código de 8 caracteres (os de antes, base58 de 22, continuam valendo).
-- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; regras de campeões e cada formato de fase com as suas colunas; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
+- **Estado e forma**: status check-in só com o check-in ligado; rascunho sem inscritos, nos dois sentidos (ninguém entra num rascunho, e torneio com inscritos não volta a ele); tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; regras de campeões e cada formato de fase com as suas colunas; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
 
 ## Configuração em colunas
 

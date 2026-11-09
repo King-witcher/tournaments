@@ -16,40 +16,25 @@ type Props = {
   tenant: string;
   /** O rascunho, como está salvo: a revisão sai dele. */
   tournament: components["schemas"]["Tournament"];
-  /**
-   * A data do rascunho ficou para trás (passou, ou ficou mais perto que a
-   * janela de check-in): o botão fica desabilitado, com o motivo.
-   */
-  startBehind?: "past" | "window";
 };
 
 /**
  * Rascunho → inscrição. A confirmação mostra a revisão do que vai valer (a
- * configuração salva) e diz que publicado o torneio não volta a rascunho nem
- * pode ser excluído. A API confere os campeões e a data de novo.
+ * configuração salva) e diz o que a publicação muda. A API confere os campeões
+ * de novo.
  */
-export function PublishTournamentButton({
-  tenant,
-  tournament,
-  startBehind,
-}: Props) {
+export function PublishTournamentButton({ tenant, tournament }: Props) {
   const t = useTranslations("Tournament");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
 
   return (
-    <ActionWithNote
-      error={error}
-      note={startBehind && t(`publishBlocked.${startBehind}`)}
-      compact
-      blocked={startBehind !== undefined}
-    >
+    <ActionWithNote error={error} compact>
       <ConfirmButton
         destructive={false}
         kind="primary"
         size="md"
         pending={pending}
-        disabled={startBehind !== undefined}
         question={t("publishConfirm")}
         details={<TournamentReview tournament={tournament} />}
         onConfirm={() => {

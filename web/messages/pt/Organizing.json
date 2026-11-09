@@ -10,7 +10,8 @@
     "action": "Iniciar",
     "startedAt": "Início marcado para <date></date>",
     "checkedIn": "{checkedIn} de {registered} fizeram check-in",
-    "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in"
+    "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in",
+    "checkInNotOpen": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, check-in não aberto"
   },
   "pendingTies": {
     "title": "Empate a decidir",

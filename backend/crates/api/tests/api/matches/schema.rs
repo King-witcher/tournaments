@@ -354,7 +354,7 @@ async fn maps_stay_inside_their_tournament() {
     let a = seeded[0];
 
     // Time de outro torneio do mesmo tenant.
-    let outra = with(duel("outra"), json!({ "check_in_minutes": null }));
+    let outra = with(duel("outra"), json!({ "check_in": false }));
     create_tournament(&app, &ana, outra).await;
     publish(&app, &ana, "outra").await;
     register(&app, "outra", &[&p[0]]).await;

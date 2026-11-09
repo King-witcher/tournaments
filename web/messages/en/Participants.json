@@ -59,9 +59,7 @@
     "stage_check_in_pending": "Stage {stage} check-in pending"
   },
   "checkIn": {
-    "opensAt": "Check-in opens <date></date>. Anyone who doesn't check in is left out of the bracket.",
     "open": "Check-in is open. Check in to confirm your attendance and join the bracket.",
-    "until": "Until <date></date> (<countdown></countdown> left).",
     "do": "Check in",
     "undo": "Undo check-in",
     "mark": "Mark as checked in",

@@ -7,8 +7,6 @@ type Props = {
   tournament: components["schemas"]["Tournament"];
   /** Organizer ou owner. */
   organizer: boolean;
-  /** Referência para saber se a abertura do check-in já passou. */
-  now: Date;
 };
 
 /**
@@ -17,12 +15,7 @@ type Props = {
  * ciclo, com a inscrição e o check-in dela mesma como terciários. Editar é a
  * aba Configurações.
  */
-export function TournamentActions({
-  tenant,
-  tournament,
-  organizer,
-  now,
-}: Props) {
+export function TournamentActions({ tenant, tournament, organizer }: Props) {
   return (
     <>
       <ParticipationAction
@@ -30,9 +23,7 @@ export function TournamentActions({
         tournament={tournament}
         kind={organizer ? "tertiary" : "primary"}
       />
-      {organizer && (
-        <NextStepButton tenant={tenant} tournament={tournament} now={now} />
-      )}
+      {organizer && <NextStepButton tenant={tenant} tournament={tournament} />}
     </>
   );
 }

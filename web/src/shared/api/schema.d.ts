@@ -1102,7 +1102,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["open_check_in"];
-        delete?: never;
+        delete: operations["close_check_in"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1550,7 +1550,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["publish_tournament"];
-        delete?: never;
+        delete: operations["unpublish_tournament"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2267,13 +2267,10 @@ export interface components {
              */
             champion_rules?: components["schemas"]["ChampionRulesInput"];
             /**
-             * Format: int32
-             * @description Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
-             *     Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
-             *     andamento).
-             * @example 30
+             * @description Se o torneio tem check-in, que a organização abre pelo botão. Ausente:
+             *     sim. Falso: a inscrição vai direto para em andamento.
              */
-            check_in_minutes?: number | null;
+            check_in?: boolean;
             /**
              * Format: int32
              * @description Minutos que o adversário tem para confirmar ou contestar um resultado
@@ -2310,10 +2307,8 @@ export interface components {
             name: string;
             /**
              * @description Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-             *     transação: o torneio vem sempre em `registration` (inscrição aberta);
-             *     o check-in abre depois, na hora (um `starts_at` dentro da janela já
-             *     aberta é recusado com `tournament.starts_at_too_soon`). Qualquer erro e
-             *     nada é gravado.
+             *     transação: o torneio vem em `registration` (inscrição aberta). Qualquer
+             *     erro e nada é gravado.
              */
             publish?: boolean;
             /** @description Texto simples; as quebras de linha são preservadas. Até 20000 caracteres. */
@@ -2339,7 +2334,7 @@ export interface components {
             stages?: components["schemas"]["StageFormat"][];
             /**
              * Format: date-time
-             * @description Início previsto. Opcional: sem data o check-in não abre sozinho.
+             * @description Início previsto, só informativo. Opcional.
              */
             starts_at?: string | null;
             team_rules?: components["schemas"]["TeamRules"] | null;
@@ -3331,16 +3326,6 @@ export interface components {
                 /** Format: int32 */
                 game: number;
                 match: string;
-                tournament: string;
-            };
-        } | {
-            /** @enum {string} */
-            code: "tournament.start_due";
-            /**
-             * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
-             *     owner, uma vez).
-             */
-            params: {
                 tournament: string;
             };
         } | {
@@ -4478,16 +4463,8 @@ export interface components {
         Tournament: {
             admission: components["schemas"]["Admission"];
             champion_rules: components["schemas"]["ChampionRules"];
-            /**
-             * Format: int32
-             * @description Janela de check-in em minutos; `null`: sem check-in.
-             */
-            check_in_minutes?: number | null;
-            /**
-             * Format: date-time
-             * @description Quando o check-in abre (ou abriu) sozinho: o início menos a janela.
-             */
-            check_in_opens_at?: string | null;
+            /** @description Se o torneio tem check-in (abre pelo botão da organização). */
+            check_in: boolean;
             /** @description Se quem vê fez check-in. */
             checked_in: boolean;
             /**
@@ -4528,7 +4505,7 @@ export interface components {
             stages: components["schemas"]["TournamentStage"][];
             /**
              * Format: date-time
-             * @description Início previsto; `null`: sem data.
+             * @description Início previsto, só informativo; `null`: sem data.
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
@@ -4768,18 +4745,17 @@ export interface components {
         /**
          * @description Campos ausentes, ou iguais aos gravados, não mudam. O endereço muda só no
          *     rascunho; nome e descrição, sempre; regras e inscrição, até o torneio
-         *     encerrar; vagas, regra de campeões, fases, data de início e janela de
-         *     check-in, até ele começar (e as vagas nunca abaixo do número de inscritos).
+         *     encerrar; vagas, regra de campeões, fases, data de início e check-in, até
+         *     ele começar (e as vagas nunca abaixo do número de inscritos).
          */
         UpdateTournament: {
             admission?: components["schemas"]["Admission"] | null;
             champion_rules?: components["schemas"]["ChampionRules"] | null;
             /**
-             * Format: int32
-             * @description `null` desliga o check-in; durante o check-in, o torneio volta para a
-             *     inscrição.
+             * @description Liga ou desliga o check-in. Desligar durante o check-in volta o torneio
+             *     para a inscrição.
              */
-            check_in_minutes?: number | null;
+            check_in?: boolean | null;
             /**
              * Format: int32
              * @description Janela de contestação; muda até o torneio encerrar e vale para os
@@ -4816,7 +4792,7 @@ export interface components {
             stages?: components["schemas"]["StageFormat"][] | null;
             /**
              * Format: date-time
-             * @description `null` tira a data, o que só vale no rascunho.
+             * @description `null` tira a data.
              */
             starts_at?: string | null;
             team_rules?: components["schemas"]["TeamRules"] | null;
@@ -7526,7 +7502,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in, e torneios com empate do fim da fase esperando a decisão da organização e com uma fase pronta para iniciar (a anterior terminou; do mais antigo). Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
+            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado, com quantos fizeram check-in, e torneios com empate do fim da fase esperando a decisão da organização e com uma fase pronta para iniciar (a anterior terminou; do mais antigo). Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9616,7 +9592,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of, stage}, format.invalid_rounds {max, got, stage}, format.invalid_tiebreakers {stage} (desempate repetido, ou buchholz fora do suíço), format.too_many_participants {max, got, stage}, stage.elimination_not_last {stage} (eliminação só na última fase), stage.invalid_advance {stage, min, max} (corte de 2 ao teto do formato da fase), stage.entry_rules_first {stage} (corte ou check-in na fase 1), champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of, stage}, format.invalid_rounds {max, got, stage}, format.invalid_tiebreakers {stage} (desempate repetido, ou buchholz fora do suíço), format.too_many_participants {max, got, stage}, stage.elimination_not_last {stage} (eliminação só na última fase), stage.invalid_advance {stage, min, max} (corte de 2 ao teto do formato da fase), stage.entry_rules_first {stage} (corte ou check-in na fase 1), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -9796,7 +9772,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -9976,7 +9952,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Check-in aberto antes da hora da abertura automática */
+            /** @description Check-in aberto, e os inscritos avisados */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10013,6 +9989,67 @@ export interface operations {
                 };
             };
             /** @description tournament.not_registration, tournament.check_in_disabled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    close_check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in fechado (abriu por engano): volta para a inscrição, e os check-ins feitos ficam */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.check_in_closed */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -10357,7 +10394,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.registration_closed (só no rascunho ou até o início), tenant.deletion_scheduled */
+            /** @description tournament.registration_closed (só depois de publicar e até o início), tenant.deletion_scheduled */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -12130,7 +12167,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio. Sempre em inscrição: a data tem de deixar a janela de check-in pela frente (senão `tournament.starts_at_past` ou `tournament.starts_at_too_soon`) */
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12175,8 +12212,69 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.blind_needs_mirror, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data do rascunho ficou para trás) */
+            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.blind_needs_mirror */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    unpublish_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description De volta ao rascunho: a inscrição fecha, os membros deixam de ver o torneio e o endereço volta a mudar. Só com a inscrição aberta (fora do check-in) e nenhum inscrito */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_registration, tournament.has_participants */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

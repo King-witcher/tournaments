@@ -15,7 +15,7 @@
     },
     "tournament": {
       "title": "Set up the tournament",
-      "body": "Choose the format, map pool and date. Check-in opens on its own before the start."
+      "body": "Choose the format and the map pool. When everything is set, open check-in and start."
     },
     "play": {
       "title": "Let the bracket run",

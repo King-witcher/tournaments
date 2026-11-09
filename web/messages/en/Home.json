@@ -3,7 +3,6 @@
   "loading": "Loading home…",
   "waiting": {
     "title": "Waiting for you",
-    "checkInUntil": "Check-in until <date></date>",
     "action": {
       "veto": "Do the veto",
       "ready": "Mark ready",

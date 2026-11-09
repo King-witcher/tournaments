@@ -30,6 +30,13 @@ type Props = {
   withdrawRegistration: boolean;
   /** Inscrição só por link: a confirmação de cancelar diz como voltar. */
   inviteOnly: boolean;
+  /** Check-in aberto, para a organização: fechar (os check-ins feitos ficam). */
+  closeCheckIn: boolean;
+  /**
+   * Inscrição aberta, para a organização: quantos inscritos há. Com algum, voltar
+   * para rascunho não dá, e o item diz o motivo.
+   */
+  unpublish?: number;
   /** Em andamento: desfazer o início apaga `results` partidas com mapa ou resultado. */
   undoStart?: { results: number; hasCheckIn: boolean; several: boolean };
   /** A fase 2 em diante que acabou de começar e ainda não teve jogo: desfazer só o início dela. */
@@ -54,6 +61,8 @@ export function TournamentOverflowMenu({
   undoCheckIn,
   withdrawRegistration,
   inviteOnly,
+  closeCheckIn,
+  unpublish,
   undoStart,
   undoStage,
   canDelete,
@@ -67,6 +76,7 @@ export function TournamentOverflowMenu({
   const router = useRouter();
   const { run, pending, error } = useApiAction();
   const [copying, setCopying] = useState(false);
+  const [unpublishTried, setUnpublishTried] = useState(false);
   const stopCopying = useCallback(() => setCopying(false), []);
   // O ⋯, para o foco voltar a ele quando o Modal fecha sem criar.
   const wrapper = useRef<HTMLDivElement>(null);
@@ -104,6 +114,43 @@ export function TournamentOverflowMenu({
           viewerDone,
         ),
     });
+  }
+  if (closeCheckIn) {
+    items.push({
+      label: tLifecycle("closeCheckIn"),
+      confirm: { question: tLifecycle("closeCheckInConfirm") },
+      onSelect: () =>
+        run(
+          () =>
+            api.DELETE(
+              "/tenants/{slug}/tournaments/{tournament}/check-in/open",
+              { params },
+            ),
+          lifecycleDone,
+        ),
+    });
+  }
+  if (unpublish !== undefined) {
+    items.push(
+      unpublish > 0
+        ? {
+            label: t("unpublish"),
+            onSelect: () => setUnpublishTried(true),
+          }
+        : {
+            label: t("unpublish"),
+            confirm: { question: t("unpublishConfirm") },
+            onSelect: () =>
+              run(
+                () =>
+                  api.DELETE(
+                    "/tenants/{slug}/tournaments/{tournament}/publish",
+                    { params },
+                  ),
+                lifecycleDone,
+              ),
+          },
+    );
   }
   if (withdrawRegistration) {
     items.push({
@@ -209,7 +256,14 @@ export function TournamentOverflowMenu({
 
   return (
     <div ref={wrapper} className={styles.contents}>
-      <ActionWithNote error={error}>
+      <ActionWithNote
+        error={error}
+        note={
+          unpublishTried && unpublish !== undefined && unpublish > 0
+            ? t("unpublishBlocked")
+            : undefined
+        }
+      >
         <OverflowActions items={items} pending={pending} />
       </ActionWithNote>
       {copying && copySource && (

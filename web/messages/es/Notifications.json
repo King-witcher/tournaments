@@ -41,10 +41,6 @@
       }
     },
     "tournament": {
-      "start_due": {
-        "title": "Hora de iniciar",
-        "body": "{tournament} llegó a la hora marcada y todavía no se inició."
-      },
       "tie_pending": {
         "title": "Empate por decidir",
         "body": "{tournament}: las series terminaron con empate en la clasificación. Decide el orden."
@@ -85,7 +81,7 @@
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notificaciones con el sitio cerrado",
-    "description": "Check-in abierto, serie lista y partida enviada por el rival. Para la organización, también partida impugnada y hora de iniciar.",
+    "description": "Check-in abierto, serie lista y partida enviada por el rival. Para la organización, también partida impugnada.",
     "loading": "Revisando este navegador…",
     "on": "Activadas en este navegador.",
     "off": "Desactivadas en este navegador. Cada dispositivo se activa por separado.",

@@ -17,7 +17,6 @@ type Props = {
   bracket?: Schemas["TournamentBracket"];
   /** Organizer ou owner: vê o que vale no passo de agora. */
   organizer: boolean;
-  now: Date;
 };
 
 /**
@@ -31,11 +30,10 @@ export function TournamentStateSection({
   tournament,
   bracket,
   organizer,
-  now,
 }: Props) {
   const t = useTranslations("Lifecycle");
   const notes = useProgressNotes();
-  const hint = useLifecycleHint(tournament, now);
+  const hint = useLifecycleHint(tournament);
   return (
     <Section title={t("title")}>
       <TournamentProgress
@@ -43,9 +41,7 @@ export function TournamentStateSection({
         secondary={notes(tournament, bracket)}
       />
       {organizer && hint && <p className={styles.hint}>{hint}</p>}
-      {organizer && (
-        <NextStepReason tenant={tenant} tournament={tournament} now={now} />
-      )}
+      {organizer && <NextStepReason tenant={tenant} tournament={tournament} />}
     </Section>
   );
 }

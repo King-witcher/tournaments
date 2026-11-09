@@ -32,4 +32,4 @@ Do usuário, 03/11. `DELETE /tenants/{slug}/tournaments/{t}`, **na hora**, no �
 - **O que some junto**: a cascata leva séries, mapas, veto, draft, escalações, times e inscritos, e o link de inscrição (a coluna dele) deixa de valer (nenhum trigger de recusa segura: eles reconhecem o torneio já apagado). O trigger `tournaments_path_forgotten` apaga as notificações que levam a ele e os avisos pendentes na fila do Discord e no outbox; quem perdeu uma notificação não vista recebe a contagem nova (`Event::Unread`). O endereço fica livre.
 - **Ranking**: apagar um mapa confirmado já marca o tenant (`rating_dirty`), e o agendador ou a próxima leitura refazem do zero, sem os mapas dele; em até 10 s, com a recarga das páginas abertas.
 - **Arquivos**: capa e uploads pendentes entram em `image_deletions`, screenshots em `screenshot_deletions`, e a rotina diária os apaga.
-- **Agendador**: `confirm_all_due`, o relógio do veto e a abertura do check-in procuram o torneio de novo antes de agir e seguem sem ele.
+- **Agendador**: `confirm_all_due` e o relógio do veto procuram o torneio de novo antes de agir e seguem sem ele.

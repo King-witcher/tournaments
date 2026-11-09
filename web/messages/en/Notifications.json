@@ -41,10 +41,6 @@
       }
     },
     "tournament": {
-      "start_due": {
-        "title": "Time to start",
-        "body": "{tournament} has reached its scheduled time and hasn't started yet."
-      },
       "tie_pending": {
         "title": "Tie to decide",
         "body": "{tournament}: the matches ended with a tie in the standings. Decide the order."
@@ -85,7 +81,7 @@
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notifications with the site closed",
-    "description": "Check-in open, match ready, and game submitted by the opponent. For organizers, also game disputed and time to start.",
+    "description": "Check-in open, match ready, and game submitted by the opponent. For organizers, also game disputed.",
     "loading": "Checking this browser…",
     "on": "Turned on in this browser.",
     "off": "Turned off in this browser. Each device is turned on separately.",

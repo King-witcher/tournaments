@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  t.status, t.starts_at as \"starts_at!\", t.check_in_minutes,\n                  (select count(*) from participants p\n                   where p.tournament_id = t.id) as \"registered!\",\n                  (select count(*) from participants p\n                   where p.tournament_id = t.id and p.checked_in_at is not null) as \"checked_in!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and t.status in ('registration', 'check_in') and t.starts_at <= $2\n           order by t.starts_at, t.id",
+  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  t.status, t.starts_at as \"starts_at!\", t.check_in,\n                  (select count(*) from participants p\n                   where p.tournament_id = t.id) as \"registered!\",\n                  (select count(*) from participants p\n                   where p.tournament_id = t.id and p.checked_in_at is not null) as \"checked_in!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and t.status in ('registration', 'check_in') and t.starts_at <= $2\n           order by t.starts_at, t.id",
   "describe": {
     "columns": [
       {
@@ -83,12 +83,12 @@
       },
       {
         "ordinal": 8,
-        "name": "check_in_minutes",
-        "type_info": "Int4",
+        "name": "check_in",
+        "type_info": "Bool",
         "origin": {
           "Table": {
             "table": "tournaments",
-            "name": "check_in_minutes"
+            "name": "check_in"
           }
         }
       },
@@ -120,10 +120,10 @@
       null,
       false,
       true,
-      true,
+      false,
       null,
       null
     ]
   },
-  "hash": "5559ef35ce77fb0ad65e8bb08fab151f310132ea4c0312a2796e9ae95587e9dc"
+  "hash": "9b55220c8aeaee242b9da52140a6b26592762ec6e303e41ab67269aba91e0238"
 }

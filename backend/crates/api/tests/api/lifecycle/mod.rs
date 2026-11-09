@@ -1,4 +1,4 @@
-//! Transições depois de publicar: abrir o check-in, iniciar e desfazer o início; a desistência e o W.O. automático em
+//! Transições depois de publicar: abrir e fechar o check-in, iniciar e desfazer o início; a desistência e o W.O. automático em
 //! `withdrawal`; o rating congelado no início, em `start_rating`.
 
 mod start_rating;
@@ -174,7 +174,7 @@ async fn undo_start_goes_back_to_check_in() {
 async fn without_check_in_registration_goes_straight_to_in_progress() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
-    let no_check_in = with(duel("copa"), json!({ "check_in_minutes": null }));
+    let no_check_in = with(duel("copa"), json!({ "check_in": false }));
     create_tournament(&app, &ana, no_check_in).await;
     publish(&app, &ana, "copa").await;
     register(&app, "copa", &[&ana, &bia]).await;
@@ -196,24 +196,49 @@ async fn without_check_in_registration_goes_straight_to_in_progress() {
 }
 
 #[tokio::test]
-async fn there_is_no_way_back_from_check_in_to_registration_but_turning_it_off() {
+async fn closing_the_check_in_keeps_the_check_ins() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
     register(&app, "copa", &[&bia]).await;
-    starts_in(&db, "copa", 10).await;
-    let (_, seen) = get(&app, COPA, &bia).await;
-    assert_eq!(seen["status"], "check_in");
+    let close = format!("{COPA}/check-in/open");
+    assert_eq!(
+        delete(&app, &close, &ana).await,
+        (StatusCode::CONFLICT, err("tournament.check_in_closed"))
+    );
+    ok(&app, &ana, "check-in/open").await;
     check_in(&app, &bia).await;
 
-    // Adiar o início não fecha o check-in; desligá-lo volta para a inscrição
-    // e o check-in feito fica.
-    let (status, _) = patch(&app, COPA, &ana, json!({ "starts_at": FAR_START })).await;
-    assert_eq!(status, StatusCode::OK);
+    // Só a organização fecha.
+    assert_eq!(
+        delete(&app, &close, &bia).await,
+        (StatusCode::FORBIDDEN, err("tenant.forbidden"))
+    );
+    let (status, closed) = delete(&app, &close, &ana).await;
+    assert_eq!(status, StatusCode::OK, "{closed}");
+    assert_eq!(closed["status"], "registration");
+
+    // Quem fez continua com o check-in, e abrir de novo funciona.
     let (_, seen) = get(&app, COPA, &bia).await;
-    assert_eq!(seen["status"], "check_in");
-    let (status, seen) = patch(&app, COPA, &ana, json!({ "check_in_minutes": null })).await;
+    assert_eq!(
+        (&seen["status"], &seen["checked_in"]),
+        (&json!("registration"), &json!(true))
+    );
+    assert_eq!(ok(&app, &ana, "check-in/open").await, "check_in");
+}
+
+#[tokio::test]
+async fn turning_the_check_in_off_goes_back_to_registration_and_keeps_the_check_ins() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    register(&app, "copa", &[&bia]).await;
+    ok(&app, &ana, "check-in/open").await;
+    check_in(&app, &bia).await;
+
+    let (status, seen) = patch(&app, COPA, &ana, json!({ "check_in": false })).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         (&seen["status"], &seen["checked_in"]),

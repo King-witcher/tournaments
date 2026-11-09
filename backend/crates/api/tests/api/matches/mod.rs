@@ -50,10 +50,7 @@ pub const MAPS: [&str; 5] = [
 
 /// Torneio `copa` sem check-in: `duel` com `changes`.
 pub fn copa(changes: Value) -> Value {
-    with(
-        duel("copa"),
-        with(json!({ "check_in_minutes": null }), changes),
-    )
+    with(duel("copa"), with(json!({ "check_in": false }), changes))
 }
 
 /// Eliminação simples com a final em md`finals` e o resto em md`best_of`.

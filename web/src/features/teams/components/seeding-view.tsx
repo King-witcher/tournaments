@@ -79,7 +79,7 @@ export async function SeedingView({ tenant, slug }: Props) {
     );
   }
 
-  const hasCheckIn = tournament.check_in_minutes != null;
+  const hasCheckIn = tournament.check_in;
   const players = new Map(
     ranking?.players.map((p) => [p.user_id, p.rating] as const) ?? [],
   );

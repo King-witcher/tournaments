@@ -24,11 +24,10 @@
     "entry": {
       "title": "Registration and check-in",
       "titleNoCheckIn": "Registration",
-      "start": "The tournament starts <when></when>.",
+      "start": "Expected to start <when></when>.",
       "registration": "Registration runs until the start or until the {max} spots fill up.",
       "inviteOnly": "Only players with the registration link, or registered by the organizers, can register.",
-      "checkInAt": "Check-in opens <when></when> and runs until the start.",
-      "checkIn": "Check-in opens {window} before the start and runs until then.",
+      "checkIn": "Check-in opens when the organizers release it and runs until the start.",
       "checkInOpen": "Check-in is open and runs until the start.",
       "checkInDo": "Check in on the tournament page to confirm you'll play. Players who don't check in are left out of the bracket.",
       "checkInDoTdm": "Check in on the tournament page to confirm you'll play. Players who don't check in aren't placed on any team.",
@@ -226,11 +225,10 @@
     "labelTranslation": "Organizer rules ({language}, translation)"
   },
   "publish": "Publish and open registration",
-  "publishConfirm": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",
-  "publishBlocked": {
-    "past": "The start date has already passed. Change it under Settings to publish.",
-    "window": "The start is closer than the check-in window. Change the date under Settings to publish."
-  },
+  "unpublish": "Back to draft",
+  "unpublishConfirm": "Registration closes and the community can no longer see the tournament.",
+  "unpublishBlocked": "It can only go back to draft with no one registered.",
+  "publishConfirm": "Registration opens right away and the community can see the tournament. After the first registration, it can't go back to draft.",
   "delete": "Delete draft",
   "deleteConfirm": "Delete this draft? This can't be undone.",
   "deleteTournament": "Delete tournament",
@@ -280,7 +278,7 @@
       "stage": "no repeats in the stage",
       "tournament": "no repeats in the tournament"
     },
-    "checkIn": "opens {window} before the start",
+    "checkIn": "the organizers open it before the start",
     "noCheckIn": "no check-in",
     "tips": {
       "bracket": "How does the bracket work?",

@@ -1,6 +1,5 @@
 //! O agendador: a cada 10 s, numa instância só (advisory lock do Postgres),
-//! abre o check-in que chegou na hora, avisa a hora de iniciar, confirma os
-//! mapas com a janela vencida, avisa a organização das contestações
+//! confirma os mapas com a janela vencida, avisa a organização das contestações
 //! que ninguém resolveu a tempo, avisa na véspera as exclusões de
 //! comunidade (ao owner) e de conta (por email) e executa as que venceram,
 //! cada torneio, comunidade ou conta na própria
@@ -21,7 +20,7 @@ use chrono::{DateTime, Utc};
 use super::db;
 use crate::{
     AppState, auth, images, matches, members, notifications, outbox, ratings, screenshots,
-    shared::ApiError, tenants, tournaments, veto_rooms,
+    shared::ApiError, tenants, veto_rooms,
 };
 
 pub const EVERY: Duration = Duration::from_secs(10);
@@ -29,10 +28,6 @@ pub const EVERY: Duration = Duration::from_secs(10);
 /// O que uma passada fez.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Tick {
-    /// Check-ins abertos.
-    pub opened: usize,
-    /// Torneios avisados da hora de iniciar.
-    pub reminded: usize,
     /// Mapas confirmados por tempo.
     pub confirmed: u64,
     /// Contestações que a organização foi avisada de resolver.
@@ -69,8 +64,6 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
     }
     let pass = async {
         Ok::<_, ApiError>(Tick {
-            opened: tournaments::open_due_check_ins(&state.db, now).await?,
-            reminded: tournaments::remind_due_starts(&state.db, now).await?,
             confirmed: matches::confirm_all_due(&state.db, now).await?,
             contest_notices: matches::notify_contested(&state.db, now).await?,
             tenant_reminders: tenants::remind_due_deletions(&state.db, now).await?,

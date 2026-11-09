@@ -5,7 +5,6 @@ use utoipa::ToSchema;
 use super::{
     admission::Admission,
     contest::DEFAULT_CONTEST_MINUTES,
-    schedule::DEFAULT_CHECK_IN_MINUTES,
     setup::TournamentMode,
     status::TournamentStatus,
     team_rules::TeamRules,
@@ -355,15 +354,14 @@ pub struct CreateTournament {
     #[serde(default = "default_stages")]
     #[schema(required = false)]
     pub stages: Vec<StageFormat>,
-    /// Início previsto. Opcional: sem data o check-in não abre sozinho.
+    /// Início previsto, só informativo. Opcional.
     #[serde(default)]
     pub starts_at: Option<DateTime<Utc>>,
-    /// Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
-    /// Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
-    /// andamento).
-    #[serde(default = "default_check_in_minutes")]
-    #[schema(required = false, example = 30)]
-    pub check_in_minutes: Option<i32>,
+    /// Se o torneio tem check-in, que a organização abre pelo botão. Ausente:
+    /// sim. Falso: a inscrição vai direto para em andamento.
+    #[serde(default = "default_check_in")]
+    #[schema(required = false)]
+    pub check_in: bool,
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
     /// enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 10.
     #[serde(default = "default_contest_minutes")]
@@ -388,10 +386,8 @@ pub struct CreateTournament {
     #[serde(default)]
     pub translations: Vec<CreateTranslation>,
     /// Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-    /// transação: o torneio vem sempre em `registration` (inscrição aberta);
-    /// o check-in abre depois, na hora (um `starts_at` dentro da janela já
-    /// aberta é recusado com `tournament.starts_at_too_soon`). Qualquer erro e
-    /// nada é gravado.
+    /// transação: o torneio vem em `registration` (inscrição aberta). Qualquer
+    /// erro e nada é gravado.
     #[serde(default)]
     pub publish: bool,
     /// Se os mapas do torneio contam para o rating da comunidade. Ausente:
@@ -422,8 +418,8 @@ pub struct CreateTranslation {
     pub rules: String,
 }
 
-fn default_check_in_minutes() -> Option<i32> {
-    Some(DEFAULT_CHECK_IN_MINUTES)
+fn default_check_in() -> bool {
+    true
 }
 
 fn default_contest_minutes() -> i32 {
@@ -436,8 +432,8 @@ fn default_counts_for_rating() -> bool {
 
 /// Campos ausentes, ou iguais aos gravados, não mudam. O endereço muda só no
 /// rascunho; nome e descrição, sempre; regras e inscrição, até o torneio
-/// encerrar; vagas, regra de campeões, fases, data de início e janela de
-/// check-in, até ele começar (e as vagas nunca abaixo do número de inscritos).
+/// encerrar; vagas, regra de campeões, fases, data de início e check-in, até
+/// ele começar (e as vagas nunca abaixo do número de inscritos).
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTournament {
     /// O endereço novo, só no rascunho, com a validação da criação. O antigo
@@ -464,15 +460,13 @@ pub struct UpdateTournament {
     /// (`tournament.stages_locked`). Sem fase depois da atual, já terminada, o
     /// torneio encerra.
     pub stages: Option<Vec<StageFormat>>,
-    /// `null` tira a data, o que só vale no rascunho.
+    /// `null` tira a data.
     #[serde(default, deserialize_with = "nullable")]
     #[schema(value_type = Option<DateTime<Utc>>)]
     pub starts_at: Option<Option<DateTime<Utc>>>,
-    /// `null` desliga o check-in; durante o check-in, o torneio volta para a
-    /// inscrição.
-    #[serde(default, deserialize_with = "nullable")]
-    #[schema(value_type = Option<i32>)]
-    pub check_in_minutes: Option<Option<i32>>,
+    /// Liga ou desliga o check-in. Desligar durante o check-in volta o torneio
+    /// para a inscrição.
+    pub check_in: Option<bool>,
     /// Janela de contestação; muda até o torneio encerrar e vale para os
     /// resultados enviados depois.
     pub contest_minutes: Option<i32>,
@@ -522,12 +516,10 @@ pub struct Tournament {
     pub checked_in: bool,
     pub champion_rules: ChampionRules,
     pub stages: Vec<TournamentStage>,
-    /// Início previsto; `null`: sem data.
+    /// Início previsto, só informativo; `null`: sem data.
     pub starts_at: Option<DateTime<Utc>>,
-    /// Janela de check-in em minutos; `null`: sem check-in.
-    pub check_in_minutes: Option<i32>,
-    /// Quando o check-in abre (ou abriu) sozinho: o início menos a janela.
-    pub check_in_opens_at: Option<DateTime<Utc>>,
+    /// Se o torneio tem check-in (abre pelo botão da organização).
+    pub check_in: bool,
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
     /// enviado.
     pub contest_minutes: i32,

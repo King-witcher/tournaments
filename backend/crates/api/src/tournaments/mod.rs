@@ -1,13 +1,13 @@
 //! Torneios de um tenant: criar (rascunho), listar, ver, editar (o endereço, só
-//! no rascunho), publicar, excluir (na hora, sem aviso; depois de começar, só o
-//! owner) e traduzir os textos. Formato e regra de campeões passam
+//! no rascunho), publicar e voltar para rascunho (sem nenhum inscrito), excluir
+//! (na hora, sem aviso; depois de começar, só o owner) e traduzir os textos. Formato e regra de campeões passam
 //! pela checagem do `engine` ao criar, ao mudar e ao publicar (e, com os
 //! participantes reais, ao iniciar: `Setup::check_entrants`). Também decide
 //! quem vê cada torneio (`visibility`: só o rascunho some para os
 //! jogadores) e quem pode se inscrever pelo botão (`admission`), que `participants`, `invites` e
-//! `matches` usam, e guarda a data de início e a janela de check-in
-//! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
-//! contestação de resultado (`contest`), a configuração do veto das partidas
+//! `matches` usam, e guarda a data de início, só informativa, e o check-in
+//! ligado ou desligado (`schedule`), a janela de contestação de resultado
+//! (`contest`), a configuração do veto das partidas
 //! (`veto`: modo do mapa, pool, campeões, tempo por passo), quem age pelo time
 //! (`team_rules`) e o screenshot obrigatório (`screenshots`). As imagens das
 //! regras (`rules_images`) são as que `images` registra na comunidade; ao
@@ -20,9 +20,7 @@
 //! andamento (`StageProgress`: início, check-in aberto, fim), que `matches` e
 //! `stages` acertam (`db::stages`). O PATCH fica em `update`, com a rota no
 //! `lifecycle`: o pódio do encerramento por ele é da chave. O que o torneio emite no outbox fica em
-//! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
-//! agendador do tempo real faz sozinho (abrir o check-in, avisar a hora de
-//! iniciar), em `scheduled`.
+//! `changes` (todo domínio que mexe num torneio chama `changed`).
 
 mod admission;
 mod changes;
@@ -33,7 +31,6 @@ mod format;
 mod handlers;
 mod rules_images;
 mod schedule;
-mod scheduled;
 mod screenshots;
 mod setup;
 mod slug;
@@ -60,7 +57,6 @@ pub use db::{
     slugs_for_member, sync_finished, unmark_stage_started, unused_rules_images,
 };
 pub use rules_images::cdn as rules_images_cdn;
-pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;
 pub use status::TournamentStatus;
 pub use team_rules::{TeamAction, TeamPicker, TeamRules};
@@ -84,7 +80,10 @@ pub fn router() -> OpenApiRouter<AppState> {
             handlers::get_tournament,
             handlers::delete_tournament
         ))
-        .routes(routes!(handlers::publish_tournament))
+        .routes(routes!(
+            handlers::publish_tournament,
+            handlers::unpublish_tournament
+        ))
         .routes(routes!(
             translations::put_translation,
             translations::delete_translation

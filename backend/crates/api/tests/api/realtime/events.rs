@@ -50,24 +50,25 @@ async fn the_same_event_goes_once_per_transaction() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
     let uri = format!("{COPA}/participants");
     let (status, _) = post(&app, &uri, &ana, json!({ "user_id": bia.id })).await;
     assert_eq!(status, StatusCode::CREATED);
-    // A janela abre com o torneio já publicado; editar então muda o torneio
-    // duas vezes na mesma transação (a edição e o check-in aberto), e cada
-    // evento entra uma vez, com o aviso aos inscritos.
-    publish(&app, &ana, "copa").await;
-    starts_in(&db, "copa", 10).await;
+    // Na hora de iniciar, editar muda a home da organização duas vezes na
+    // mesma transação (`changed` e o adiar), e o evento entra uma vez.
+    starts_in(&db, "copa", -10).await;
     clear(&db).await;
     let (status, body) = patch(&app, COPA, &ana, json!({ "name": "Copa 2" })).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    let events = outbox(&db).await;
     assert_eq!(
-        events[..3],
-        [tenant("quake-br"), tournament("copa", None), me(&[bia.id])]
+        outbox(&db).await,
+        [
+            tenant("quake-br"),
+            tournament("copa", None),
+            me(&[bia.id]),
+            me(&[ana.id]),
+        ]
     );
-    assert_eq!(events.len(), 4);
-    assert_eq!(notices(&events)[0].0, "check_in.opened");
 }
 
 #[tokio::test]

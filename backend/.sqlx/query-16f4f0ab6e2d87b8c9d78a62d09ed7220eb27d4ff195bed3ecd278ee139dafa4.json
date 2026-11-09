@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "with link as (\n               select id as tenant_id, null::bigint as tournament_id\n               from tenants where invite_token = $1\n               union all\n               select tenant_id, id from tournaments where invite_token = $1\n           )\n           select t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name,\n                  tr.slug as \"tournament_slug?\",\n                  t.description as tenant_description, t.logo_key, t.cover_key,\n                  t.deletion_due_at is not null as \"tenant_deleting!\",\n                  coalesce((select m.nickname from tenant_members m\n                            where m.tenant_id = t.id and m.role = 'owner'), '') as \"owner_name!\",\n                  (select count(*) from tenant_members m\n                   where m.tenant_id = t.id and m.left_at is null) as \"member_count!\"\n           from link\n           join tenants t on t.id = link.tenant_id\n           left join tournaments tr on tr.tenant_id = link.tenant_id and tr.id = link.tournament_id",
+  "query": "with link as (\n               select id as tenant_id, null::bigint as tournament_id\n               from tenants where invite_token = $1\n               union all\n               select tenant_id, id from tournaments where invite_token = $1 and status <> 'draft'\n           )\n           select t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name,\n                  tr.slug as \"tournament_slug?\",\n                  t.description as tenant_description, t.logo_key, t.cover_key,\n                  t.deletion_due_at is not null as \"tenant_deleting!\",\n                  coalesce((select m.nickname from tenant_members m\n                            where m.tenant_id = t.id and m.role = 'owner'), '') as \"owner_name!\",\n                  (select count(*) from tenant_members m\n                   where m.tenant_id = t.id and m.left_at is null) as \"member_count!\"\n           from link\n           join tenants t on t.id = link.tenant_id\n           left join tournaments tr on tr.tenant_id = link.tenant_id and tr.id = link.tournament_id",
   "describe": {
     "columns": [
       {
@@ -117,5 +117,5 @@
       null
     ]
   },
-  "hash": "fb0ab215d24a9663bd4ce5ffbea7a7609b27ebead2a520cb55bac163921dd78c"
+  "hash": "16f4f0ab6e2d87b8c9d78a62d09ed7220eb27d4ff195bed3ecd278ee139dafa4"
 }

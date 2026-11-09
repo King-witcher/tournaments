@@ -25,7 +25,6 @@
     },
     "tournament": {
       "started": "Torneio iniciado, com o link da chave",
-      "start_due": "Hora de iniciar, para a organização",
       "finished": "Torneio encerrado, com o pódio",
       "tie_pending": "Empate a decidir, para a organização"
     },

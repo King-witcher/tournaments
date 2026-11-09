@@ -22,7 +22,7 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
     <ParticipationTile
       suggestPush={
         (entry?.situation ??
-          (tournament.check_in_minutes != null && !tournament.checked_in
+          (tournament.check_in && !tournament.checked_in
             ? "missed_check_in"
             : "playing")) === "playing"
       }

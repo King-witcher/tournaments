@@ -1,24 +1,18 @@
 //! Leitura de torneios: a lista do tenant (ou de vários, `list_in`) e um
-//! torneio pelo slug. As duas
-//! aplicam a abertura automática do check-in (`Schedule::check_in_due`) antes
-//! de devolver, então o status lido já é o que vale agora. O agendador do
-//! tempo real abre pelo mesmo caminho (`current_status`) os que ninguém leu.
+//! torneio pelo slug.
 
-use chrono::{DateTime, Utc};
 use engine::core::MapId;
-use sqlx::{Acquire, PgConnection, PgPool, types::Json};
+use sqlx::{PgConnection, PgPool, types::Json};
 
 use super::{
     StoredTournament, TournamentId,
     columns::{ChampionColumns, StageRow},
-    status::open_due_check_in,
 };
 use crate::{
     shared::{ApiError, Locale, public_url},
     tenants::TenantId,
     tournaments::{
         admission::Admission,
-        changes,
         schedule::Schedule,
         setup::{Setup, TournamentMode},
         status::TournamentStatus,
@@ -28,28 +22,6 @@ use crate::{
         veto::{MapMode, PickOrder, PoolMap, VetoOrder, VetoSetup},
     },
 };
-
-/// O status que vale em `now`: abre o check-in se a janela abriu e grava,
-/// junto com o aviso aos inscritos (numa transação própria, ou num savepoint
-/// da de quem chama).
-pub async fn current_status(
-    conn: &mut PgConnection,
-    id: TournamentId,
-    stored: TournamentStatus,
-    schedule: &Schedule,
-    now: DateTime<Utc>,
-) -> Result<TournamentStatus, sqlx::Error> {
-    if !schedule.check_in_due(stored, now) {
-        return Ok(stored);
-    }
-    let mut tx = conn.begin().await?;
-    if !open_due_check_in(&mut *tx, id, schedule).await? {
-        return Ok(stored);
-    }
-    changes::check_in_opened(&mut tx, id).await?;
-    tx.commit().await?;
-    Ok(TournamentStatus::CheckIn)
-}
 
 /// Torneios do tenant que `viewer` vê, do mais novo ao mais antigo. Com
 /// `see_all` (organizer e owner), todos; sem, nem rascunhos (`visibility::can_see`).
@@ -85,7 +57,7 @@ pub async fn list_in(
     let ids = |ts: &[TenantId]| ts.iter().map(|t| t.get()).collect::<Vec<_>>();
     let rows = sqlx::query!(
         r#"select t.id, t.tenant_id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status,
-                  t.admission, t.max_participants, t.starts_at, t.check_in_minutes, t.created_at,
+                  t.admission, t.max_participants, t.starts_at, t.created_at,
                   t.cover_key,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
@@ -112,13 +84,7 @@ pub async fn list_in(
 
     let mut list = Vec::with_capacity(rows.len());
     for r in rows {
-        let schedule = Schedule {
-            starts_at: r.starts_at,
-            check_in_minutes: r.check_in_minutes,
-        };
-        let stored = TournamentStatus::from_db(&r.status)?;
         let id = TournamentId(r.id);
-        let status = current_status(&mut *conn, id, stored, &schedule, Utc::now()).await?;
         let translations = r
             .translation_locales
             .iter()
@@ -144,7 +110,7 @@ pub async fn list_in(
                 name: r.name,
                 mode: TournamentMode::from_db(&r.mode)?,
                 team_size: i32::from(r.team_size),
-                status,
+                status: TournamentStatus::from_db(&r.status)?,
                 admission: Admission::from_db(&r.admission)?,
                 max_participants: r.max_participants,
                 participants: r.participants,
@@ -192,7 +158,7 @@ pub async fn find(
         r#"select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,
                   t.admission, t.max_participants, t.bans_per_series, t.mirror, t.same_team,
                   t.no_repeat_who, t.no_repeat_scope,
-                  t.starts_at, t.check_in_minutes, t.contest_minutes,
+                  t.starts_at, t.check_in, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
                   t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
                   t.pick_order, t.started_at, t.cover_key, t.veto_by, t.ban_by, t.pick_by,
@@ -241,10 +207,8 @@ pub async fn find(
     let id = TournamentId(row.id);
     let schedule = Schedule {
         starts_at: row.starts_at,
-        check_in_minutes: row.check_in_minutes,
+        check_in: row.check_in,
     };
-    let stored = TournamentStatus::from_db(&row.status)?;
-    let status = current_status(&mut *conn, id, stored, &schedule, Utc::now()).await?;
 
     let map_pool: Vec<PoolMap> = row
         .map_pool
@@ -296,7 +260,7 @@ pub async fn find(
             description: row.description,
             rules: row.rules,
         },
-        status,
+        status: TournamentStatus::from_db(&row.status)?,
         admission: Admission::from_db(&row.admission)?,
         setup: Setup {
             mode: TournamentMode::from_db(&row.mode)?,

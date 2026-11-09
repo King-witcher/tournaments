@@ -1,15 +1,13 @@
 //! SQL dos torneios: criar, editar e excluir aqui; leitura em `read`,
 //! mudanças de status em `status`, traduções em `translations`, as imagens
 //! das regras e quem as usa em `rules_images`, os
-//! destinatários do tempo real em `audience`, o que o agendador procura em
-//! `scheduled` e a tradução entre as colunas e os tipos do `engine` em
-//! `columns`.
+//! destinatários do tempo real em `audience` e a tradução entre as colunas e
+//! os tipos do `engine` em `columns`.
 
 mod audience;
 mod columns;
 mod read;
 mod rules_images;
-mod scheduled;
 mod stages;
 mod status;
 mod translations;
@@ -36,12 +34,11 @@ use crate::{
 
 pub use audience::{Address, Audience, audience};
 pub use columns::{StageProgress, StageRow};
-pub use read::{Listed, current_status, find, find_for_update, list, list_in, slugs_for_member};
+pub use read::{Listed, find, find_for_update, list, list_in, slugs_for_member};
 pub use rules_images::{
     delete_unused_rules_images, lock_rules_images, register_rules_image, rules_images_with,
     set_rules_images, unused_rules_images,
 };
-pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use stages::{
     mark_stage_finished, mark_stage_started, open_stage_check_in, reset_stages,
     unmark_stage_started,
@@ -69,7 +66,6 @@ pub struct StoredTournament {
     pub slug: String,
     pub locale: Locale,
     pub texts: Texts,
-    /// O que vale agora: `find` já abriu o check-in se a janela abriu.
     pub status: TournamentStatus,
     pub admission: Admission,
     pub setup: Setup,
@@ -199,7 +195,7 @@ pub async fn create(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, admission,
                 max_participants, bans_per_series, mirror, same_team, no_repeat_who,
-                no_repeat_scope, starts_at, check_in_minutes, contest_minutes,
+                no_repeat_scope, starts_at, check_in, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
                 team_size, team_pick_seconds, veto_order, pick_order, invite_token,
                 veto_by, ban_by, pick_by, report_by)
@@ -222,7 +218,7 @@ pub async fn create(
         champions.no_repeat_who,
         champions.no_repeat_scope,
         new.schedule.starts_at,
-        new.schedule.check_in_minutes,
+        new.schedule.check_in,
         new.contest_minutes,
         new.counts_for_rating,
         new.setup.veto.map_mode.as_str(),
@@ -371,7 +367,7 @@ async fn update_stages(
 }
 
 /// Grava o PATCH: os textos e, quando vieram, a inscrição (`admission`), a configuração
-/// (modo, vagas, campeões, fases e veto), a data e a janela de check-in, a
+/// (modo, vagas, campeões, fases e veto), a data e o check-in, a
 /// janela de contestação e o status. Trocar o modo ou o tamanho refaz os
 /// times no banco (trigger `tournaments_mode_teams`). As fases mudam no lugar
 /// (`existing_stages`: quantas há agora), as que não começaram também depois
@@ -401,10 +397,10 @@ pub async fn update(
     .await?;
     if let Some(schedule) = &edit.schedule {
         sqlx::query!(
-            "update tournaments set starts_at = $2, check_in_minutes = $3 where id = $1",
+            "update tournaments set starts_at = $2, check_in = $3 where id = $1",
             id.0,
             schedule.starts_at,
-            schedule.check_in_minutes
+            schedule.check_in
         )
         .execute(&mut *conn)
         .await?;
@@ -472,8 +468,10 @@ pub async fn set_screenshots_required(
 }
 
 /// Troca o slug do torneio; o antigo fica livre. Quem chama confere que é
-/// rascunho (o banco também: um rascunho nunca avisou ninguém, então não há
-/// caminho a reescrever nas notificações). 409 `tournament.slug_taken`.
+/// rascunho (o banco também). Aviso antigo de um torneio que voltou a rascunho
+/// não se reescreve: quem o recebeu já saiu da inscrição e não vê rascunho, e
+/// o link dá em "não encontrado" de qualquer forma. 409
+/// `tournament.slug_taken`.
 pub async fn rename(conn: &mut PgConnection, id: TournamentId, slug: &str) -> Result<(), ApiError> {
     let done = sqlx::query!(
         "update tournaments set slug = $2, updated_at = now() where id = $1",

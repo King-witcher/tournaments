@@ -24,11 +24,10 @@
     "entry": {
       "title": "Inscripción y check-in",
       "titleNoCheckIn": "Inscripción",
-      "start": "El torneo empieza <when></when>.",
+      "start": "Inicio previsto <when></when>.",
       "registration": "La inscripción sigue abierta hasta el inicio o hasta que se agoten los {max} cupos.",
       "inviteOnly": "Solo se inscribe quien tiene el enlace de inscripción o es inscrito por la organización.",
-      "checkInAt": "El check-in abre <when></when> y sigue hasta el inicio.",
-      "checkIn": "El check-in abre {window} antes del inicio y sigue hasta él.",
+      "checkIn": "El check-in abre cuando la organización lo habilite y sigue hasta el inicio.",
       "checkInOpen": "El check-in está abierto y sigue hasta el inicio.",
       "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar. Quien no lo haga queda fuera de la llave.",
       "checkInDoTdm": "Haz el check-in en la página del torneo para confirmar que vas a jugar. Quien no lo haga no entra en ningún equipo.",
@@ -226,11 +225,10 @@
     "labelTranslation": "Reglas de la organización ({language}, traducción)"
   },
   "publish": "Publicar y abrir inscripciones",
-  "publishConfirm": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar.",
-  "publishBlocked": {
-    "past": "La fecha de inicio ya pasó. Cámbiala en Configuración para publicar.",
-    "window": "El inicio está más cerca que la ventana de check-in. Cambia la fecha en Configuración para publicar."
-  },
+  "unpublish": "Volver a borrador",
+  "unpublishConfirm": "Las inscripciones se cierran y la comunidad deja de ver el torneo.",
+  "unpublishBlocked": "Solo vuelve a borrador sin inscritos.",
+  "publishConfirm": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Después de la primera inscripción, no vuelve a borrador.",
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
   "deleteTournament": "Eliminar torneo",
@@ -280,7 +278,7 @@
       "stage": "no repite en la fase",
       "tournament": "no repite en el torneo"
     },
-    "checkIn": "abre {window} antes del inicio",
+    "checkIn": "la organización lo abre antes del inicio",
     "noCheckIn": "sin check-in",
     "tips": {
       "bracket": "¿Cómo funciona la llave?",

@@ -97,18 +97,3 @@ async fn push_subscriptions_keep_their_format() {
         0
     );
 }
-
-#[tokio::test]
-async fn only_published_tournaments_are_reminded() {
-    let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, _) = quake_br(&db).await;
-    create_tournament(&app, &ana, duel("copa")).await;
-    assert_eq!(
-        rejected(exec(&db, "update tournaments set start_reminded_at = now()").await),
-        rule(CHECK, "tournaments_start_reminded_published")
-    );
-    publish(&app, &ana, "copa").await;
-    exec(&db, "update tournaments set start_reminded_at = now()")
-        .await
-        .unwrap();
-}

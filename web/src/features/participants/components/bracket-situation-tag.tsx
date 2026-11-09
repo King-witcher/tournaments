@@ -20,7 +20,7 @@ export function BracketSituationTag({ entry, tournament }: Props) {
   const t = useTranslations("Participants");
   const situation: Schemas["Situation"] =
     entry?.situation ??
-    (tournament.check_in_minutes != null && !tournament.checked_in
+    (tournament.check_in && !tournament.checked_in
       ? "missed_check_in"
       : "playing");
   const placement = entry?.placement;

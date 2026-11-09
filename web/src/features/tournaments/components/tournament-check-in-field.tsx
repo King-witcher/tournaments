@@ -1,69 +1,34 @@
 import { useTranslations } from "next-intl";
 
-import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
-import { SelectItem } from "@/shared/ui/carbon/select";
-import { Select } from "@/shared/ui/select";
-
-const WINDOWS = [15, 30, 45, 60];
+import { Checkbox } from "@/shared/ui/checkbox";
 
 type Props = {
-  /** Minutos antes do início; `null` sem check-in. */
-  value: number | null;
-  onChange: (minutes: number | null) => void;
-  /** O que a API disse deste campo, já traduzido. */
-  error?: string;
+  checked: boolean;
+  onChange: (checkIn: boolean) => void;
   /** O torneio já começou: só para leitura. */
   readOnly: boolean;
   /** TDM: o check-in decide quem entra num time, não na chave. */
   teams?: boolean;
 };
 
-/** Janela de check-in: quanto antes do início ele abre, ou sem check-in. */
+/** Se o torneio tem check-in, que a organização abre pelo botão. */
 export function TournamentCheckInField({
-  value,
+  checked,
   onChange,
-  error,
   readOnly,
   teams = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
-  const formatMinutes = useFormatMinutes();
-  // Uma janela que veio da API fora das opções continua aparecendo.
-  const windows =
-    value === null || WINDOWS.includes(value)
-      ? WINDOWS
-      : [...WINDOWS, value].sort((a, b) => a - b);
+  const hint = checked ? "checkInHint" : "checkInOffHint";
 
   return (
-    <Select
+    <Checkbox
       labelText={t("checkIn")}
-      helperText={
-        teams
-          ? t(value === null ? "checkInOffHintTdm" : "checkInHintTdm")
-          : t(value === null ? "checkInOffHint" : "checkInHint")
-      }
-      name="checkInMinutes"
-      value={value ?? "off"}
+      helperText={t(teams ? `${hint}Tdm` : hint)}
+      name="checkIn"
+      checked={checked}
       readOnly={readOnly}
-      invalid={error !== undefined}
-      invalidText={error}
-      onChange={(e) =>
-        onChange(e.target.value === "off" ? null : Number(e.target.value))
-      }
-    >
-      <SelectItem value="off" text={t("checkInOff")} />
-      {windows.map((minutes) => (
-        <SelectItem
-          key={minutes}
-          value={minutes}
-          // Acima de uma hora, em horas, como no resto do site ("24 h").
-          text={
-            minutes > 60
-              ? t("checkInOptionHours", { window: formatMinutes(minutes) })
-              : t("checkInOption", { minutes })
-          }
-        />
-      ))}
-    </Select>
+      onChange={onChange}
+    />
   );
 }

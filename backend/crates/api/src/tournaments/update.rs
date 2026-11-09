@@ -70,7 +70,6 @@ pub async fn update(
             && current
                 .stage(current.current_stage())
                 .is_some_and(|(_, p)| p.finished_at.is_some()),
-        now: Utc::now(),
     };
     let edit = edit::apply(stored, veto, body)?;
     let rules_changed = edit.texts.rules != current.texts.rules;

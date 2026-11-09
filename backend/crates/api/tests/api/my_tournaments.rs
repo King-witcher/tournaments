@@ -149,7 +149,7 @@ async fn situation_before_the_bracket() {
         &app,
         "/tenants/argentina/tournaments",
         &bia,
-        with(duel("liga"), json!({ "check_in_minutes": null })),
+        with(duel("liga"), json!({ "check_in": false })),
     )
     .await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
@@ -178,7 +178,7 @@ async fn situation_before_the_bracket() {
     );
 
     // O check-in abre: pendente até fazer.
-    starts_in(&db, "copa", 10).await;
+    open_check_in(&app, &ana, "copa").await;
     assert_eq!(mine(&app, &bia).await[0]["situation"], "check_in_pending");
     for who in [&bia, &ana] {
         let (status, _) = post_empty(&app, &format!("{COPA}/check-in"), who).await;

@@ -30,7 +30,7 @@ Toda página, de cima para baixo:
 
 ## Mapa de páginas
 
-Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e **partida**. Ficam como aba ou bloco: check-in (botão e prazo, em "Sua situação" e na tabela de inscritos), o link de convite e o de inscrição (botão que abre o Modal com o link), configurações da comunidade. Fora do MVP: perfil global entre comunidades e página pública de comunidade.
+Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e **partida**. Ficam como aba ou bloco: check-in (botão, em "Sua situação" e na tabela de inscritos), o link de convite e o de inscrição (botão que abre o Modal com o link), configurações da comunidade. Fora do MVP: perfil global entre comunidades e página pública de comunidade.
 
 ### Casca (todas)
 
@@ -76,7 +76,7 @@ Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde";
 
 ### Torneio `/[tenant]/[tournament]`
 
-Na **Visão geral**, o `PageHeader` completo: nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx) e, do `lg` para cima, a capa à direita (2:1). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), ⋯ com "Copiar torneio" (o Modal da criação), "Desfazer início" e "Excluir" (o rascunho; publicado, com o endereço digitado; depois de começar, só o owner). Editar é a aba Configurações. "Publicar" abre a confirmação com a revisão da configuração salva (nome, início, formato, inscrições, mapas, campeões, resultados, idiomas) e diz que publicado não volta a rascunho. Abaixo, "Sua situação". Abas:
+Na **Visão geral**, o `PageHeader` completo: nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx) e, do `lg` para cima, a capa à direita (2:1). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), ⋯ com "Copiar torneio" (o Modal da criação), "Voltar a rascunho", "Fechar check-in", "Desfazer início" e "Excluir" (o rascunho; publicado, com o endereço digitado; depois de começar, só o owner). Editar é a aba Configurações. "Publicar" abre a confirmação com a revisão da configuração salva (nome, início, formato, inscrições, mapas, campeões, resultados, idiomas) e diz que, depois da primeira inscrição, ele não volta a rascunho. Abaixo, "Sua situação". Abas:
 
 Nas outras seções, um cabeçalho compacto (no `layout.tsx`, troca no cliente pelo segmento): a trilha com o torneio (`Copa Arena Sul /`) só abaixo do `lg`, onde é ela que diz o torneio, o nome da seção como título, as mesmas ações e ⋯ e, para quem joga depois do início, uma linha com a situação e a próxima série. Nome e estado ficam sempre no menu lateral. Seções, no menu:
 

@@ -70,8 +70,7 @@ impl From<StoredTournament> for Tournament {
             champion_rules: t.setup.champion_rules.into(),
             stages,
             starts_at: t.schedule.starts_at,
-            check_in_minutes: t.schedule.check_in_minutes,
-            check_in_opens_at: t.schedule.check_in_opens_at(),
+            check_in: t.schedule.check_in,
             contest_minutes: t.contest_minutes,
             counts_for_rating: t.counts_for_rating,
             veto: VetoSettings {

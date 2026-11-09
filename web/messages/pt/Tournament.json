@@ -24,11 +24,10 @@
     "entry": {
       "title": "Inscrição e check-in",
       "titleNoCheckIn": "Inscrição",
-      "start": "O torneio começa <when></when>.",
+      "start": "Início previsto <when></when>.",
       "registration": "A inscrição vai até o início ou até acabarem as {max} vagas.",
       "inviteOnly": "Só se inscreve quem tem o link de inscrição ou é inscrito pela organização.",
-      "checkInAt": "O check-in abre <when></when> e vai até o início.",
-      "checkIn": "O check-in abre {window} antes do início e vai até ele.",
+      "checkIn": "O check-in abre quando a organização liberar e vai até o início.",
       "checkInOpen": "O check-in está aberto e vai até o início.",
       "checkInDo": "Faça o check-in na página do torneio para confirmar que vai jogar. Quem não fizer fica fora da chave.",
       "checkInDoTdm": "Faça o check-in na página do torneio para confirmar que vai jogar. Quem não fizer, não entra em nenhum time.",
@@ -226,11 +225,10 @@
     "labelTranslation": "Regras da organização ({language}, tradução)"
   },
   "publish": "Publicar e abrir inscrições",
-  "publishConfirm": "As inscrições abrem na hora e a comunidade passa a ver o torneio. Publicado, ele não volta a rascunho nem pode ser excluído.",
-  "publishBlocked": {
-    "past": "A data de início já passou. Mude-a em Configurações para publicar.",
-    "window": "O início está mais perto que a janela de check-in. Mude a data em Configurações para publicar."
-  },
+  "unpublish": "Voltar a rascunho",
+  "unpublishConfirm": "As inscrições fecham e a comunidade deixa de ver o torneio.",
+  "unpublishBlocked": "Só volta a rascunho sem inscritos.",
+  "publishConfirm": "As inscrições abrem na hora e a comunidade passa a ver o torneio. Depois da primeira inscrição, ele não volta a rascunho.",
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
   "deleteTournament": "Excluir torneio",
@@ -280,7 +278,7 @@
       "stage": "não repete na fase",
       "tournament": "não repete no torneio"
     },
-    "checkIn": "abre {window} antes do início",
+    "checkIn": "a organização abre antes do início",
     "noCheckIn": "sem check-in",
     "tips": {
       "bracket": "Como funciona a chave?",

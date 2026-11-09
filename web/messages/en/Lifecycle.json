@@ -1,10 +1,11 @@
 {
   "title": "Tournament status",
-  "opensAt": "Check-in opens automatically on <date></date>.",
   "noCheckIn": "No check-in. When you start, everyone registered enters the bracket.",
   "checkInOpen": "When you start, only players who checked in enter the bracket.",
   "finished": "Results can still be corrected on each match's page.",
-  "openCheckIn": "Open check-in now",
+  "openCheckIn": "Open check-in",
+  "closeCheckIn": "Close check-in",
+  "closeCheckInConfirm": "Close check-in? The tournament goes back to registration, and check-ins already made stay.",
   "start": "Start tournament",
   "startConfirm": "Start the tournament? Registrations and check-ins freeze, and players who didn't check in are left out.",
   "startConfirmCount": "Start the tournament? {in, plural, =0 {No one enters} one {# registered player enters} other {# registered players enter}} the bracket and {out, plural, =0 {no one is left out} one {# is left out (no check-in)} other {# are left out (no check-in)}}. Registrations and check-ins freeze.",

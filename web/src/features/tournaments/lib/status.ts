@@ -14,16 +14,14 @@ export function isFinished(status: Status) {
   return status === "finished";
 }
 
-/** O organizador ainda inscreve e tira participantes (até começar). */
+/** O organizador inscreve e tira participantes: depois de publicar, até começar. */
 export function participantsEditable(status: Status) {
-  return setupEditable(status);
+  return registrationOpen(status);
 }
 
-/** O link de inscrição aparece e se troca: no rascunho e até o início. */
+/** O link de inscrição aparece e se troca: depois de publicar, até o início. */
 export function invitesAllowed(status: Status) {
-  return (
-    status === "draft" || status === "registration" || status === "check_in"
-  );
+  return registrationOpen(status);
 }
 
 /** A inscrição está aberta: até o início, também durante o check-in. */
@@ -41,14 +39,10 @@ export function hasStarted(status: Status) {
  * check-in, com a inscrição aberta (antes disso, não se sabe quem entra).
  */
 export function seedingOpen(
-  tournament: Pick<
-    components["schemas"]["Tournament"],
-    "status" | "check_in_minutes"
-  >,
+  tournament: Pick<components["schemas"]["Tournament"], "status" | "check_in">,
 ) {
   return (
     tournament.status === "check_in" ||
-    (tournament.status === "registration" &&
-      tournament.check_in_minutes == null)
+    (tournament.status === "registration" && !tournament.check_in)
   );
 }

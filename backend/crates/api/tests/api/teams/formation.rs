@@ -222,10 +222,10 @@ async fn the_start_needs_every_team_complete() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 5).await;
-    let body = tdm(2, json!({ "check_in_minutes": 30 }));
+    let body = tdm(2, json!({ "check_in": true }));
     formed(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
     register(&app, "copa", &[&p[4]]).await;
-    starts_in(&db, "copa", 10).await;
+    open_check_in(&app, &ana, "copa").await;
     for who in &p {
         let (status, body) = post_empty(&app, &format!("{COPA}/check-in"), who).await;
         assert_eq!(status, StatusCode::NO_CONTENT, "{body}");

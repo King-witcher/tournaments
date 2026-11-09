@@ -25,7 +25,6 @@
     },
     "tournament": {
       "started": "Tournament started, with the bracket link",
-      "start_due": "Time to start, for the organizers",
       "finished": "Tournament ended, with the podium",
       "tie_pending": "Tie to decide, for the organizers"
     },

@@ -1,12 +1,10 @@
-//! O agendador: confirma os mapas vencidos, abre o check-in na hora, avisa
-//! a hora de iniciar uma vez, numa instância só, e avisa a organização da
-//! contestação que ninguém resolveu.
+//! O agendador: confirma os mapas vencidos, numa instância só, e avisa a
+//! organização da contestação que ninguém resolveu.
 
 use api::realtime::{self, Tick};
 use axum::http::StatusCode;
 use chrono::{Duration, Utc};
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
@@ -98,14 +96,6 @@ async fn the_captain_who_organizes_is_not_told_twice() {
     );
 }
 
-async fn status_of(db: &PgPool, slug: &str) -> String {
-    sqlx::query_scalar("select status from tournaments where slug = $1")
-        .bind(slug)
-        .fetch_one(db)
-        .await
-        .unwrap()
-}
-
 #[tokio::test]
 async fn confirms_due_maps_and_moves_the_bracket() {
     let (db, _lease) = crate::db::test_db().await;
@@ -149,90 +139,6 @@ async fn confirms_due_maps_and_moves_the_bracket() {
             ("match.ready".to_owned(), vec![p[1].id]),
         ]
     );
-}
-
-#[tokio::test]
-async fn opens_the_check_in_on_time() {
-    let (db, _lease) = crate::db::test_db().await;
-    let state = state(db.clone());
-    let app = app_from(state.clone());
-    let ana = user(&db, "Ana").await;
-    let bia = user(&db, "Bia").await;
-    create(&app, &ana, "quake-br").await;
-    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
-    create_tournament(&app, &ana, duel("copa")).await;
-    publish(&app, &ana, "copa").await;
-    register(&app, "copa", &[&bia]).await;
-    // Janela de 30 minutos, início em 40: abre daqui a 10.
-    starts_in(&db, "copa", 40).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.opened, 0);
-    assert_eq!(status_of(&db, "copa").await, "registration");
-
-    clear(&db).await;
-    let later = Utc::now() + Duration::minutes(11);
-    let tick = realtime::tick(&state, later).await.unwrap().unwrap();
-    assert_eq!(tick.opened, 1);
-    assert_eq!(status_of(&db, "copa").await, "check_in");
-    let found = notices(&outbox(&db).await);
-    assert_eq!(found.len(), 1);
-    assert_eq!(
-        (found[0].0.as_str(), &found[0].1),
-        ("check_in.opened", &vec![bia.id])
-    );
-}
-
-#[tokio::test]
-async fn reminds_the_start_once() {
-    let (db, _lease) = crate::db::test_db().await;
-    let state = state(db.clone());
-    let app = app_from(state.clone());
-    let ana = user(&db, "Ana").await;
-    create(&app, &ana, "quake-br").await;
-    let olga = organizer(&app, &db, &ana, "Olga").await;
-    member(&app, &db, &ana, "Bia").await;
-    let without_check_in = with(duel("copa"), json!({ "check_in_minutes": null }));
-    create_tournament(&app, &ana, without_check_in.clone()).await;
-    publish(&app, &ana, "copa").await;
-    // Rascunho com a data passada não é lembrado, nem publicado sem data.
-    create_tournament(
-        &app,
-        &ana,
-        with(without_check_in.clone(), json!({ "slug": "rascunho" })),
-    )
-    .await;
-    let undated = with(
-        without_check_in,
-        json!({ "slug": "sem-data", "starts_at": null }),
-    );
-    create_tournament(&app, &ana, undated).await;
-    publish(&app, &ana, "sem-data").await;
-    for slug in ["copa", "rascunho"] {
-        starts_in(&db, slug, -1).await;
-    }
-
-    clear(&db).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.reminded, 1);
-    let found = notices(&outbox(&db).await);
-    assert_eq!(
-        found,
-        [(
-            "tournament.start_due".to_owned(),
-            ids(&[&ana, &olga]),
-            json!({ "tournament": "Copa de Outubro" })
-        )]
-    );
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.reminded, 0);
-
-    // Adiado para depois do aviso, avisa de novo quando a nova hora chega.
-    starts_in(&db, "copa", 30).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.reminded, 0);
-    let later = Utc::now() + Duration::minutes(31);
-    let tick = realtime::tick(&state, later).await.unwrap().unwrap();
-    assert_eq!(tick.reminded, 1);
 }
 
 #[tokio::test]

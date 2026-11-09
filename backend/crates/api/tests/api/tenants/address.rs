@@ -149,7 +149,7 @@ async fn the_open_tabs_and_the_homes_of_the_members_are_told() {
 async fn store_notice(db: &PgPool, who: &User, path: &str) -> i64 {
     sqlx::query_scalar(
         "insert into notifications (user_id, notice)
-         values ($1, jsonb_build_object('code', 'tournament.start_due',
+         values ($1, jsonb_build_object('code', 'check_in.opened',
                                         'params', jsonb_build_object('tournament', 'Copa'),
                                         'path', $2::text))
          returning id",
@@ -245,7 +245,7 @@ async fn the_discord_queue_and_the_pending_notices_follow() {
         "kind": "notice",
         "users": [bia.id],
         "notice": {
-            "code": "tournament.start_due",
+            "code": "check_in.opened",
             "params": { "tournament": "Copa" },
             "path": "/quake-br/copa"
         }
@@ -286,6 +286,6 @@ async fn the_discord_queue_and_the_pending_notices_follow() {
     );
     let events = outbox(&db).await;
     assert_eq!(events[0]["notice"]["path"], "/quake-brasil/copa");
-    assert_eq!(events[0]["notice"]["code"], "tournament.start_due");
+    assert_eq!(events[0]["notice"]["code"], "check_in.opened");
     assert_eq!(events[1]["announce"]["path"], "/quake-brasil/copa");
 }
