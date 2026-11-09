@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams set captain = -id where tournament_id = $1 and id = any($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "56c4d1d081696a2a504885fdb244e27a7481df07586fefb0ddadb5e76ffa67fa"
+}

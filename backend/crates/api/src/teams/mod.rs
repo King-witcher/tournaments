@@ -15,8 +15,8 @@
 //! `stage_entrants` dá os times de uma fase com o seed dela.
 //!
 //! No TDM (times de 2 a 4): a formação antes do início (`formation`: ver os
-//! times e os reservas, criar time, pôr e tirar jogadores; o sorteio, que lê
-//! o rating, fica em `lifecycle` com `draw_teams`), o nome e o capitão e a
+//! times e os reservas, salvar o arranjo inteiro; o sorteio, que lê o rating,
+//! fica em `lifecycle` com `draw_teams`), o nome e o capitão e a
 //! substituição durante o torneio (`roster`). A escalação de cada mapa (quem
 //! está no time e na comunidade no envio) é gravada pelo banco.
 
@@ -47,8 +47,8 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(seeding::get_seeding, seeding::put_seeding))
         .routes(routes!(seeding::shuffle_seeding))
-        .routes(routes!(formation::get_teams, formation::create_team))
-        .routes(routes!(formation::put_member, formation::delete_member))
+        .routes(routes!(formation::get_teams))
+        .routes(routes!(formation::save_team_formation))
         .routes(routes!(roster::update_team))
         .routes(routes!(roster::substitute))
 }

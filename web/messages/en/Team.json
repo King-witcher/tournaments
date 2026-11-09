@@ -16,6 +16,7 @@
     "leftover": "{count, plural, one {The last player to register stays} other {The last # players to register stay}} in reserve.",
     "replaceTeams": "Current teams, with names and captains, will be undone.",
     "replaceTeamsAndOrder": "Current teams, with names and captains, and the seeding will be undone.",
+    "discardDraft": "Unsaved changes are lost.",
     "submit": "Draw",
     "short": "The draw needs at least {size} registered; {count, plural, =0 {none so far} one {only # is registered} other {only # are registered}}.",
     "shortCheckIn": "The draw uses only players who checked in and needs at least {size}; {count, plural, =0 {nobody has yet} one {only # has} other {only # have}}."
@@ -44,7 +45,11 @@
     "notCheckedInTip": "Hasn't checked in yet. Without it, they stay out of the bracket."
   },
   "seed": "#{seed}",
-  "saving": "Saving…",
+  "formation": {
+    "changed": "Teams changed. Save to apply.",
+    "save": "Save teams",
+    "saved": "Teams saved."
+  },
   "playerActions": "Actions for {name}",
   "teamActions": "Actions for team {name}",
   "move": {

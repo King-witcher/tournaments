@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -67,6 +66,9 @@ pub struct TeamFormation {
     pub reserves: Vec<FormationPlayer>,
     /// `user_id` de quem fez check-in, entre todos os inscritos.
     pub checked_in: Vec<i64>,
+    /// `user_id` de todos os inscritos, na ordem de inscrição: a tela reproduz
+    /// a capitania automática e a ordem dos jogadores no rascunho.
+    pub registration_order: Vec<i64>,
 }
 
 /// Um inscrito sem time.
@@ -76,7 +78,6 @@ pub struct FormationPlayer {
     /// Apelido no tenant; vazio quando a conta foi excluída.
     pub nickname: String,
     pub avatar_url: Option<String>,
-    pub registered_at: DateTime<Utc>,
     /// Saiu da comunidade (ou foi removido).
     pub left: bool,
 }
@@ -98,11 +99,26 @@ pub struct DrawTeams {
     pub method: DrawMethod,
 }
 
-/// Um time novo com um jogador, que vira o capitão.
+/// A formação inteira, salva de uma vez: quem não aparece em nenhum time fica
+/// de reserva, e o time existente que não aparece (ou vem vazio) some.
 #[derive(Deserialize, ToSchema)]
-pub struct NewTeam {
-    /// Um inscrito (sai do time em que estava).
-    pub user_id: i64,
+pub struct FormationDraft {
+    pub teams: Vec<DraftTeam>,
+}
+
+/// Um time da formação salva.
+#[derive(Deserialize, ToSchema)]
+pub struct DraftTeam {
+    /// Id de um time do torneio, que guarda o nome e o seed; sem id, um time
+    /// novo.
+    #[serde(default)]
+    pub id: Option<i64>,
+    /// Os `user_id`, todos inscritos, sem repetir e no máximo o tamanho do
+    /// time.
+    pub members: Vec<i64>,
+    /// `user_id` do capitão, um dos `members`. Pode faltar só no time vazio.
+    #[serde(default)]
+    pub captain: Option<i64>,
 }
 
 /// Campos ausentes não mudam.
@@ -129,13 +145,4 @@ pub struct Substitution {
     /// comunidade, que fica inscrito já no time.
     #[serde(rename = "in")]
     pub sub: i64,
-}
-
-/// `{tournament}`, `{team}` e `{user_id}` de
-/// `/tenants/{slug}/tournaments/{tournament}/teams/{team}/members/{user_id}`.
-#[derive(Deserialize)]
-pub struct TeamMemberPath {
-    pub tournament: String,
-    pub team: i64,
-    pub user_id: i64,
 }

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update participants set team_id = null\n           where tournament_id = $1 and team_id is not null and user_id <> all($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "835fa4343d5469a6ce9a8f2a24074c7986711690f10198f9c703dd3e38fd538b"
+}

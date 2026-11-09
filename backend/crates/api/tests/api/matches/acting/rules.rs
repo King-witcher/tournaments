@@ -129,14 +129,12 @@ async fn the_rules_are_saved_and_lock_when_the_tournament_starts() {
     }
     publish(&app, &ana, "copa").await;
     register(&app, "copa", &[&p[0], &p[1], &p[2], &p[3]]).await;
-    for team in [&p[0..2], &p[2..4]] {
-        let (status, f) = crate::teams::new_team(&app, &ana, &team[0]).await;
-        assert_eq!(status, StatusCode::OK, "{f}");
-        let id = crate::teams::team_of(&f, &team[0]).unwrap()["id"]
-            .as_i64()
-            .unwrap();
-        crate::teams::move_to(&app, &ana, id, &team[1]).await;
-    }
+    let teams = json!([
+        crate::teams::new_team(&[&p[0], &p[1]]),
+        crate::teams::new_team(&[&p[2], &p[3]]),
+    ]);
+    let (status, f) = crate::teams::save(&app, &ana, teams).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // O mesmo não é mudança, e qualquer outra, inclusive a de resultado, é recusada.

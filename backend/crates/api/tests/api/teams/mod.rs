@@ -1,6 +1,6 @@
 //! Testes de `teams` no TDM: a formação antes do início (`formation`: troca
-//! de modo com inscritos, sorteio aleatório e balanceado, mover jogadores,
-//! reserva, iniciar com time incompleto) e o time depois de formado
+//! de modo com inscritos, sorteio aleatório e balanceado, salvar a formação
+//! inteira, iniciar com time incompleto) e o time depois de formado
 //! (`roster`: nome, capitão, substituição, quem sai da comunidade). O
 //! seeding fica em `participants::seeding`. Helpers para montar um TDM.
 
@@ -52,32 +52,21 @@ pub async fn draw(app: &Router, who: &User, method: &str) -> (StatusCode, Value)
     .await
 }
 
-pub async fn new_team(app: &Router, who: &User, player: &User) -> (StatusCode, Value) {
-    post(
+/// Salva a formação: `teams` é a lista de times (`id`, `members`, `captain`).
+pub async fn save(app: &Router, who: &User, teams: Value) -> (StatusCode, Value) {
+    put(
         app,
-        &format!("{COPA}/teams"),
+        &format!("{COPA}/teams/formation"),
         who,
-        json!({ "user_id": player.id }),
+        json!({ "teams": teams }),
     )
     .await
 }
 
-pub async fn move_to(app: &Router, who: &User, team: i64, player: &User) -> (StatusCode, Value) {
-    put_empty(
-        app,
-        &format!("{COPA}/teams/{team}/members/{}", player.id),
-        who,
-    )
-    .await
-}
-
-pub async fn to_reserve(app: &Router, who: &User, team: i64, player: &User) -> (StatusCode, Value) {
-    delete(
-        app,
-        &format!("{COPA}/teams/{team}/members/{}", player.id),
-        who,
-    )
-    .await
+/// Um time novo, para `save`: o primeiro de `players` é o capitão.
+pub fn new_team(players: &[&User]) -> Value {
+    let ids: Vec<i64> = players.iter().map(|p| p.id).collect();
+    json!({ "members": ids, "captain": ids[0] })
 }
 
 /// O time de `player` na formação (`None`: reserva).
@@ -129,18 +118,16 @@ pub async fn formed(app: &Router, ana: &User, body: Value, size: usize, who: &[&
     create_tournament(app, ana, body).await;
     publish(app, ana, "copa").await;
     register(app, "copa", who).await;
-    let mut teams = Vec::new();
-    for chunk in who.chunks(size) {
-        let (status, f) = new_team(app, ana, chunk[0]).await;
-        assert_eq!(status, StatusCode::OK, "{f}");
-        let team = team_of(&f, chunk[0]).unwrap()["id"].as_i64().unwrap();
-        for p in &chunk[1..] {
-            let (status, f) = move_to(app, ana, team, p).await;
-            assert_eq!(status, StatusCode::OK, "{f}");
-        }
-        teams.push(team);
-    }
-    teams
+    let (status, f) = save(
+        app,
+        ana,
+        Value::Array(who.chunks(size).map(new_team).collect()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    who.chunks(size)
+        .map(|chunk| team_of(&f, chunk[0]).unwrap()["id"].as_i64().unwrap())
+        .collect()
 }
 
 /// `formed` e inicia, com a ordem da chave na ordem dos times.

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from teams where tournament_id = $1 and id <> all($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4080e0d4d26a4c7585b83f31d48ab830a15a25b4801a75f68d746004a7d76117"
+}

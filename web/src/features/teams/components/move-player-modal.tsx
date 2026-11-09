@@ -5,7 +5,6 @@ import { type RefObject, useState } from "react";
 
 import { FormModal } from "@/shared/ui/form-modal";
 import { Select } from "@/shared/ui/select";
-import { useMovePlayer } from "../hooks/use-move-player";
 import { useTeamName } from "../hooks/use-team-name";
 import {
   canMove,
@@ -15,16 +14,13 @@ import {
 } from "../lib/formation";
 
 type Props = {
-  tenant: string;
-  tournament: string;
   formation: Formation;
-  userId: number;
   /** O apelido como aparece (já com "Conta excluída"). */
   name: string;
   from: Spot;
   returnFocusTo?: RefObject<HTMLElement | null>;
   onClose: () => void;
-  onDone: (formation: Formation) => void;
+  onMove: (to: Destination) => void;
 };
 
 /** O valor do `<option>` de volta para o destino. */
@@ -35,22 +31,19 @@ function parse(value: string): Destination {
 /**
  * "Mover para…" de um jogador, a alternativa ao arrastar (celular e
  * teclado): os times com vaga (com quantos têm), um time novo com ele como
- * capitão e a reserva, tirando o lugar onde ele já está.
+ * capitão e a reserva, tirando o lugar onde ele já está. Muda só o rascunho
+ * da formação.
  */
 export function MovePlayerModal({
-  tenant,
-  tournament,
   formation,
-  userId,
   name,
   from,
   returnFocusTo,
   onClose,
-  onDone,
+  onMove,
 }: Props) {
   const t = useTranslations("Team.move");
   const teamName = useTeamName();
-  const { move, pending, error } = useMovePlayer(tenant, tournament);
   const [to, setTo] = useState("");
   const teams = formation.teams.filter((team) =>
     canMove(formation, from, team.id),
@@ -60,12 +53,10 @@ export function MovePlayerModal({
     <FormModal
       title={t("title", { name })}
       submitLabel={t("submit")}
-      pending={pending}
       submitDisabled={to === ""}
-      error={error}
       returnFocusTo={returnFocusTo}
       onClose={onClose}
-      onSubmit={() => move(userId, from, parse(to), onDone)}
+      onSubmit={() => onMove(parse(to))}
     >
       <Select
         labelText={t("label")}

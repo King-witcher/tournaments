@@ -2,8 +2,6 @@ import { useTranslations } from "next-intl";
 import type { HTMLAttributes, ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
-import { ErrorText } from "@/shared/ui/error-text";
-import { Spinner } from "@/shared/ui/spinner";
 import { useTeamName } from "../hooks/use-team-name";
 import { teamBlockId } from "../lib/focus";
 import { EmptySlot } from "./empty-slot";
@@ -24,10 +22,6 @@ type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
   indentSlots?: boolean;
   /** Um jogador arrastado pode ser solto aqui e está em cima. */
   highlight?: boolean;
-  /** Uma ação neste time está em andamento (soltar alguém nele). */
-  busy?: boolean;
-  /** O erro da última ação neste time, já traduzido. */
-  error?: string;
   /** Para receber jogadores arrastados (`useDroppable`). */
   ref?: (node: HTMLElement | null) => void;
   /** Os jogadores (`PlayerLine`), o capitão primeiro. */
@@ -49,8 +43,6 @@ export function TeamBlock({
   emptySlots = 0,
   indentSlots,
   highlight,
-  busy,
-  error,
   children,
   ...rest
 }: Props) {
@@ -64,7 +56,6 @@ export function TeamBlock({
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-name`}
-      aria-busy={busy || undefined}
       highlight={highlight}
       {...rest}
     >
@@ -78,12 +69,7 @@ export function TeamBlock({
           {name}
         </h3>
         {state && <span className={styles.state}>{state}</span>}
-        {(actions || busy) && (
-          <span className={styles.actions}>
-            {busy && <Spinner label={t("saving")} />}
-            {actions}
-          </span>
-        )}
+        {actions && <span className={styles.actions}>{actions}</span>}
       </div>
       <ul>
         {children}
@@ -93,7 +79,6 @@ export function TeamBlock({
           <EmptySlot key={slot} indented={indentSlots} />
         ))}
       </ul>
-      {error && <ErrorText>{error}</ErrorText>}
     </FormationBlock>
   );
 }

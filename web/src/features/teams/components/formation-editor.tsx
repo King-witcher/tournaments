@@ -9,6 +9,7 @@ import { type Formation, formationCounts, MIN_TEAMS } from "../lib/formation";
 import { DrawTeamsButton } from "./draw-teams-button";
 import { EditableReserves } from "./editable-reserves";
 import { EditableTeam } from "./editable-team";
+import { FormationActions } from "./formation-actions";
 import { FormationBoard } from "./formation-board";
 import { FormationDnd } from "./formation-dnd";
 import { NewTeamZone } from "./new-team-zone";
@@ -26,9 +27,10 @@ type Props = {
 /**
  * A formação dos times para a organização, antes de iniciar: o aviso enquanto
  * faltam times completos e os times e reservas, com "Sortear times", o
- * arrastar entre eles e o ⋯ de cada jogador. Cada ação mostra na hora a
- * formação que a API devolveu; quando a página recarrega (outra pessoa
- * mexeu), vale a dela.
+ * arrastar entre eles e o ⋯ de cada jogador. Tudo muda um rascunho na tela,
+ * que "Salvar times" grava de uma vez (`FormationActions`); quando a página
+ * recarrega (outra pessoa mexeu), o rascunho é reaplicado sobre a formação
+ * dela.
  */
 export function FormationEditor({
   tenant,
@@ -57,6 +59,7 @@ export function FormationEditor({
                   tenant={tenant}
                   tournament={tournament}
                   formation={formation}
+                  unsaved={board.dirty}
                   onDrawn={board.replace}
                 />
               }
@@ -76,13 +79,13 @@ export function FormationEditor({
             </TeamsColumn>
           }
           reserves={
-            <EditableReserves
-              tenant={tenant}
-              tournament={tournament}
-              board={board}
-              checkIn={checkIn}
-            />
+            <EditableReserves tenant={tenant} board={board} checkIn={checkIn} />
           }
+        />
+        <FormationActions
+          tenant={tenant}
+          tournament={tournament}
+          board={board}
         />
       </Stack>
     </FormationDnd>

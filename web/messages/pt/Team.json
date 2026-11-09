@@ -16,6 +16,7 @@
     "leftover": "{count, plural, one {O último inscrito fica} other {Os # últimos inscritos ficam}} de reserva.",
     "replaceTeams": "Os times atuais, com nomes e capitães, são desfeitos.",
     "replaceTeamsAndOrder": "Os times atuais, com nomes e capitães, e a ordem da chave são desfeitos.",
+    "discardDraft": "As mudanças não salvas se perdem.",
     "submit": "Sortear",
     "short": "O sorteio precisa de pelo menos {size} inscritos; {count, plural, =0 {ainda não há nenhum} one {só há #} other {só há #}}.",
     "shortCheckIn": "O sorteio usa só quem fez check-in e precisa de pelo menos {size}; {count, plural, =0 {ninguém fez ainda} one {só # fez} other {só # fizeram}}."
@@ -44,7 +45,11 @@
     "notCheckedInTip": "Ainda não fez o check-in. Sem ele, não entra na chave."
   },
   "seed": "#{seed}",
-  "saving": "Salvando…",
+  "formation": {
+    "changed": "Times alterados. Salve para valer.",
+    "save": "Salvar times",
+    "saved": "Times salvos."
+  },
   "playerActions": "Ações de {name}",
   "teamActions": "Ações do time {name}",
   "move": {

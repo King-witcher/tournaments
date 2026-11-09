@@ -1,7 +1,8 @@
-//! SQL da formação dos times do TDM (criar, mover jogadores, nome e
+//! SQL da formação dos times do TDM (gravar o arranjo inteiro, nome e
 //! capitão) e da substituição durante o torneio.
 
-use chrono::{DateTime, Utc};
+use std::collections::HashMap;
+
 use sqlx::PgConnection;
 
 use crate::{
@@ -14,7 +15,6 @@ pub struct Player {
     pub user_id: i64,
     pub nickname: String,
     pub avatar_url: Option<String>,
-    pub registered_at: DateTime<Utc>,
     pub checked_in: bool,
     pub left: bool,
     pub team_id: Option<i64>,
@@ -28,7 +28,6 @@ pub async fn players(
     let mut rows = sqlx::query_as!(
         Player,
         r#"select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
-                  p.registered_at,
                   p.checked_in_at is not null as "checked_in!",
                   m.left_at is not null as "left!", p.team_id
            from participants p
@@ -151,39 +150,6 @@ pub async fn set_team(
     Ok(done.rows_affected() > 0)
 }
 
-/// Tira `user_id` do time dele (ele fica sem time). O time que fica vazio
-/// some; o capitão que sai passa a capitania ao jogador do time inscrito há
-/// mais tempo (`hand_over`).
-pub async fn leave_team(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    user_id: i64,
-) -> Result<(), sqlx::Error> {
-    let Some(Some(team)) = sqlx::query_scalar!(
-        "select team_id from participants where tournament_id = $1 and user_id = $2",
-        tournament.get(),
-        user_id
-    )
-    .fetch_optional(&mut *conn)
-    .await?
-    else {
-        return Ok(());
-    };
-    if !hand_over(conn, tournament, team, user_id, false).await? {
-        // Era o único: o time some (e ele fica sem time pela FK).
-        sqlx::query!(
-            "delete from teams where tournament_id = $1 and id = $2",
-            tournament.get(),
-            team
-        )
-        .execute(conn)
-        .await?;
-        return Ok(());
-    }
-    set_team(conn, tournament, user_id, None).await?;
-    Ok(())
-}
-
 /// Se `leaving` é o capitão do time `team`, a capitania passa ao jogador do
 /// time inscrito há mais tempo (`active_only`: entre os que estão na
 /// comunidade). `false` se não há a quem passar (e o capitão fica).
@@ -221,6 +187,114 @@ pub async fn hand_over(
     .execute(conn)
     .await?;
     Ok(true)
+}
+
+/// Um time como a formação salva o quer: sem `id`, um time novo.
+pub struct ArrangedTeam {
+    pub id: Option<i64>,
+    /// Pelo menos um jogador.
+    pub members: Vec<i64>,
+    /// Um dos `members`.
+    pub captain: i64,
+}
+
+/// Os times do torneio e o capitão de cada um.
+pub async fn captains(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+) -> Result<HashMap<i64, i64>, sqlx::Error> {
+    let rows = sqlx::query!(
+        "select id, captain from teams where tournament_id = $1",
+        tournament.get()
+    )
+    .fetch_all(conn)
+    .await?;
+    Ok(rows.into_iter().map(|r| (r.id, r.captain)).collect())
+}
+
+/// Grava a formação inteira: os times que não vêm somem, quem não está em
+/// nenhum fica sem time, os que vêm com id ficam com esses jogadores e esse
+/// capitão (o nome e o seed continuam) e os sem id nascem agora. `current` são
+/// os capitães de agora (`captains`).
+///
+/// O capitão é único por torneio num índice comum, conferido linha a linha:
+/// quem troca de capitão passa antes por um valor provisório (o id negativo do
+/// time, que não é nenhum inscrito), que a FK do capitão aceita porque só
+/// confere no commit, e depois recebe o definitivo. Os times novos nascem por
+/// último, com o capitão deles já livre.
+pub async fn arrange(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    tournament: TournamentId,
+    current: &HashMap<i64, i64>,
+    teams: &[ArrangedTeam],
+) -> Result<(), sqlx::Error> {
+    let kept: Vec<(i64, &ArrangedTeam)> = teams.iter().filter_map(|t| Some((t.id?, t))).collect();
+    let kept_ids: Vec<i64> = kept.iter().map(|(id, _)| *id).collect();
+    sqlx::query!(
+        "delete from teams where tournament_id = $1 and id <> all($2)",
+        tournament.get(),
+        &kept_ids
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    let placed: Vec<i64> = teams.iter().flat_map(|t| t.members.clone()).collect();
+    sqlx::query!(
+        r#"update participants set team_id = null
+           where tournament_id = $1 and team_id is not null and user_id <> all($2)"#,
+        tournament.get(),
+        &placed
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    let (changed, captains): (Vec<i64>, Vec<i64>) = kept
+        .iter()
+        .filter(|(id, team)| current.get(id) != Some(&team.captain))
+        .map(|(id, team)| (*id, team.captain))
+        .unzip();
+    sqlx::query!(
+        "update teams set captain = -id where tournament_id = $1 and id = any($2)",
+        tournament.get(),
+        &changed
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    let (users, targets): (Vec<i64>, Vec<i64>) = kept
+        .iter()
+        .flat_map(|(id, team)| team.members.iter().map(move |user| (*user, *id)))
+        .unzip();
+    sqlx::query!(
+        r#"update participants p set team_id = m.team
+           from unnest($2::bigint[], $3::bigint[]) as m(user_id, team)
+           where p.tournament_id = $1 and p.user_id = m.user_id"#,
+        tournament.get(),
+        &users,
+        &targets
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    sqlx::query!(
+        r#"update teams t set captain = c.captain
+           from unnest($2::bigint[], $3::bigint[]) as c(id, captain)
+           where t.tournament_id = $1 and t.id = c.id"#,
+        tournament.get(),
+        &changed,
+        &captains
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    for team in teams.iter().filter(|t| t.id.is_none()) {
+        let players: Vec<i64> = std::iter::once(team.captain)
+            .chain(team.members.iter().copied().filter(|u| *u != team.captain))
+            .collect();
+        create(conn, tenant, tournament, &players).await?;
+    }
+    Ok(())
 }
 
 /// O capitão do time `team` passa a ser `captain`.

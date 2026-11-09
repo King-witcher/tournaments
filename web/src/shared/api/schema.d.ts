@@ -1725,7 +1725,7 @@ export interface paths {
         };
         get: operations["get_teams"];
         put?: never;
-        post: operations["create_team"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1748,6 +1748,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/teams/formation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["save_team_formation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/teams/{team}": {
         parameters: {
             query?: never;
@@ -1762,22 +1778,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_team"];
-        trace?: never;
-    };
-    "/tenants/{slug}/tournaments/{tournament}/teams/{team}/members/{user_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["put_member"];
-        post?: never;
-        delete: operations["delete_member"];
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/tenants/{slug}/tournaments/{tournament}/teams/{team}/substitution": {
@@ -2415,6 +2415,25 @@ export interface components {
             available: components["schemas"]["AvailableEvent"][];
             webhook?: components["schemas"]["WebhookSettings"] | null;
         };
+        /** @description Um time da formação salva. */
+        DraftTeam: {
+            /**
+             * Format: int64
+             * @description `user_id` do capitão, um dos `members`. Pode faltar só no time vazio.
+             */
+            captain?: number | null;
+            /**
+             * Format: int64
+             * @description Id de um time do torneio, que guarda o nome e o seed; sem id, um time
+             *     novo.
+             */
+            id?: number | null;
+            /**
+             * @description Os `user_id`, todos inscritos, sem repetir e no máximo o tamanho do
+             *     time.
+             */
+            members: number[];
+        };
         /**
          * @description Como sortear os times.
          * @enum {string}
@@ -2525,6 +2544,13 @@ export interface components {
          * @enum {string}
          */
         FinalTie: "seed" | "organizer";
+        /**
+         * @description A formação inteira, salva de uma vez: quem não aparece em nenhum time fica
+         *     de reserva, e o time existente que não aparece (ou vem vazio) some.
+         */
+        FormationDraft: {
+            teams: components["schemas"]["DraftTeam"][];
+        };
         /** @description Um inscrito sem time. */
         FormationPlayer: {
             avatar_url?: string | null;
@@ -2532,8 +2558,6 @@ export interface components {
             left: boolean;
             /** @description Apelido no tenant; vazio quando a conta foi excluída. */
             nickname: string;
-            /** Format: date-time */
-            registered_at: string;
             /** Format: int64 */
             user_id: number;
         };
@@ -3105,14 +3129,6 @@ export interface components {
         NewPassword: {
             /** @description 8 a 128 caracteres. */
             password: string;
-        };
-        /** @description Um time novo com um jogador, que vira o capitão. */
-        NewTeam: {
-            /**
-             * Format: int64
-             * @description Um inscrito (sai do time em que estava).
-             */
-            user_id: number;
         };
         /** @description O arquivo que o navegador vai mandar. */
         NewUpload: {
@@ -4363,6 +4379,11 @@ export interface components {
              *     chave.
              */
             has_check_in: boolean;
+            /**
+             * @description `user_id` de todos os inscritos, na ordem de inscrição: a tela reproduz
+             *     a capitania automática e a ordem dos jogadores no rascunho.
+             */
+            registration_order: number[];
             /**
              * @description Os inscritos sem time, na ordem de inscrição (no TDM em andamento,
              *     também quem foi substituído).
@@ -13276,80 +13297,6 @@ export interface operations {
             };
         };
     };
-    create_team: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NewTeam"];
-            };
-        };
-        responses: {
-            /** @description Time novo com o inscrito como capitão (ele sai do time em que estava; o time que fica vazio some) */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamFormation"];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden (só organizer ou owner) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found, participant.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tournament.not_tdm, tournament.participants_locked (já começou) */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description request.invalid_body */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
     draw_teams: {
         parameters: {
             query?: never;
@@ -13414,6 +13361,80 @@ export interface operations {
                 };
             };
             /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    save_team_formation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormationDraft"];
+            };
+        };
+        responses: {
+            /** @description A formação inteira gravada numa transação: cada time com seus jogadores e capitão (time existente guarda o nome e o seed; sem id, nasce um novo), quem não aparece fica de reserva e o time que não aparece, ou vem vazio, some. Time incompleto é aceito (iniciar é que exige completo) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found, participant.not_found (não está inscrito) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.participants_locked (já começou), team.full {max}, team.player_in_team (jogador em dois times) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description team.captain_invalid (não é jogador do time), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -13500,154 +13521,6 @@ export interface operations {
             };
             /** @description team.name_invalid {max}, team.captain_invalid (não é jogador do time), request.invalid_body */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    put_member: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-                /** @description Id do time */
-                team: number;
-                /** @description O inscrito */
-                user_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description O inscrito entra no time (sai do que estava; o capitão que sai passa a capitania ao jogador inscrito há mais tempo; o time que fica vazio some). Já estar no time não muda nada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamFormation"];
-                };
-            };
-            /** @description request.invalid_path */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden (só organizer ou owner) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found, team.not_found, participant.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tournament.not_tdm, tournament.participants_locked, team.full {max} */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    delete_member: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-                /** @description Id do time */
-                team: number;
-                /** @description O jogador */
-                user_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description O jogador sai do time e fica de reserva (o capitão passa a capitania; o time que fica vazio some) */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamFormation"];
-                };
-            };
-            /** @description request.invalid_path */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden (só organizer ou owner) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found, team.not_found, participant.not_found (não está nesse time) */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tournament.not_tdm, tournament.participants_locked */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -18,6 +18,8 @@ type Props = {
   tenant: string;
   tournament: string;
   formation: Formation;
+  /** Há mudança não salva: o Modal avisa que ela se perde. */
+  unsaved: boolean;
   /** Sorteou: a formação nova. */
   onDrawn: (formation: Formation) => void;
 };
@@ -30,6 +32,7 @@ export function DrawTeamsButton({
   tenant,
   tournament,
   formation,
+  unsaved,
   onDrawn,
 }: Props) {
   const t = useTranslations("Team.draw");
@@ -61,6 +64,7 @@ export function DrawTeamsButton({
           tenant={tenant}
           tournament={tournament}
           formation={formation}
+          unsaved={unsaved}
           trigger={trigger}
           onClose={() => setOpen(false)}
           onDrawn={(data) => {
@@ -76,12 +80,14 @@ export function DrawTeamsButton({
 
 /**
  * O Modal aberto: a escolha entre balanceado e aleatório e o que o resultado
- * não mostra de antemão. Um a cada abertura, para voltar ao padrão.
+ * não mostra de antemão (o que se desfaz, o que não foi salvo). Um a cada
+ * abertura, para voltar ao padrão.
  */
 function DrawTeamsModal({
   tenant,
   tournament,
   formation,
+  unsaved,
   trigger,
   onClose,
   onDrawn,
@@ -142,6 +148,7 @@ function DrawTeamsModal({
           {t(hasOrder ? "replaceTeamsAndOrder" : "replaceTeams")}
         </Notice>
       )}
+      {unsaved && <Notice kind="warning">{t("discardDraft")}</Notice>}
     </FormModal>
   );
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  p.registered_at,\n                  p.checked_in_at is not null as \"checked_in!\",\n                  m.left_at is not null as \"left!\", p.team_id\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1\n           order by p.registered_at, p.user_id",
+  "query": "select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  p.checked_in_at is not null as \"checked_in!\",\n                  m.left_at is not null as \"left!\", p.team_id\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1\n           order by p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
@@ -33,29 +33,18 @@
       },
       {
         "ordinal": 3,
-        "name": "registered_at",
-        "type_info": "Timestamptz",
-        "origin": {
-          "Table": {
-            "table": "participants",
-            "name": "registered_at"
-          }
-        }
-      },
-      {
-        "ordinal": 4,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "left!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "team_id",
         "type_info": "Int8",
         "origin": {
@@ -75,11 +64,10 @@
       false,
       false,
       null,
-      false,
       null,
       null,
       true
     ]
   },
-  "hash": "bed8b8bfd8f593e98c58656294d6b05dfcfd31b8af433a599593b74a76096e2c"
+  "hash": "aa6de69ecb1a358ac6c9fbebfb69fbb8b1aa825587a509f6027823729e4de3b9"
 }

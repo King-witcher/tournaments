@@ -31,7 +31,7 @@ async fn switching_the_mode_with_registrants_redoes_the_teams() {
     assert_eq!(reserves(&f), p.iter().map(|u| u.id).collect::<Vec<_>>());
 
     // Um time formado some ao mudar o tamanho.
-    new_team(&app, &ana, &p[0]).await;
+    save(&app, &ana, json!([new_team(&[&p[0]])])).await;
     let (status, _) = patch(&app, COPA, &ana, json!({ "team_size": 3 })).await;
     assert_eq!(status, StatusCode::OK);
     assert!(
@@ -152,55 +152,187 @@ async fn balanced_draw_snakes_by_the_community_rating() {
 }
 
 #[tokio::test]
-async fn the_organizer_moves_players_between_teams_and_the_reserve() {
+async fn the_organizer_saves_the_whole_formation() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 5).await;
+    create_tournament(&app, &ana, tdm(2, json!({}))).await;
+    publish(&app, &ana, "copa").await;
+    register(&app, "copa", &[&p[0], &p[1], &p[2], &p[3], &p[4]]).await;
+
+    // Dois times novos; o resto, reserva. Time incompleto passa.
+    let teams = json!([new_team(&[&p[0], &p[1]]), new_team(&[&p[2]])]);
+    let (status, f) = save(&app, &ana, teams).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert_eq!(rosters(&f), [vec![p[0].id, p[1].id], vec![p[2].id]]);
+    assert_eq!(reserves(&f), [p[3].id, p[4].id]);
+    assert_eq!(
+        f["registration_order"],
+        json!(p.iter().map(|u| u.id).collect::<Vec<_>>())
+    );
+
+    // O time que fica guarda o id e o nome; o capitão enviado vale, mesmo
+    // saindo o antigo. O que não vem some, e quem não aparece fica de reserva.
+    let (first, second) = (
+        team_of(&f, &p[0]).unwrap()["id"].as_i64().unwrap(),
+        team_of(&f, &p[2]).unwrap()["id"].as_i64().unwrap(),
+    );
+    let uri = format!("{COPA}/teams/{first}");
+    let (status, body) = patch(&app, &uri, &ana, json!({ "name": "Os Bons" })).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let teams = json!([{ "id": first, "members": [p[1].id, p[3].id], "captain": p[3].id }]);
+    let (status, f) = save(&app, &ana, teams).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert_eq!(rosters(&f), [vec![p[3].id, p[1].id]]);
+    assert_eq!(f["teams"][0]["name"], "Os Bons");
+    assert_eq!(f["teams"][0]["captain"], p[3].id);
+    assert_eq!(reserves(&f), [p[0].id, p[2].id, p[4].id]);
+    let (status, body) = save(
+        &app,
+        &ana,
+        json!([{ "id": second, "members": [p[2].id], "captain": p[2].id }]),
+    )
+    .await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::NOT_FOUND, err("team.not_found"))
+    );
+
+    // Time vazio some, com ou sem id.
+    let (status, f) = save(&app, &ana, json!([{ "id": first, "members": [] }])).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert!(rosters(&f).is_empty());
+    let (status, f) = save(&app, &ana, json!([{ "members": [] }])).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert_eq!(reserves(&f).len(), 5);
+
+    // Só a organização; quem vê o torneio vê os times.
+    assert_eq!(save(&app, &bia, json!([])).await.0, StatusCode::FORBIDDEN);
+    assert_eq!(
+        get(&app, &format!("{COPA}/teams"), &bia).await.0,
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
+async fn the_saved_formation_keeps_the_captains_it_was_sent() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let teams = formed(
+        &app,
+        &ana,
+        tdm(2, json!({})),
+        2,
+        &[&p[0], &p[1], &p[2], &p[3]],
+    )
+    .await;
+    let order = json!({ "team_ids": [teams[1], teams[0]] });
+    let (status, body) = put(&app, &format!("{COPA}/seeding"), &ana, order).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    // Os capitães trocam de time um com o outro (o índice é um capitão por
+    // torneio, e a troca passa por ele); cada time segue com o seed dele.
+    let body = json!([
+        { "id": teams[0], "members": [p[2].id, p[1].id], "captain": p[2].id },
+        { "id": teams[1], "members": [p[0].id, p[3].id], "captain": p[0].id },
+    ]);
+    let (status, f) = save(&app, &ana, body).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    let (first, second) = (team_of(&f, &p[2]).unwrap(), team_of(&f, &p[0]).unwrap());
+    assert_eq!(
+        (
+            first["id"].clone(),
+            first["captain"].clone(),
+            first["seed"].clone()
+        ),
+        (json!(teams[0]), json!(p[2].id), json!(2))
+    );
+    assert_eq!(
+        (
+            second["id"].clone(),
+            second["captain"].clone(),
+            second["seed"].clone()
+        ),
+        (json!(teams[1]), json!(p[0].id), json!(1))
+    );
+
+    // O capitão de um time existente vai ser capitão de um time novo.
+    let body = json!([
+        { "id": teams[1], "members": [p[3].id], "captain": p[3].id },
+        { "members": [p[0].id], "captain": p[0].id },
+    ]);
+    let (status, f) = save(&app, &ana, body).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert_eq!(team_of(&f, &p[3]).unwrap()["id"], teams[1]);
+    assert_eq!(team_of(&f, &p[0]).unwrap()["captain"], p[0].id);
+}
+
+#[tokio::test]
+async fn the_saved_formation_is_validated() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
-    create_tournament(&app, &ana, tdm(2, json!({}))).await;
-    publish(&app, &ana, "copa").await;
-    register(&app, "copa", &[&p[0], &p[1], &p[2]]).await;
+    let teams = formed(&app, &ana, tdm(2, json!({})), 2, &[&p[0], &p[1]]).await;
+    register(&app, "copa", &[&p[2]]).await;
+    let team = |members: &[&User], captain: &User| {
+        let ids: Vec<i64> = members.iter().map(|u| u.id).collect();
+        json!({ "id": teams[0], "members": ids, "captain": captain.id })
+    };
 
-    let (status, f) = new_team(&app, &ana, &p[0]).await;
-    assert_eq!(status, StatusCode::OK, "{f}");
-    let team = team_of(&f, &p[0]).unwrap()["id"].as_i64().unwrap();
-    let (_, f) = move_to(&app, &ana, team, &p[1]).await;
-    assert_eq!(rosters(&f), [vec![p[0].id, p[1].id]]);
-    assert_eq!(reserves(&f), [p[2].id]);
-    // Cheio.
-    let (status, body) = move_to(&app, &ana, team, &p[2]).await;
     assert_eq!(
-        (status, body),
+        save(&app, &ana, json!([team(&[&p[0], &p[1], &p[2]], &p[0])])).await,
         (
             StatusCode::CONFLICT,
             json!({ "error": "team.full", "params": { "max": 2 } })
         )
     );
-    // Repetir não muda nada.
-    assert_eq!(move_to(&app, &ana, team, &p[1]).await.0, StatusCode::OK);
-
-    // O capitão vai para a reserva: a capitania passa para P2.
-    let (status, f) = to_reserve(&app, &ana, team, &p[0]).await;
-    assert_eq!(status, StatusCode::OK, "{f}");
-    assert_eq!(team_of(&f, &p[1]).unwrap()["captain"], p[1].id);
-    // P2 vai para um time novo: o antigo, vazio, some.
-    let (_, f) = new_team(&app, &ana, &p[1]).await;
-    assert_eq!(rosters(&f).len(), 1);
-    assert_ne!(team_of(&f, &p[1]).unwrap()["id"], team);
     assert_eq!(
-        move_to(&app, &ana, team, &p[2]).await,
-        (StatusCode::NOT_FOUND, err("team.not_found"))
-    );
-
-    // Só a organização; quem não está inscrito, não.
-    assert_eq!(new_team(&app, &bia, &p[2]).await.0, StatusCode::FORBIDDEN);
-    assert_eq!(
-        new_team(&app, &ana, &bia).await,
+        save(&app, &ana, json!([team(&[&p[0], &bia], &p[0])])).await,
         (StatusCode::NOT_FOUND, err("participant.not_found"))
     );
-    // Quem vê o torneio vê os times.
     assert_eq!(
-        get(&app, &format!("{COPA}/teams"), &bia).await.0,
-        StatusCode::OK
+        save(&app, &ana, json!([team(&[&p[0], &p[0]], &p[0])])).await,
+        (StatusCode::CONFLICT, err("team.player_in_team"))
+    );
+    assert_eq!(
+        save(&app, &ana, json!([team(&[&p[0]], &p[2])])).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("team.captain_invalid")
+        )
+    );
+    assert_eq!(
+        save(
+            &app,
+            &ana,
+            json!([{ "id": teams[0] + 1000, "members": [p[0].id], "captain": p[0].id }])
+        )
+        .await,
+        (StatusCode::NOT_FOUND, err("team.not_found"))
+    );
+    // Nada mudou.
+    let f = formation(&app, &ana).await;
+    assert_eq!(rosters(&f), [vec![p[0].id, p[1].id]]);
+    assert_eq!(reserves(&f), [p[2].id]);
+}
+
+#[tokio::test]
+async fn the_saved_formation_warns_the_realtime() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    create_tournament(&app, &ana, tdm(2, json!({}))).await;
+    publish(&app, &ana, "copa").await;
+    register(&app, "copa", &[&p[0], &p[1]]).await;
+    crate::realtime::clear(&db).await;
+
+    let (status, f) = save(&app, &ana, json!([new_team(&[&p[0], &p[1]])])).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+    assert!(
+        crate::realtime::outbox(&db)
+            .await
+            .contains(&crate::realtime::tournament("copa", None))
     );
 }
 
@@ -247,17 +379,19 @@ async fn the_start_needs_every_team_complete() {
     assert_eq!(seeding.as_array().unwrap().len(), 1);
 
     // A organização troca P4 pelo reserva: dois times completos.
-    let team = team_of(&formation(&app, &ana).await, &p[3]).unwrap()["id"]
-        .as_i64()
-        .unwrap();
-    to_reserve(&app, &ana, team, &p[3]).await;
-    let (status, f) = move_to(&app, &ana, team, &p[4]).await;
+    let team = team_of(&formation(&app, &ana).await, &p[3]).unwrap();
+    let other = team_of(&formation(&app, &ana).await, &p[0]).unwrap();
+    let body = json!([
+        { "id": other["id"], "members": [p[0].id, p[1].id], "captain": p[0].id },
+        { "id": team["id"], "members": [p[2].id, p[4].id], "captain": p[2].id },
+    ]);
+    let (status, f) = save(&app, &ana, body).await;
     assert_eq!(status, StatusCode::OK, "{f}");
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // Depois de começar, a formação não muda.
     assert_eq!(
-        new_team(&app, &ana, &p[3]).await,
+        save(&app, &ana, json!([new_team(&[&p[3]])])).await,
         (StatusCode::CONFLICT, err("tournament.participants_locked"))
     );
     assert_eq!(

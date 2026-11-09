@@ -3,6 +3,7 @@
 import type { components } from "@/shared/api/schema";
 import type { FormationBoardState } from "../hooks/use-formation-board";
 import { useFormationDrop } from "../hooks/use-formation-drop";
+import { isDraftTeam } from "../lib/formation-draft";
 import { DraggablePlayerLine } from "./draggable-player-line";
 import { RenameTeamButton } from "./rename-team-button";
 import { TeamBlock } from "./team-block";
@@ -19,7 +20,8 @@ type Props = {
 
 /**
  * Um time na edição da formação: recebe jogadores arrastados (se tiver
- * vaga), cada jogador se arrasta e tem o ⋯, e o time tem "Renomear".
+ * vaga), cada jogador se arrasta e tem o ⋯, e o time tem "Renomear", que
+ * grava na hora; o time só do rascunho, que ainda não existe na API, não.
  */
 export function EditableTeam({
   tenant,
@@ -43,12 +45,14 @@ export function EditableTeam({
         />
       }
       actions={
-        <RenameTeamButton
-          tenant={tenant}
-          tournament={tournament}
-          team={team}
-          onDone={board.replace}
-        />
+        !isDraftTeam(team) && (
+          <RenameTeamButton
+            tenant={tenant}
+            tournament={tournament}
+            team={team}
+            onDone={board.adopt}
+          />
+        )
       }
       emptySlots={formation.team_size - team.members.length}
       indentSlots
@@ -58,7 +62,6 @@ export function EditableTeam({
         <DraggablePlayerLine
           key={m.user_id}
           tenant={tenant}
-          tournament={tournament}
           board={board}
           player={m}
           from={team.id}

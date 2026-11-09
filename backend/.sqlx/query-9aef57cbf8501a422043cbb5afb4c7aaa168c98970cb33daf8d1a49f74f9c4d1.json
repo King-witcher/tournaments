@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update participants p set team_id = m.team\n           from unnest($2::bigint[], $3::bigint[]) as m(user_id, team)\n           where p.tournament_id = $1 and p.user_id = m.user_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9aef57cbf8501a422043cbb5afb4c7aaa168c98970cb33daf8d1a49f74f9c4d1"
+}

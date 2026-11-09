@@ -12,7 +12,6 @@ import { PlayerMenu } from "./player-menu";
 
 type Props = {
   tenant: string;
-  tournament: string;
   board: FormationBoardState;
   player: {
     user_id: number;
@@ -34,7 +33,6 @@ type Props = {
  */
 export function DraggablePlayerLine({
   tenant,
-  tournament,
   board,
   player,
   from,
@@ -76,14 +74,12 @@ export function DraggablePlayerLine({
       left={player.left}
       actions={
         <PlayerMenu
-          tenant={tenant}
-          tournament={tournament}
           formation={formation}
-          userId={player.user_id}
           name={name}
           from={from}
           captain={captain}
-          onDone={board.settle}
+          onMove={(to) => board.moveTo(player.user_id, to)}
+          onMakeCaptain={() => board.makeCaptain(player.user_id)}
         />
       }
     />
