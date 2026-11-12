@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/z-index";
+
+// Preso no pé da área visível enquanto a lista dos times rola: com muitos
+// times, "Salvar times" fica à mão de quem arrasta. Sobre os cartões, abaixo
+// do cabeçalho e dos menus; o fundo da página e a borda o separam do que
+// passa por baixo. No fim da página ele volta ao fluxo, sem cobrir a última
+// linha.
+.bar {
+  position: sticky;
+  z-index: z-index.z("overlay");
+  inset-block-end: 0;
+  padding-block: spacing.$spacing-05;
+  background: theme.$background;
+  border-block-start: 1px solid theme.$border-subtle;
+}

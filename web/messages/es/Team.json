@@ -46,7 +46,6 @@
   },
   "seed": "#{seed}",
   "formation": {
-    "changed": "Equipos modificados. Guárdalos para que valgan.",
     "save": "Guardar equipos",
     "saved": "Equipos guardados."
   },

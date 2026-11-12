@@ -46,7 +46,6 @@
   },
   "seed": "#{seed}",
   "formation": {
-    "changed": "Teams changed. Save to apply.",
     "save": "Save teams",
     "saved": "Teams saved."
   },

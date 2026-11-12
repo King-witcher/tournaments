@@ -46,7 +46,6 @@
   },
   "seed": "#{seed}",
   "formation": {
-    "changed": "Times alterados. Salve para valer.",
     "save": "Salvar times",
     "saved": "Times salvos."
   },
