@@ -3,7 +3,7 @@
   "loading": "Loading home…",
   "waiting": {
     "title": "Waiting for you",
-    "stageCheckIn": "Stage {stage} check-in is open"
+    "openTournament": "Open tournament"
   },
   "open": {
     "title": "Registration open",

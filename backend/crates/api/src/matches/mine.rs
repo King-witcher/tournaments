@@ -301,6 +301,7 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
         .or_else(|| mine(false))?;
     let side = view::viewer_side(stage, m, viewer)?;
     let (oa, ob) = view::occupants(stage, m);
+    let task = tasks::match_task(status, stage, m, Some(side), viewer);
     let (opponent, slot) = match side {
         Side::A => (ob, m.b),
         Side::B => (oa, m.a),
@@ -330,7 +331,7 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
             }),
             _ => None,
         },
-        task: tasks::match_task(status, stage, m, Some(side), viewer),
+        task,
         veto: veto::status(stage, m),
         next_map: veto::next_map(status, stage, m, &stage.games_of(m.id)),
         opponent_playing: progress::opponent_playing(
@@ -339,5 +340,6 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
             Some(side),
             &progress::playing(stage),
         ),
+        task_detail: tasks::task_detail(status, stage, m, task, Some(side), viewer),
     })
 }

@@ -258,16 +258,35 @@ async fn next_match_and_placement() {
         (&Value::Null, &json!("P4"))
     );
     assert_eq!(next["task"], "report");
-
-    // Enviou: espera o adversário, que tem de responder.
     let side = side_of(&app, &p[0], "wb-1-1").await;
+    assert_eq!(
+        (
+            &next["task_detail"]["game"],
+            &next["task_detail"]["viewer_side"]
+        ),
+        (&json!(1), &json!(side))
+    );
+
+    // Enviou: espera o adversário, que tem de responder até o prazo.
     let (status, body) = report(&app, &p[0], "wb-1-1", 1, game(side, "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
+    let next = &mine(&app, &p[0]).await[0]["next_match"];
     assert_eq!(
-        mine(&app, &p[0]).await[0]["next_match"]["task"],
-        "await_opponent"
+        (&next["task"], &next["task_detail"]),
+        (&json!("await_opponent"), &Value::Null)
     );
-    assert_eq!(mine(&app, &p[3]).await[0]["next_match"]["task"], "respond");
+    let next = &mine(&app, &p[3]).await[0]["next_match"];
+    assert_eq!(next["task"], "respond");
+    let detail = &next["task_detail"];
+    assert_eq!(
+        (
+            &detail["game"],
+            &detail["reported_by"],
+            &detail["contested_by"]
+        ),
+        (&json!(1), &json!("P1"), &Value::Null)
+    );
+    assert!(detail["confirm_by"].is_string());
 
     // Confirmado: P1 espera o vencedor da outra semifinal; P4 saiu em 3º–4º.
     let (status, body) = confirm(&app, &p[3], "wb-1-1", 1).await;

@@ -99,13 +99,25 @@
   "pending": {
     "title": "Matches waiting for you",
     "item": "{match} · {a} × {b}",
-    "action": {
-      "veto": "Do the veto",
-      "ready": "Mark ready",
-      "respond": "Confirm or dispute",
-      "accept_contest": "View dispute",
-      "report": "Submit game",
-      "resolve": "Resolve"
+    "against": "{match} against {opponent}",
+    "open": "Open match",
+    "deadline": "Confirm or dispute. Without a response, the game counts <deadline></deadline>.",
+    "acceptContest": "Accept or wait for the organizers to resolve it.",
+    "notice": {
+      "report": "Your turn to submit game {game}",
+      "respond": "Game {game} submitted by {opponent}",
+      "accept_contest": "{player} disputed your submission",
+      "accept_contest_unknown": "Your submission was disputed",
+      "ready": "{opponent} marked “Ready”. You're next.",
+      "ready_first": "Your turn to mark “Ready”",
+      "veto": "Your turn in the veto",
+      "ban_map": "Your turn to ban a map",
+      "pick_map": "Your turn to pick a map",
+      "ban_champion": "Your turn to ban a champion",
+      "pick_champion": "Your turn to pick a champion",
+      "resolve": "{player} disputed {reporter}'s submission",
+      "resolve_game": "{player} disputed game {game}",
+      "resolve_unknown": "Game {game} disputed"
     }
   },
   "live": {

@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 
-import { useNextMatchLabel } from "@/features/matches/hooks/use-next-match-label";
+import { useMatchLabels } from "@/features/matches/hooks/use-match-labels";
+import { useTaskNoticeText } from "@/features/matches/hooks/use-task-notice-text";
 import type { Severity } from "@/features/organizing/lib/severity";
 import { CheckInButton } from "@/features/participants/components/check-in-button";
 import { StageCheckInButton } from "@/features/stages/components/stage-check-in-button";
@@ -10,7 +11,7 @@ import { ButtonLink } from "@/shared/ui/button-link";
 import { MetaLines } from "@/shared/ui/meta-lines";
 import { TaskNotice } from "@/shared/ui/task-notice";
 import { localizedName } from "../lib/localize";
-import { playerTask } from "../lib/my-tournaments";
+import { type PlayerTask, playerTask } from "../lib/my-tournaments";
 
 type Schemas = components["schemas"];
 
@@ -24,30 +25,28 @@ type Props = {
 };
 
 /**
- * O que um torneio de quem vê espera dele: a série em que é a vez dele, com o
- * botão que leva a ela, ou o check-in que falta (do torneio ou de uma fase),
- * feito aqui mesmo (uma tarefa que se desfaz e não pede nada além do clique);
- * o da fase no duelo, sem o time na resposta, leva à página do torneio.
+ * O que um torneio de quem vê espera dele, com o torneio no metadado: a série
+ * em que é a vez dele, com o botão que leva a ela, ou o check-in que falta
+ * (do torneio ou de uma fase), feito aqui mesmo (uma tarefa que se desfaz e
+ * não pede nada além do clique); o da fase no duelo, sem o time na resposta,
+ * leva à página do torneio.
  */
 export function MyTaskNotice({ kind, entry, community, focusAfter }: Props) {
-  const t = useTranslations("Home.waiting");
-  const tBracket = useTranslations("Bracket.pending.action");
-  const tStages = useTranslations("Stages.checkIn");
+  const t = useTranslations("Home");
   const locale = useLocale();
   const { tournament } = entry;
   const task = playerTask(entry);
   const teamName = useTeamName();
-  const title = localizedName(tournament, locale);
+  const where = `${community ? `${community} · ` : ""}${localizedName(tournament, locale)}`;
 
   if (task && entry.next_match) {
     return (
       <SeriesTaskNotice
         kind={kind}
-        title={title}
+        where={where}
         entry={entry}
         next={entry.next_match}
-        label={tBracket(task)}
-        community={community}
+        task={task}
       />
     );
   }
@@ -57,8 +56,10 @@ export function MyTaskNotice({ kind, entry, community, focusAfter }: Props) {
     return (
       <TaskNotice
         kind={kind}
-        title={title}
-        meta={`${community ? `${community} · ` : ""}${t("stageCheckIn", { stage: entry.stage })}`}
+        title={t("tournaments.situation.stage_check_in_pending", {
+          stage: entry.stage,
+        })}
+        meta={where}
         action={
           entry.team ? (
             <StageCheckInButton
@@ -77,7 +78,7 @@ export function MyTaskNotice({ kind, entry, community, focusAfter }: Props) {
               kind="ghost"
               size="sm"
             >
-              {tStages("do")}
+              {t("waiting.openTournament")}
             </ButtonLink>
           )
         }
@@ -87,8 +88,8 @@ export function MyTaskNotice({ kind, entry, community, focusAfter }: Props) {
   return (
     <TaskNotice
       kind={kind}
-      title={title}
-      meta={community}
+      title={t("tournaments.situation.check_in_pending")}
+      meta={where}
       action={
         <CheckInButton
           tenant={entry.tenant_slug}
@@ -102,43 +103,51 @@ export function MyTaskNotice({ kind, entry, community, focusAfter }: Props) {
   );
 }
 
+/**
+ * A série em que é a vez de quem vê: a situação no título e, embaixo do
+ * torneio, a série e o adversário (com o mapa, ao enviar) ou o que fazer.
+ */
 function SeriesTaskNotice({
   kind,
-  title,
+  where,
   entry,
   next,
-  label,
-  community,
+  task,
 }: {
   kind: Severity;
-  title: string;
+  /** A comunidade (na lista de várias) e o torneio. */
+  where: string;
   entry: Schemas["MyTournament"];
   next: Schemas["NextMatch"];
-  label: string;
-  community?: string;
+  task: PlayerTask;
 }) {
-  const tBracket = useTranslations("Bracket");
-  const nextLabel = useNextMatchLabel(next);
+  const t = useTranslations("Bracket.pending");
+  const { title, note } = useTaskNoticeText();
+  const { code } = useMatchLabels(next.single);
+  const teamName = useTeamName();
+  const opponent = next.opponent ? teamName(next.opponent) : undefined;
+  const against = opponent && t("against", { match: code(next.key), opponent });
+  const detail = next.task_detail;
+  const line =
+    task === "report"
+      ? against &&
+        `${against}${next.next_map ? ` · ${next.next_map.name}` : ""}`
+      : task === "veto"
+        ? against
+        : note(task, detail);
 
   return (
     <TaskNotice
       kind={kind}
-      title={title}
-      meta={
-        <MetaLines
-          lines={[
-            `${community ? `${community} · ` : ""}${nextLabel}`,
-            next.next_map && tBracket("nextMap", { map: next.next_map.name }),
-          ]}
-        />
-      }
+      title={title(task, detail, opponent)}
+      meta={<MetaLines lines={[where, line]} />}
       action={
         <ButtonLink
           href={`/${entry.tenant_slug}/${entry.tournament.slug}/matches/${next.key}`}
           kind="ghost"
           size="sm"
         >
-          {label}
+          {t("open")}
         </ButtonLink>
       }
     />

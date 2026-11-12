@@ -3,7 +3,7 @@
   "loading": "Cargando el inicio…",
   "waiting": {
     "title": "Esperando tu acción",
-    "stageCheckIn": "Check-in de la fase {stage} abierto"
+    "openTournament": "Abrir torneo"
   },
   "open": {
     "title": "Inscripciones abiertas",

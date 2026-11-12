@@ -119,6 +119,17 @@ impl Stage {
         participant_of(&self.entrants, user_id)
     }
 
+    /// O apelido de `user_id` entre os jogadores dos times do torneio; `None`
+    /// se ele não joga (a organização) ou a conta foi excluída.
+    pub fn nickname(&self, user_id: i64) -> Option<&str> {
+        self.teams
+            .iter()
+            .flat_map(|t| &t.members)
+            .find(|m| m.user_id == user_id)
+            .map(|m| m.nickname.as_str())
+            .filter(|n| !n.is_empty())
+    }
+
     pub fn result(&self, id: MatchId) -> Option<&StoredResult> {
         self.results.iter().find(|r| r.match_id == id)
     }

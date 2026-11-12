@@ -9,8 +9,8 @@ import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio cujas séries acabaram com empate na classificação esperando a
- * organização: a comunidade e o botão que abre a decisão deles na
- * Classificação.
+ * organização: a comunidade e o torneio embaixo do título e o botão que abre
+ * a decisão deles na Classificação.
  */
 export function PendingTiesNotice({
   kind,
@@ -29,8 +29,8 @@ export function PendingTiesNotice({
   return (
     <TaskNotice
       kind={kind}
-      title={localizedName(tournament, locale)}
-      meta={`${community ? `${community} · ` : ""}${t("title")}`}
+      title={t("title")}
+      meta={`${community ? `${community} · ` : ""}${localizedName(tournament, locale)}`}
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}/standings?${OPEN_TIES_QUERY}`}

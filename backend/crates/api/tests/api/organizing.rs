@@ -102,8 +102,8 @@ async fn contested_maps_wait_for_the_organization() {
         (&json!("wb-1-1"), &json!(true), &json!(1))
     );
     assert_eq!(
-        (&item["map"], &item["contested_by"]),
-        (&json!("Awoken"), &json!("P1"))
+        (&item["map"], &item["contested_by"], &item["reported_by"]),
+        (&json!("Awoken"), &json!("P1"), &json!("P2"))
     );
     assert!(item["contested_at"].is_string());
     assert_eq!(found["start_due"], json!([]));

@@ -99,13 +99,25 @@
   "pending": {
     "title": "Séries que esperam você",
     "item": "{match} · {a} × {b}",
-    "action": {
-      "veto": "Fazer o veto",
-      "ready": "Ficar pronto",
-      "respond": "Confirmar ou contestar",
-      "accept_contest": "Ver contestação",
-      "report": "Enviar partida",
-      "resolve": "Resolver"
+    "against": "{match} contra {opponent}",
+    "open": "Abrir série",
+    "deadline": "Confirme ou conteste. Sem resposta, a partida vale <deadline></deadline>.",
+    "acceptContest": "Aceite ou espere a organização resolver.",
+    "notice": {
+      "report": "Sua vez de enviar a partida {game}",
+      "respond": "Partida {game} enviada por {opponent}",
+      "accept_contest": "{player} contestou seu envio",
+      "accept_contest_unknown": "Contestaram seu envio",
+      "ready": "{opponent} marcou “Pronto”. Falta você.",
+      "ready_first": "Sua vez de marcar “Pronto”",
+      "veto": "Sua vez no veto",
+      "ban_map": "Sua vez de banir um mapa",
+      "pick_map": "Sua vez de escolher um mapa",
+      "ban_champion": "Sua vez de banir um campeão",
+      "pick_champion": "Sua vez de escolher um campeão",
+      "resolve": "{player} contestou o envio de {reporter}",
+      "resolve_game": "{player} contestou a partida {game}",
+      "resolve_unknown": "Partida {game} contestada"
     }
   },
   "live": {

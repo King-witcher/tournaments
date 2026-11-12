@@ -50,6 +50,9 @@ pub struct ContestedGame {
     pub map: Option<String>,
     /// Apelido de quem contestou; `null` se a conta não existe mais.
     pub contested_by: Option<String>,
+    /// Apelido de quem enviou a partida contestada; `null` se a conta não
+    /// existe mais.
+    pub reported_by: Option<String>,
     pub contested_at: DateTime<Utc>,
 }
 

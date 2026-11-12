@@ -25,13 +25,29 @@ async fn only_the_captain_of_the_other_team_accepts() {
     let seen = detail(&c.app, cap, KEY).await;
     assert_eq!(seen["games"][0]["task"], "accept_contest");
     assert_eq!(seen["summary"]["task"], "accept_contest");
+    // O aviso diz quem enviou e quem contestou.
+    let named = |d: &Value| {
+        let t = &d["summary"]["task_detail"];
+        (
+            t["game"].clone(),
+            t["reported_by"].clone(),
+            t["contested_by"].clone(),
+            t["viewer_side"].clone(),
+        )
+    };
+    assert_eq!(
+        named(&seen),
+        (json!(1), json!("P2"), json!("P4"), json!("a"))
+    );
     for who in [mate, other_cap, other_mate] {
         let seen = detail(&c.app, who, KEY).await;
         assert_eq!(seen["games"][0]["task"], "await_organizer");
     }
+    let seen = detail(&c.app, &c.ana, KEY).await;
+    assert_eq!(seen["games"][0]["task"], "resolve");
     assert_eq!(
-        detail(&c.app, &c.ana, KEY).await["games"][0]["task"],
-        "resolve"
+        named(&seen),
+        (json!(1), json!("P2"), json!("P4"), Value::Null)
     );
 
     let refused = (StatusCode::FORBIDDEN, err("match.not_accepter"));

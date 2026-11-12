@@ -26,7 +26,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                            '{}') as "translation_names!",
                   coalesce(s.bracket = 'single', false) as "single!",
                   g.stage, g.match_key, g.number, mp.name as "map?", c.nickname as "contested_by?",
-                  g.contested_at as "contested_at!"
+                  r.nickname as "reported_by?", g.contested_at as "contested_at!"
            from tenant_members m
            join tenants te on te.id = m.tenant_id
            join tournaments t on t.tenant_id = m.tenant_id
@@ -34,6 +34,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
            join tournament_stages s on s.tournament_id = g.tournament_id and s.position = g.stage
            left join maps mp on mp.id = g.map_id
            left join tenant_members c on c.tenant_id = g.tenant_id and c.user_id = g.contested_by
+           left join tenant_members r on r.tenant_id = g.tenant_id and r.user_id = g.reported_by
            where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')
              and g.status = 'contested'
            order by g.contested_at, g.id"#,
@@ -60,6 +61,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
             game: r.number,
             map: r.map,
             contested_by: r.contested_by,
+            reported_by: r.reported_by,
             contested_at: r.contested_at,
         })
     })

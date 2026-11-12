@@ -1,24 +1,25 @@
 {
   "contested": {
-    "action": "Resolver",
     "where": "{match}, partida {game}",
-    "whereMap": "{match}, partida {game} ({map})",
-    "by": "{player} contestou <ago></ago>",
-    "byUnknown": "Contestada <ago></ago>"
+    "whereMap": "{match}, partida {game} ({map})"
   },
   "startDue": {
-    "action": "Iniciar",
+    "title": "Passou a hora de iniciar",
+    "action": "Abrir torneio",
     "startedAt": "Início marcado para <date></date>",
     "checkedIn": "{checkedIn} de {registered} fizeram check-in",
     "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in",
     "checkInNotOpen": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, check-in não aberto"
   },
   "pendingTies": {
-    "title": "Empate a decidir",
-    "action": "Decidir"
+    "title": "Empate na classificação",
+    "titleStage": "Empate na fase {stage}",
+    "meta": "Decida a ordem para encerrar o torneio.",
+    "metaStage": "Decida a ordem para encerrar a fase.",
+    "action": "Abrir classificação"
   },
   "stageDue": {
     "title": "Fase {number} pronta para iniciar",
-    "action": "Iniciar"
+    "action": "Abrir torneio"
   }
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  coalesce(s.bracket = 'single', false) as \"single!\",\n                  g.stage, g.match_key, g.number, mp.name as \"map?\", c.nickname as \"contested_by?\",\n                  g.contested_at as \"contested_at!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           join match_games g on g.tournament_id = t.id\n           join tournament_stages s on s.tournament_id = g.tournament_id and s.position = g.stage\n           left join maps mp on mp.id = g.map_id\n           left join tenant_members c on c.tenant_id = g.tenant_id and c.user_id = g.contested_by\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and g.status = 'contested'\n           order by g.contested_at, g.id",
+  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  coalesce(s.bracket = 'single', false) as \"single!\",\n                  g.stage, g.match_key, g.number, mp.name as \"map?\", c.nickname as \"contested_by?\",\n                  r.nickname as \"reported_by?\", g.contested_at as \"contested_at!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           join match_games g on g.tournament_id = t.id\n           join tournament_stages s on s.tournament_id = g.tournament_id and s.position = g.stage\n           left join maps mp on mp.id = g.map_id\n           left join tenant_members c on c.tenant_id = g.tenant_id and c.user_id = g.contested_by\n           left join tenant_members r on r.tenant_id = g.tenant_id and r.user_id = g.reported_by\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and g.status = 'contested'\n           order by g.contested_at, g.id",
   "describe": {
     "columns": [
       {
@@ -122,6 +122,17 @@
       },
       {
         "ordinal": 12,
+        "name": "reported_by?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "contested_at!",
         "type_info": "Timestamptz",
         "origin": {
@@ -150,8 +161,9 @@
       false,
       false,
       false,
+      false,
       true
     ]
   },
-  "hash": "60a253fc4519296c211ccd5ae27bcbafdfe7f1d57932d83e85bd4449499d3e6b"
+  "hash": "99d770fde5b092986c78a776395cf75ce88a5a4954962aed5b09e9cf59542809"
 }

@@ -8,8 +8,8 @@ import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio com a fase seguinte pronta para iniciar (a anterior terminou):
- * a comunidade, a fase e o botão que leva ao torneio, onde a organização abre
- * o check-in e inicia a fase.
+ * a fase no título, a comunidade e o torneio embaixo e o botão que leva ao
+ * torneio, onde a organização abre o check-in e inicia a fase.
  */
 export function StageDueNotice({
   kind,
@@ -28,8 +28,8 @@ export function StageDueNotice({
   return (
     <TaskNotice
       kind={kind}
-      title={localizedName(tournament, locale)}
-      meta={`${community ? `${community} · ` : ""}${t("title", { number: item.stage })}`}
+      title={t("title", { number: item.stage })}
+      meta={`${community ? `${community} · ` : ""}${localizedName(tournament, locale)}`}
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}`}

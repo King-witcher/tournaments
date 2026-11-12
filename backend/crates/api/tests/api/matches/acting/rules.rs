@@ -10,11 +10,12 @@ async fn the_bracket_and_my_tournaments_do_not_charge_whoever_cannot_act() {
     let c = cast(&db, all_captain(), draft("alternating", 1, 1)).await;
     let [cap, mate] = [&c.p[0], &c.p[1]];
     let task_in_bracket = |b: &Value| find(b, KEY)["task"].clone();
-    let next_task = async |who: &User| {
+    let next = async |who: &User| {
         let (status, body) = get(&c.app, "/me/tournaments", who).await;
         assert_eq!(status, StatusCode::OK, "{body}");
-        body["registered"][0]["next_match"]["task"].clone()
+        body["registered"][0]["next_match"].clone()
     };
+    let next_task = async |who: &User| next(who).await["task"].clone();
     assert_eq!(task_in_bracket(&bracket(&c.app, cap).await), "ready");
     assert_eq!(
         task_in_bracket(&bracket(&c.app, mate).await),
@@ -22,9 +23,27 @@ async fn the_bracket_and_my_tournaments_do_not_charge_whoever_cannot_act() {
     );
     assert_eq!(next_task(cap).await, "ready");
     assert_eq!(next_task(mate).await, "await_captain");
-    // Na vez do lado dele, no veto, de novo só o capitão é cobrado.
-    captains_ready(&c).await;
+    // O aviso diz a partida e, no "Pronto", se o adversário já marcou.
     let [other_cap, other_mate] = [&c.p[2], &c.p[3]];
+    let detail = next(cap).await["task_detail"].clone();
+    assert_eq!(
+        (
+            &detail["game"],
+            &detail["opponent_ready"],
+            &detail["veto_step"]
+        ),
+        (&json!(1), &json!(false), &Value::Null)
+    );
+    assert_eq!(next(mate).await["task_detail"], Value::Null);
+    ok_ready(&c, cap).await;
+    assert_eq!(next(other_cap).await["task_detail"]["opponent_ready"], true);
+    // Na vez do lado dele, no veto, de novo só o capitão é cobrado; o aviso diz
+    // o passo.
+    ok_ready(&c, other_cap).await;
+    assert_eq!(
+        next(other_cap).await["task_detail"]["veto_step"],
+        "ban_champion"
+    );
     assert_eq!(next_task(other_cap).await, "veto");
     assert_eq!(next_task(other_mate).await, "await_captain");
     assert_eq!(next_task(cap).await, "await_opponent");

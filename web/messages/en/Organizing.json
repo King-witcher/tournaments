@@ -1,24 +1,25 @@
 {
   "contested": {
-    "action": "Resolve",
     "where": "{match}, game {game}",
-    "whereMap": "{match}, game {game} ({map})",
-    "by": "{player} disputed <ago></ago>",
-    "byUnknown": "Disputed <ago></ago>"
+    "whereMap": "{match}, game {game} ({map})"
   },
   "startDue": {
-    "action": "Start",
+    "title": "Start time has passed",
+    "action": "Open tournament",
     "startedAt": "Start scheduled for <date></date>",
     "checkedIn": "{checkedIn} of {registered} checked in",
     "registered": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, no check-in",
     "checkInNotOpen": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, check-in not open"
   },
   "pendingTies": {
-    "title": "Tie to decide",
-    "action": "Decide"
+    "title": "Tie in the standings",
+    "titleStage": "Tie in stage {stage}",
+    "meta": "Decide the order to finish the tournament.",
+    "metaStage": "Decide the order to finish the stage.",
+    "action": "Open standings"
   },
   "stageDue": {
     "title": "Stage {number} ready to start",
-    "action": "Start"
+    "action": "Open tournament"
   }
 }

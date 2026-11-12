@@ -222,6 +222,42 @@ pub enum ViewerTask {
     AwaitTeam,
 }
 
+/// O passo do veto que está na vez de quem vê.
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoStep {
+    BanMap,
+    /// Escolher o mapa de uma partida, também por votação.
+    PickMap,
+    BanChampion,
+    /// Escolher o campeão de uma partida (o próprio, no pick por jogador).
+    PickChampion,
+}
+
+/// O que o aviso de uma tarefa (`ViewerTask`) diz além dela: a partida de que
+/// ela fala, o prazo e quem agiu. Só nas tarefas que pedem ação (`report`,
+/// `respond`, `accept_contest`, `resolve`, `ready`, `veto`).
+#[derive(Serialize, ToSchema)]
+pub struct TaskDetail {
+    /// O número da partida de que a tarefa fala: a enviada para responder, a
+    /// contestada ou a próxima (enviar, "Pronto", veto).
+    pub game: i16,
+    /// `respond`: até quando responder; sem resposta, a partida vale.
+    pub confirm_by: Option<DateTime<Utc>>,
+    /// `respond`, `accept_contest` e `resolve`: apelido de quem enviou a
+    /// partida; `null` se foi a organização ou a conta foi excluída.
+    pub reported_by: Option<String>,
+    /// `accept_contest` e `resolve`: apelido de quem contestou; `null` se a
+    /// conta foi excluída.
+    pub contested_by: Option<String>,
+    /// `veto`: o passo da vez.
+    pub veto_step: Option<VetoStep>,
+    /// `ready`: o adversário já marcou "Pronto".
+    pub opponent_ready: bool,
+    /// O lado de quem vê; `null` se ele não joga (`resolve`).
+    pub viewer_side: Option<Side>,
+}
+
 /// A próxima partida de quem vê num torneio em andamento.
 #[derive(Serialize, ToSchema)]
 pub struct NextMatch {
@@ -248,6 +284,8 @@ pub struct NextMatch {
     /// Round robin: a série ainda não começou e o adversário está jogando
     /// outra.
     pub opponent_playing: bool,
+    /// O que o aviso de `task` diz além dela; `null` sem tarefa que peça ação.
+    pub task_detail: Option<TaskDetail>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -293,6 +331,8 @@ pub struct BracketMatch {
     /// Round robin: quem vê joga a série, que ainda não começou, e o adversário
     /// está jogando outra.
     pub opponent_playing: bool,
+    /// O que o aviso de `task` diz além dela; `null` sem tarefa que peça ação.
+    pub task_detail: Option<TaskDetail>,
 }
 
 /// Um lado da partida.

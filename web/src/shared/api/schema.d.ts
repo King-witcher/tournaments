@@ -2095,6 +2095,7 @@ export interface components {
             round: number;
             state: components["schemas"]["MatchState"];
             task?: components["schemas"]["ViewerTask"] | null;
+            task_detail?: components["schemas"]["TaskDetail"] | null;
             veto?: components["schemas"]["VetoStatus"] | null;
             /** @description Quem vê joga a partida. */
             yours: boolean;
@@ -2234,6 +2235,11 @@ export interface components {
             key: string;
             /** @description Nome do mapa jogado; `null` em série antiga, sem detalhe por mapa. */
             map?: string | null;
+            /**
+             * @description Apelido de quem enviou a partida contestada; `null` se a conta não
+             *     existe mais.
+             */
+            reported_by?: string | null;
             /** @description Eliminação simples (o código curto da partida não diz a chave). */
             single: boolean;
             tournament: components["schemas"]["PendingTournament"];
@@ -3184,6 +3190,7 @@ export interface components {
              */
             state: components["schemas"]["MatchState"];
             task?: components["schemas"]["ViewerTask"] | null;
+            task_detail?: components["schemas"]["TaskDetail"] | null;
             veto?: components["schemas"]["VetoStatus"] | null;
         };
         NoRepeatRule: {
@@ -4332,6 +4339,38 @@ export interface components {
             wins: number;
         };
         /**
+         * @description O que o aviso de uma tarefa (`ViewerTask`) diz além dela: a partida de que
+         *     ela fala, o prazo e quem agiu. Só nas tarefas que pedem ação (`report`,
+         *     `respond`, `accept_contest`, `resolve`, `ready`, `veto`).
+         */
+        TaskDetail: {
+            /**
+             * Format: date-time
+             * @description `respond`: até quando responder; sem resposta, a partida vale.
+             */
+            confirm_by?: string | null;
+            /**
+             * @description `accept_contest` e `resolve`: apelido de quem contestou; `null` se a
+             *     conta foi excluída.
+             */
+            contested_by?: string | null;
+            /**
+             * Format: int32
+             * @description O número da partida de que a tarefa fala: a enviada para responder, a
+             *     contestada ou a próxima (enviar, "Pronto", veto).
+             */
+            game: number;
+            /** @description `ready`: o adversário já marcou "Pronto". */
+            opponent_ready: boolean;
+            /**
+             * @description `respond`, `accept_contest` e `resolve`: apelido de quem enviou a
+             *     partida; `null` se foi a organização ou a conta foi excluída.
+             */
+            reported_by?: string | null;
+            veto_step?: components["schemas"]["VetoStep"] | null;
+            viewer_side?: components["schemas"]["Side"] | null;
+        };
+        /**
          * @description Um time do torneio: quem ocupa um lado da chave. No duelo, o time de um
          *     jogador, sem nome (a tela mostra o apelido dele).
          */
@@ -5175,6 +5214,11 @@ export interface components {
          * @enum {string}
          */
         VetoStatus: "waiting_ready" | "in_progress" | "done";
+        /**
+         * @description O passo do veto que está na vez de quem vê.
+         * @enum {string}
+         */
+        VetoStep: "ban_map" | "pick_map" | "ban_champion" | "pick_champion";
         /** @enum {string} */
         VetoTarget: "map" | "champion";
         /** @description O campeão de um jogador numa partida, no pick por jogador. */

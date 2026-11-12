@@ -7,7 +7,7 @@
 use engine::{
     core::{Match, MatchState, PlayerId},
     series,
-    veto::{Action, Turn},
+    veto::{Action, Target, Turn},
 };
 
 use super::{
@@ -15,7 +15,7 @@ use super::{
     games::{GameStatus, StoredGame, series_games},
     result::Side,
     stage::Stage,
-    types::ViewerTask,
+    types::{TaskDetail, VetoStep, ViewerTask},
     veto,
     view::Viewer,
 };
@@ -170,5 +170,86 @@ pub fn match_task(
         Some(ViewerTask::AwaitCaptain)
     } else {
         None
+    }
+}
+
+/// O que o aviso da tarefa `task` da partida `m` (`match_task`) diz além dela,
+/// para quem vê do lado `mine`: a partida de que ela fala e, conforme a
+/// tarefa, o prazo, quem enviou, quem contestou, o passo do veto ou se o
+/// adversário já marcou "Pronto". `None` nas tarefas de esperar.
+pub fn task_detail(
+    status: TournamentStatus,
+    stage: &Stage,
+    m: &Match,
+    task: Option<ViewerTask>,
+    mine: Option<Side>,
+    viewer: &Viewer,
+) -> Option<TaskDetail> {
+    let task = task?;
+    let games = stage.games_of(m.id);
+    let name = |user: Option<i64>| user.and_then(|u| stage.nickname(u)).map(str::to_owned);
+    let detail = |game: i16| TaskDetail {
+        game,
+        confirm_by: None,
+        reported_by: None,
+        contested_by: None,
+        veto_step: None,
+        opponent_ready: false,
+        viewer_side: mine,
+    };
+    // A primeira partida em que a tarefa é `task` (responder, aceitar ou
+    // resolver a contestação).
+    let of_game = || {
+        games
+            .iter()
+            .find(|g| game_task(status, stage, m, g, mine, viewer) == Some(task))
+            .map(|g| TaskDetail {
+                confirm_by: (task == ViewerTask::Respond)
+                    .then_some(g.confirm_by)
+                    .flatten(),
+                reported_by: name(g.reported_by),
+                contested_by: (task != ViewerTask::Respond)
+                    .then(|| name(g.contested_by))
+                    .flatten(),
+                ..detail(g.number)
+            })
+    };
+    match task {
+        ViewerTask::Respond | ViewerTask::AcceptContest | ViewerTask::Resolve => of_game(),
+        ViewerTask::Report => next_game(status, m, &games).map(detail),
+        ViewerTask::Ready => {
+            let game = next_game(status, m, &games)?;
+            let MatchState::Ready { a, b } = m.state else {
+                return None;
+            };
+            let other = match mine? {
+                Side::A => Side::B,
+                Side::B => Side::A,
+            };
+            Some(TaskDetail {
+                opponent_ready: stage.readiness(m.id, (a, b)).side(other),
+                ..detail(game)
+            })
+        }
+        ViewerTask::Veto => {
+            let game = next_game(status, m, &games)?;
+            let step = stage.veto_of(m.id).and_then(|v| match v.state.turn() {
+                Turn::Act { action, target, .. } => Some(match (target, action) {
+                    (Target::Map, Action::Ban) => VetoStep::BanMap,
+                    (Target::Map, _) => VetoStep::PickMap,
+                    (Target::Champion, Action::Ban) => VetoStep::BanChampion,
+                    (Target::Champion, _) => VetoStep::PickChampion,
+                }),
+                _ => None,
+            });
+            Some(TaskDetail {
+                veto_step: step,
+                ..detail(game)
+            })
+        }
+        ViewerTask::AwaitOpponent
+        | ViewerTask::AwaitOrganizer
+        | ViewerTask::AwaitCaptain
+        | ViewerTask::AwaitTeam => None,
     }
 }

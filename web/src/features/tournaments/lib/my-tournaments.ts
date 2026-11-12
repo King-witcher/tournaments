@@ -16,7 +16,7 @@ const PLAYER_TASKS = [
   "report",
 ] as const satisfies Schemas["ViewerTask"][];
 
-type PlayerTask = (typeof PLAYER_TASKS)[number];
+export type PlayerTask = (typeof PLAYER_TASKS)[number];
 
 function isPlayerTask(task: Schemas["ViewerTask"]): task is PlayerTask {
   return PLAYER_TASKS.some((playerTask) => playerTask === task);

@@ -66,6 +66,7 @@ export async function TournamentOverview({ tenant, slug }: Props) {
           {organizer && bracket && bracket.pending_ties.length > 0 && (
             <PendingTiesTask
               href={`/${tenant}/${slug}/standings?${OPEN_TIES_QUERY}`}
+              stage={bracket.stage}
               lastStage={isLastStage(tournament, bracket.stage)}
             />
           )}

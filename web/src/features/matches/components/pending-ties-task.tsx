@@ -10,22 +10,24 @@ import { TaskNotice } from "@/shared/ui/task-notice";
  */
 export function PendingTiesTask({
   href,
+  stage,
   lastStage,
 }: {
   href: string;
+  /** A fase dos empates. */
+  stage: number;
   /** É a última fase: decididos, o torneio termina (senão, a fase). */
   lastStage: boolean;
 }) {
-  const t = useTranslations("Bracket.ties");
-  const tOrganizing = useTranslations("Organizing.pendingTies");
+  const t = useTranslations("Organizing.pendingTies");
   return (
     <TaskNotice
       kind={severity("pending_ties")}
-      title={t("title")}
-      meta={t(lastStage ? "description" : "descriptionStage")}
+      title={lastStage ? t("title") : t("titleStage", { stage })}
+      meta={t(lastStage ? "meta" : "metaStage")}
       action={
         <ButtonLink href={href} kind="ghost" size="sm">
-          {tOrganizing("action")}
+          {t("action")}
         </ButtonLink>
       }
     />

@@ -19,12 +19,12 @@ export function StageCheckInNotice({
   stage: number;
   candidate: components["schemas"]["StageCandidate"];
 }) {
-  const t = useTranslations("Home.waiting");
+  const t = useTranslations("Home.tournaments");
   const teamName = useTeamName();
   return (
     <TaskNotice
       kind={severity("check_in")}
-      title={t("stageCheckIn", { stage })}
+      title={t("situation.stage_check_in_pending", { stage })}
       action={
         <StageCheckInButton
           tenant={tenant}
