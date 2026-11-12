@@ -5,14 +5,6 @@
   "titleScore": "{code}: {a} {aScore} × {bScore} {b}",
   "label": "{part} · {round} · série {index}",
   "bestOf": "Melhor de {count}",
-  "stateTag": {
-    "pending": "Aguardando os lados",
-    "ready": "A jogar",
-    "bye": "Sem adversário",
-    "completed": "Decidida",
-    "not_needed": "Não precisou",
-    "drawn": "Empate"
-  },
   "state": {
     "pending": "Os lados ainda dependem de outras séries.",
     "ready": "A jogar.",

@@ -4,16 +4,10 @@ import { Stack } from "./carbon/stack";
 import { type Status, StatusTag } from "./status-tag";
 
 const labels: Record<Status, string> = {
-  draft: "Rascunho",
-  registration: "Inscrições abertas",
-  check_in: "Check-in",
-  in_progress: "Em andamento",
-  finished: "Encerrado",
-  cancelled: "Cancelado",
-  waiting: "Aguardando",
-  contested: "Contestado",
-  confirmed: "Confirmado",
-  neutral: "Organizador",
+  cancelled: "Desistiu",
+  contested: "Contestada",
+  action: "Sua vez no veto",
+  neutral: "Você",
 };
 
 const statuses = Object.keys(labels) as Status[];
@@ -21,7 +15,7 @@ const statuses = Object.keys(labels) as Status[];
 const meta = {
   title: "Estado e conteúdo/StatusTag",
   component: StatusTag,
-  args: { status: "in_progress", children: "Em andamento" },
+  args: { status: "cancelled", children: "Desistiu" },
   argTypes: {
     status: { control: "select", options: statuses },
     size: { control: "inline-radio", options: ["sm", "md"] },
@@ -32,51 +26,22 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Rascunho. */
-export const Draft: Story = {
-  args: { status: "draft", children: labels.draft },
-};
-
-/** Inscrições abertas, inscrito. */
-export const Registration: Story = {
-  args: { status: "registration", children: labels.registration },
-};
-
-/** Check-in aberto ou pendente. */
-export const CheckIn: Story = {
-  args: { status: "check_in", children: labels.check_in },
-};
-
-/** Em andamento, jogando. */
-export const InProgress: Story = {
-  args: { status: "in_progress", children: labels.in_progress },
-};
-
-/** Encerrado, eliminado. */
-export const Finished: Story = {
-  args: { status: "finished", children: labels.finished },
-};
-
-/** Cancelado, desistiu, saiu, perdeu a vaga. */
+/** Saiu, desistiu, ficou fora da chave. */
 export const Cancelled: Story = {
   args: { status: "cancelled", children: labels.cancelled },
 };
 
-/** Aguardando o outro lado ou o prazo. */
-export const Waiting: Story = {
-  args: { status: "waiting", children: labels.waiting },
-};
-
+/** Contestado. */
 export const Contested: Story = {
   args: { status: "contested", children: labels.contested },
 };
 
-/** Confirmado, check-in feito, venceu. */
-export const Confirmed: Story = {
-  args: { status: "confirmed", children: labels.confirmed },
+/** A ação que falta a quem vê, no cartão da série. */
+export const Action: Story = {
+  args: { status: "action", children: labels.action },
 };
 
-/** Sem estado especial (papel, contagem). */
+/** Marcador sem gravidade: rascunho, "Você", reserva. */
 export const Neutral: Story = {
   args: { status: "neutral", children: labels.neutral },
 };

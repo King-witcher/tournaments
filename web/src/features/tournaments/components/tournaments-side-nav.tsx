@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { getTenant } from "@/features/tenants/server";
 import { serverApi } from "@/shared/api/server";
 import { AppSideNavTitle } from "@/shared/ui/app-side-nav-title";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { localizedName } from "../lib/localize";
 import { SETTINGS_SECTIONS } from "../lib/settings-sections";
 import { hasStarted } from "../lib/status";
@@ -49,11 +48,7 @@ export async function TournamentsSideNav({ tenant, children }: Props) {
       <AppSideNavTitle
         kind={t("kind")}
         name={localizedName(x, locale)}
-        tags={
-          <StatusTag status={x.status} size="sm">
-            {tStatus(x.status)}
-          </StatusTag>
-        }
+        detail={tStatus(x.status)}
       />
     ),
     tabs: tournamentTabs(`/${tenant}/${x.slug}`, {

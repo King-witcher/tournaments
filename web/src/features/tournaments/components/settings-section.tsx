@@ -11,7 +11,6 @@ import { Notice } from "@/shared/ui/notice";
 import { PageFormLayout } from "@/shared/ui/page-form-layout";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { useSettingsDrafts } from "../hooks/use-settings-drafts";
 import {
   type SettingsSection as SectionKey,
@@ -60,9 +59,9 @@ type Props = {
 
 /**
  * Uma seção das Configurações do torneio, a página inteira dela: o título,
- * com o estado ao lado ("Mudanças não salvas" com o aviso do Carbon, ou "Só
- * leitura"), e embaixo o resumo do que está salvo; depois, o motivo do que
- * não muda num `Callout` antes dos campos, os campos e o Salvar dela,
+ * com "Mudanças não salvas" ao lado (o aviso do Carbon) quando algo difere
+ * do salvo, e embaixo o resumo do que está salvo; depois, o motivo do que
+ * não muda num `Callout` antes dos campos (é ele que diz "só leitura"), os campos e o Salvar dela,
  * desabilitado enquanto um campo recusa o que tem. Ir a outra seção não perde
  * o que foi mexido. Erro de outra seção (as séries daqui pedem mais mapas que
  * o pool salvo) aparece acima do botão, com "Ir para" a página da seção onde
@@ -148,14 +147,9 @@ export function SettingsSection({
         title={
           <span className={styles.head}>
             <span>{t(`sections.${section}`)}</span>
-            {form.dirty ? (
+            {/* Só leitura não tem marca: o motivo está no aviso antes dos campos. */}
+            {form.dirty && (
               <IconIndicator kind="caution-minor" label={t("unsaved")} />
-            ) : (
-              readOnly && (
-                <StatusTag status="neutral" size="sm">
-                  {t("readOnly")}
-                </StatusTag>
-              )
             )}
           </span>
         }

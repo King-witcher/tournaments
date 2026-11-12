@@ -20,7 +20,6 @@
   "goTo": "Ir a {section}",
   "saved": "Guardado.",
   "unsaved": "Cambios sin guardar",
-  "readOnly": "Solo lectura",
   "noTranslations": "Sin traducción",
   "leave": {
     "text": "Los cambios sin guardar en {sections} se pierden."

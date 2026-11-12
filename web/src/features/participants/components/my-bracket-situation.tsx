@@ -1,7 +1,7 @@
 import { NextMatchLink } from "@/features/matches/components/next-match-link";
 import { getMyTournamentEntry } from "@/features/tournaments/server";
 import type { components } from "@/shared/api/schema";
-import { BracketSituationTag } from "./bracket-situation-tag";
+import { BracketSituation } from "./bracket-situation";
 import { ParticipationTile } from "./participation-tile";
 
 type Props = {
@@ -10,8 +10,8 @@ type Props = {
 };
 
 /**
- * "Sua situação" depois do início, para o inscrito: a etiqueta da situação
- * (`BracketSituationTag`) e a próxima partida como link. Lê "Seus torneios";
+ * "Sua situação" depois do início, para o inscrito: a situação
+ * (`BracketSituation`: texto ou, na exceção, a marca) e a próxima partida como link. Lê "Seus torneios";
  * se a API falhar, cai no que o torneio diz (fez ou não o check-in). Quem
  * ainda joga vê o convite a ativar as notificações (`PushSuggestion`, abaixo
  * do bloco). Fica em `<Suspense>`.
@@ -26,7 +26,7 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
             ? "missed_check_in"
             : "playing")) === "playing"
       }
-      tag={<BracketSituationTag entry={entry} tournament={tournament} />}
+      situation={<BracketSituation entry={entry} tournament={tournament} />}
     >
       {entry?.next_match && (
         <NextMatchLink

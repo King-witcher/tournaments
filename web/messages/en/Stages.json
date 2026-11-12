@@ -1,9 +1,6 @@
 {
   "title": "Stage {number}",
-  "state": {
-    "pending": "Waiting to start",
-    "check_in": "Check-in open"
-  },
+  "checkInOpen": "Check-in open",
   "enters": "{count, plural, one {# {tdm, select, yes {team} other {player}} enters} other {# {tdm, select, yes {teams} other {players}} enter}}",
   "substitutes": "{count, plural, one {# substitute} other {# substitutes}}",
   "confirmed": "{count} of {total} checked in",

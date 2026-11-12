@@ -1,7 +1,9 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
 
-// O número e a marca de provisório na mesma linha; no celular, a marca desce
-// se não couber.
+// O número e "provisório" na mesma linha; no celular, o texto desce se não
+// couber.
 .value {
   display: inline-flex;
   flex-wrap: wrap;
@@ -12,4 +14,10 @@
 // Algarismos da mesma largura: os ratings ficam alinhados na coluna.
 .number {
   font-variant-numeric: tabular-nums;
+}
+
+.provisional {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
 }

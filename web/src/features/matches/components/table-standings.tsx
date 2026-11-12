@@ -8,8 +8,8 @@ import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
+import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { InfoTip } from "@/shared/ui/info-tip";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { STANDINGS_TABLE_ID } from "../lib/ties";
 import { DepartureTag } from "./departure-tag";
 import {
@@ -137,14 +137,10 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
         notes: (
           <span className={styles.notes}>
             {finished && lastStage && r.position === 1 && (
-              <StatusTag status="confirmed" size="sm">
-                {tStandings("champion")}
-              </StatusTag>
+              <span>{tStandings("champion")}</span>
             )}
             {r.tie_pending && (
-              <StatusTag status="in_progress" size="sm">
-                {t("tiePending")}
-              </StatusTag>
+              <IconIndicator kind="caution-minor" label={t("tiePending")} />
             )}
             {team && (
               <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />

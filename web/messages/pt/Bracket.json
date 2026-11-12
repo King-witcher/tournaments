@@ -47,7 +47,6 @@
   "matchSides": "{a} × {b}",
   "nextMap": "Próximo mapa: {map}",
   "result": {
-    "pending": "Partida esperando confirmação",
     "contested": "Partida contestada",
     "drawn": "Empate"
   },

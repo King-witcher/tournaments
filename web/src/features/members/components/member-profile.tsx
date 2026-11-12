@@ -13,7 +13,6 @@ import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
-import { StatusTag } from "@/shared/ui/status-tag";
 import styles from "./member-profile.module.scss";
 import { MemberTournaments } from "./member-tournaments";
 
@@ -97,9 +96,10 @@ export async function MemberProfile({ tenant, user }: Props) {
             {profile.nickname}
           </span>
         }
-        tags={<StatusTag status="neutral">{tRoles(profile.role)}</StatusTag>}
         meta={
           <>
+            {tRoles(profile.role)}
+            {" · "}
             {t.rich("since", {
               date: () => <LocalDate value={profile.joined_at} />,
             })}

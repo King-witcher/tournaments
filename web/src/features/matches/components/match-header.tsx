@@ -6,7 +6,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import { useSideNames } from "../hooks/use-side-names";
-import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
+import { taskKey, taskTag } from "../lib/status";
 import { MatchStatusLine } from "./match-status-line";
 import { VetoSoundToggle } from "./veto-sound-toggle";
 import { WalkoverButton } from "./walkover-button";
@@ -24,9 +24,9 @@ type Props = {
 /**
  * O topo da série: a trilha até a chave, o código curto (o mesmo do cartão
  * na chave) com os dois lados e, depois da primeira partida enviada, o
- * placar entre eles (o das confirmadas enquanto corre), o estado (o empate no
- * lugar de "Decidida") e o que ela espera de quem vê, a parte, a rodada e o
- * melhor de N e, embaixo, como ela terminou (ou por que ainda não começou). Nas
+ * placar entre eles (o das confirmadas enquanto corre), a etiqueta da
+ * contestação em aberto, a parte, a rodada e o melhor de N e, embaixo, como
+ * ela terminou, por que ainda não começou ou quem ela espera. Nas
  * ações, o W.O. da organização e, com a série em andamento e veto no torneio, o
  * botão que silencia os sons do veto.
  */
@@ -81,7 +81,7 @@ export function MatchHeader({
       ? { a: s.a_maps, b: s.b_maps }
       : null;
   const sides = { code: code(s.key), a: side("a"), b: side("b") };
-  const drawn = s.state === "completed" && r != null && r.winner == null;
+  const contested = s.task && taskTag(s.task) === "contested" ? s.task : null;
   // O W.O. vale na série pronta e, no lugar do resultado, na decidida.
   const canWalkover =
     detail.can_manage && (s.state === "ready" || s.state === "completed");
@@ -106,22 +106,15 @@ export function MatchHeader({
           ? t("titleScore", { ...sides, aScore: score.a, bScore: score.b })
           : t("title", sides)
       }
+      // Só a contestação tem etiqueta: o estado está nos passos e na linha
+      // embaixo, a ação de quem vê é o passo em que a página abre e a espera
+      // é texto (`MatchStatusLine`).
       tags={
-        <>
-          <StatusTag status={drawn ? "neutral" : MATCH_STATE_STATUS[s.state]}>
-            {t(drawn ? "stateTag.drawn" : `stateTag.${s.state}`)}
+        contested && (
+          <StatusTag status="contested">
+            {tBracket(`task.${taskKey(contested, s.veto)}`)}
           </StatusTag>
-          {s.task && (
-            <StatusTag status={TASK_STATUS[s.task]}>
-              {tBracket(`task.${taskKey(s.task, s.veto)}`)}
-            </StatusTag>
-          )}
-          {s.opponent_playing && (
-            <StatusTag status="waiting">
-              {tBracket("opponentPlaying")}
-            </StatusTag>
-          )}
-        </>
+        )
       }
       meta={`${label} · ${t("bestOf", { count: s.best_of })}`}
       actions={

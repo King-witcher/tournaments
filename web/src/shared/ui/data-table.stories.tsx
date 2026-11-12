@@ -32,10 +32,10 @@ const columns: DataTableColumn[] = [
   { key: "status", header: "Situação" },
 ];
 
+// O esperado em texto; etiqueta só na exceção.
 const STATUSES = [
-  { status: "confirmed", label: "Check-in feito" },
-  { status: "check_in", label: "Check-in pendente" },
-  { status: "registration", label: "Inscrito" },
+  { status: null, label: "Check-in feito" },
+  { status: null, label: "Inscrito" },
   { status: "cancelled", label: "Desistiu" },
 ] as const;
 
@@ -55,7 +55,11 @@ function players(count: number): DataTableRow[] {
         ),
         community: i % 3 === 0 ? "Arena Sul" : "Quake RS",
         rating: String(1200 + ((i * 37) % 500)),
-        status: <StatusTag status={state.status}>{state.label}</StatusTag>,
+        status: state.status ? (
+          <StatusTag status={state.status}>{state.label}</StatusTag>
+        ) : (
+          state.label
+        ),
       },
     };
   });
@@ -122,7 +126,12 @@ export const RowLinks: Story = {
       cells: {
         name,
         start,
-        status: <StatusTag status={status as "draft"}>{label}</StatusTag>,
+        status:
+          status === "draft" ? (
+            <StatusTag status="neutral">{label}</StatusTag>
+          ) : (
+            label
+          ),
       },
     })),
   },

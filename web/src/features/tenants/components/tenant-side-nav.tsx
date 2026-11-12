@@ -4,7 +4,6 @@ import { AppSideNav } from "@/shared/ui/app-side-nav";
 import { AppSideNavLink } from "@/shared/ui/app-side-nav-link";
 import { AppSideNavTitle } from "@/shared/ui/app-side-nav-title";
 import { Avatar } from "@/shared/ui/avatar";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { getTenant } from "../server";
 import { TenantSettingsMenu } from "./tenant-settings-menu";
 
@@ -35,11 +34,7 @@ export async function TenantSideNav({ slug }: { slug: string }) {
               <Avatar shape="square" size="md" src={tenant.logo_url} />
             )
           }
-          tags={
-            <StatusTag status="neutral" size="sm">
-              {tRoles(tenant.role)}
-            </StatusTag>
-          }
+          detail={tRoles(tenant.role)}
         />
       }
     >

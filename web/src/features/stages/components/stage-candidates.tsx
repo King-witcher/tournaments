@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
+import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { type CandidateState, candidateState } from "../lib/candidates";
 import { StageCheckInButton } from "./stage-check-in-button";
@@ -19,12 +20,23 @@ type Props = {
   tdm: boolean;
 };
 
-const STATE_STATUS = {
-  enters: "confirmed",
-  substitute: "neutral",
-  absent: "check_in",
-  withdrawn: "cancelled",
-} as const satisfies Record<CandidateState, string>;
+/**
+ * Como na tabela de inscritos: o esperado em texto (entra, suplente), o
+ * triângulo de quem ainda não fez o check-in e a etiqueta de quem desistiu.
+ */
+function Presence({ state, label }: { state: CandidateState; label: string }) {
+  if (state === "withdrawn") {
+    return (
+      <StatusTag status="cancelled" size="sm">
+        {label}
+      </StatusTag>
+    );
+  }
+  if (state === "absent") {
+    return <IconIndicator kind="caution-minor" label={label} />;
+  }
+  return label;
+}
 
 /**
  * Os candidatos à fase seguinte, na ordem da tabela da fase anterior: a ordem
@@ -54,11 +66,7 @@ export function StageCandidates({
         seed: candidate.projected_seed ?? "—",
         team: name,
         previous: t("rank", { rank: candidate.previous_rank }),
-        presence: (
-          <StatusTag status={STATE_STATUS[state]} size="sm">
-            {t(`state.${state}`)}
-          </StatusTag>
-        ),
+        presence: <Presence state={state} label={t(`state.${state}`)} />,
       },
       actions:
         organizer && checkInOpen && state !== "withdrawn" ? (

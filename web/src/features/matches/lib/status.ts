@@ -69,37 +69,35 @@ export function taskKey(
   return task;
 }
 
+/** A contestação em aberto na série de quem vê: resolver, aceitar ou esperar a organização. */
+const CONTEST = [
+  "resolve",
+  "accept_contest",
+  "await_organizer",
+] as const satisfies Schemas["ViewerTask"][];
+
 /**
- * Cor da etiqueta do que a partida espera de quem vê. A ação que falta a
- * quem joga tem o destaque do check-in que falta (roxo); a contestação para
- * a organização resolver ou o capitão aceitar, o do contestado; esperar o
- * outro lado, o de aguardando.
+ * A etiqueta do que a série espera de quem vê, só onde ela chama atenção: a
+ * contestação, na cor do contestado, e a ação que falta a quem joga, em
+ * roxo. Esperar o outro lado é o caminho normal e não tem etiqueta
+ * (`waitingKey` dá o texto).
  */
-export const TASK_STATUS: Record<Schemas["ViewerTask"], Status> = {
-  report: "check_in",
-  respond: "check_in",
-  resolve: "contested",
-  accept_contest: "contested",
-  await_opponent: "waiting",
-  await_organizer: "waiting",
-  await_captain: "waiting",
-  await_team: "waiting",
-  ready: "check_in",
-  veto: "check_in",
-};
+export function taskTag(task: Schemas["ViewerTask"]): Status | null {
+  if (CONTEST.some((contest) => contest === task)) return "contested";
+  return isActionable(task) ? "action" : null;
+}
 
-/** Cor da etiqueta de um mapa da série. */
-export const GAME_STATUS: Record<Schemas["GameStatus"], Status> = {
-  pending: "waiting",
-  contested: "contested",
-  confirmed: "confirmed",
-};
-
-/** Cor da etiqueta do estado da partida. */
-export const MATCH_STATE_STATUS: Record<Schemas["MatchState"], Status> = {
-  pending: "neutral",
-  ready: "in_progress",
-  bye: "neutral",
-  completed: "finished",
-  not_needed: "neutral",
-};
+/**
+ * A chave do texto (em `Bracket`) do que a série espera de outro: o adversário
+ * em outra série, o adversário, a organização, o capitão, o time. A ação de
+ * quem vê não entra (`undefined`): ela é um aviso com o botão.
+ */
+export function waitingKey(m: {
+  task?: Schemas["ViewerTask"] | null;
+  veto?: Schemas["VetoStatus"] | null;
+  opponent_playing?: boolean;
+}) {
+  if (m.opponent_playing) return "opponentPlaying";
+  if (!m.task || isActionable(m.task)) return undefined;
+  return `task.${taskKey(m.task, m.veto)}` as const;
+}

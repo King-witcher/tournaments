@@ -9,13 +9,12 @@ import {
 import type { components } from "@/shared/api/schema";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { TaskNotice } from "@/shared/ui/task-notice";
-import { SITUATION_STATUS } from "../lib/situation";
 import { CheckInButton } from "./check-in-button";
 import { MyBracketSituation } from "./my-bracket-situation";
 import { ParticipationTile } from "./participation-tile";
-import { TeamSituationTag } from "./team-situation-tag";
+import { SituationMark } from "./situation-mark";
+import { TeamSituation } from "./team-situation";
 
 type Props = {
   tenant: string;
@@ -25,8 +24,9 @@ type Props = {
 };
 
 /**
- * "Sua situação" para quem joga: a situação uma vez, na etiqueta (no TDM, de
- * reserva se os times já se formaram sem a pessoa) e, depois de iniciar, a
+ * "Sua situação" para quem joga: a situação uma vez, em texto ("Inscrição
+ * feita"; no TDM, a etiqueta de reserva se os times já se formaram sem a
+ * pessoa) e, depois de iniciar, a
  * situação na chave e a próxima partida. O check-in que falta é um aviso com
  * a ação, no lugar do bloco. Para quem não está inscrito, só o motivo de não
  * haver botão de inscrição (só por link, lotado). Nada a
@@ -36,24 +36,25 @@ type Props = {
 export function MyParticipation({ tenant, tournament, organizer }: Props) {
   const t = useTranslations("Participants");
   const { status } = tournament;
-  const tag = (situation: keyof typeof SITUATION_STATUS) => (
-    <StatusTag status={SITUATION_STATUS[situation]}>
-      {t(`situation.${situation}`, { place: "", stage: "" })}
-    </StatusTag>
+  const mark = (situation: "registered" | "checked_in") => (
+    <SituationMark
+      situation={situation}
+      label={t(`situation.${situation}`, { place: "", stage: "" })}
+    />
   );
   // No TDM, inscrito ou com o check-in feito pode já estar de reserva (os
-  // times foram formados sem ele): a etiqueta confere a formação.
-  const teamTag = (situation: "registered" | "checked_in") =>
+  // times foram formados sem ele): a situação confere a formação.
+  const teamSituation = (situation: "registered" | "checked_in") =>
     tournament.mode === "tdm" ? (
-      <Suspense fallback={tag(situation)}>
-        <TeamSituationTag
+      <Suspense fallback={mark(situation)}>
+        <TeamSituation
           tenant={tenant}
           slug={tournament.slug}
           situation={situation}
         />
       </Suspense>
     ) : (
-      tag(situation)
+      mark(situation)
     );
 
   if (!tournament.registered) {
@@ -85,7 +86,12 @@ export function MyParticipation({ tenant, tournament, organizer }: Props) {
 
   if (status === "check_in") {
     if (tournament.checked_in) {
-      return <ParticipationTile tag={teamTag("checked_in")} suggestPush />;
+      return (
+        <ParticipationTile
+          situation={teamSituation("checked_in")}
+          suggestPush
+        />
+      );
     }
     return (
       <Stack gap={3}>
@@ -107,5 +113,7 @@ export function MyParticipation({ tenant, tournament, organizer }: Props) {
     );
   }
 
-  return <ParticipationTile tag={teamTag("registered")} suggestPush />;
+  return (
+    <ParticipationTile situation={teamSituation("registered")} suggestPush />
+  );
 }

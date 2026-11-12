@@ -81,8 +81,7 @@ export const WithTags: Story = {
   args: {
     tags: (
       <>
-        <StatusTag status="registration">Inscrições abertas</StatusTag>
-        <StatusTag status="neutral">Duelo</StatusTag>
+        <StatusTag status="neutral">Rascunho</StatusTag>
       </>
     ),
   },
@@ -107,7 +106,7 @@ export const WithDescription: Story = {
 export const Complete: Story = {
   args: {
     breadcrumbs,
-    tags: <StatusTag status="registration">Inscrições abertas</StatusTag>,
+    tags: <StatusTag status="neutral">Rascunho</StatusTag>,
     meta: "Duelo · melhor de 3 · começa amanhã às 21h · 18/32 inscritos",
     actions,
     overflow,

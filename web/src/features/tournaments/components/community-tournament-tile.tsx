@@ -6,7 +6,6 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { MetaLines } from "@/shared/ui/meta-lines";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useModeLabel } from "../hooks/use-mode-label";
-import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 import { participantsEditable } from "../lib/status";
 import { TournamentMedia } from "./tournament-media";
@@ -14,8 +13,8 @@ import { TournamentMedia } from "./tournament-media";
 /**
  * Um torneio ativo na aba Torneios da comunidade: com `media`, a capa no topo
  * (ou o logo da comunidade no lugar dela), o nome, o início, a modalidade e as
- * vagas, e as etiquetas do estado, do que é de quem vê (inscrito, falta o
- * check-in) e da visibilidade.
+ * vagas e, numa linha de texto, o estado, se quem vê está inscrito e "Só por
+ * link". Etiqueta só no rascunho, que ainda não é público.
  */
 export function CommunityTournamentTile({
   tenant,
@@ -42,6 +41,16 @@ export function CommunityTournamentTile({
     count: tournament.participants,
     max: tournament.max_participants,
   });
+  const draft = tournament.status === "draft";
+  // O estado e o que é de quem vê, em texto: o caminho esperado não chama
+  // atenção, e o check-in que falta já é um aviso no topo da página.
+  const facts = [
+    !draft && tStatus(tournament.status),
+    tournament.registered && t("registered"),
+    tournament.admission === "invite_only" &&
+      participantsEditable(tournament.status) &&
+      tAdmission("inviteOnly"),
+  ].filter(Boolean);
 
   return (
     <LinkTile
@@ -66,27 +75,11 @@ export function CommunityTournamentTile({
               t("noDate")
             ),
             `${mode} · ${spots}`,
+            facts.join(" · "),
           ]}
         />
       }
-      tags={
-        <>
-          <StatusTag status={tournament.status}>
-            {tStatus(tournament.status)}
-          </StatusTag>
-          {checkInPending(tournament) ? (
-            <StatusTag status="check_in">{t("checkInPending")}</StatusTag>
-          ) : (
-            tournament.registered && (
-              <StatusTag status="registration">{t("registered")}</StatusTag>
-            )
-          )}
-          {tournament.admission === "invite_only" &&
-            participantsEditable(tournament.status) && (
-              <StatusTag status="neutral">{tAdmission("inviteOnly")}</StatusTag>
-            )}
-        </>
-      }
+      tags={draft && <StatusTag status="neutral">{tStatus("draft")}</StatusTag>}
     />
   );
 }

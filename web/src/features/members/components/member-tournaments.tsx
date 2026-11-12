@@ -1,12 +1,11 @@
 import { useLocale, useTranslations } from "next-intl";
-import { SITUATION_STATUS } from "@/features/participants/lib/situation";
+import { SituationMark } from "@/features/participants/components/situation-mark";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { DataTable } from "@/shared/ui/data-table";
 import { Section } from "@/shared/ui/section";
-import { StatusTag } from "@/shared/ui/status-tag";
 
 type Schemas = components["schemas"];
 
@@ -19,8 +18,8 @@ type Props = {
 
 /**
  * "Torneios nesta comunidade" na página da pessoa: torneio (link), estado,
- * a situação dela (as cores de "Seus torneios"; no TDM, com o time) e a
- * colocação, do início
+ * a situação dela (texto; a exceção com a marca de "Seus torneios",
+ * `SituationMark`; no TDM, com o time) e a colocação, do início
  * mais recente ao mais antigo (a ordem da API).
  */
 export function MemberTournaments({ tenant, profile, isYou }: Props) {
@@ -65,17 +64,14 @@ export function MemberTournaments({ tenant, profile, isYou }: Props) {
               search: `${name} ${tournament.name}`,
               cells: {
                 tournament: label,
-                status: (
-                  <StatusTag status={tournament.status}>
-                    {tStatus(tournament.status)}
-                  </StatusTag>
-                ),
+                status: tStatus(tournament.status),
                 situation: (
-                  <StatusTag status={SITUATION_STATUS[situation]}>
-                    {t(`situations.${situation}`, {
+                  <SituationMark
+                    situation={situation}
+                    label={t(`situations.${situation}`, {
                       place: placed ?? t("noPlacement"),
                     })}
-                  </StatusTag>
+                  />
                 ),
                 placement: placed ?? t("noPlacement"),
               },

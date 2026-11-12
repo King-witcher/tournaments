@@ -39,8 +39,8 @@ export const WithTags: Story = {
   args: {
     tags: (
       <>
-        <StatusTag status="in_progress">Em andamento</StatusTag>
-        <StatusTag status="neutral">Duelo</StatusTag>
+        <StatusTag status="cancelled">Desistiu</StatusTag>
+        <StatusTag status="neutral">Rascunho</StatusTag>
       </>
     ),
   },
@@ -60,7 +60,7 @@ export const WithAvatar: Story = {
 /** A capa no topo, em 2:1. */
 export const WithMedia: Story = {
   args: {
-    tags: <StatusTag status="registration">Inscrições abertas</StatusTag>,
+    tags: <StatusTag status="neutral">Rascunho</StatusTag>,
     media: <Image src="/maps/crucible.webp" alt="" fill unoptimized />,
   },
 };
@@ -70,7 +70,7 @@ export const LongTitle: Story = {
     title:
       "Campeonato Gaúcho de Quake Champions de Duelo, Temporada de Inverno",
     meta: "Associação Gaúcha de Quake · começa em 20/11, 19h",
-    tags: <StatusTag status="registration">Inscrições abertas</StatusTag>,
+    tags: <StatusTag status="neutral">Rascunho</StatusTag>,
   },
 };
 
@@ -82,7 +82,7 @@ export const InGrid: Story = {
         href="/arena-sul/copa"
         title="Copa Arena Sul"
         meta="Arena Sul · hoje, 21h"
-        tags={<StatusTag status="in_progress">Em andamento</StatusTag>}
+        tags={<StatusTag status="cancelled">Desistiu</StatusTag>}
       />
       <LinkTile
         href="/arena-sul/duelo"
@@ -93,7 +93,7 @@ export const InGrid: Story = {
         href="/quake-rs/liga"
         title="Liga de inverno"
         meta="Quake RS · 20/11, 19h"
-        tags={<StatusTag status="check_in">Check-in</StatusTag>}
+        tags={<StatusTag status="neutral">Reserva, sem time</StatusTag>}
       />
     </TileGrid>
   ),

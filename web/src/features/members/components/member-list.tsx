@@ -4,7 +4,6 @@ import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDate } from "@/shared/ui/local-date";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { getMembers } from "../server";
 import { MemberActions } from "./member-actions";
 import { MemberName } from "./member-name";
@@ -57,9 +56,7 @@ export async function MemberList({ slug }: { slug: string }) {
             search: `${member.nickname} ${member.display_name}`,
             cells: {
               member: <MemberName member={member} />,
-              role: (
-                <StatusTag status="neutral">{tRoles(member.role)}</StatusTag>
-              ),
+              role: tRoles(member.role),
               since: <LocalDate value={member.joined_at} />,
             },
             actions:

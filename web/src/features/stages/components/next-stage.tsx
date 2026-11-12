@@ -8,7 +8,6 @@ import { Accordion } from "@/shared/ui/accordion";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Tile } from "@/shared/ui/carbon/tile";
 import { Section } from "@/shared/ui/section";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { TaskNotice } from "@/shared/ui/task-notice";
 import { candidateState, entering, substitutes } from "../lib/candidates";
 import { pendingStage } from "../lib/stages";
@@ -70,6 +69,7 @@ export async function NextStage({ tenant, tournament, organizer }: Props) {
     ...(entry.check_in ? [tEntry("checkIn")] : []),
   ].join(" ");
   const counts = [
+    ...(checkInOpen ? [t("checkInOpen")] : []),
     t("enters", { count: enters, tdm: tdm ? "yes" : "no" }),
     ...(waiting > 0 ? [t("substitutes", { count: waiting })] : []),
     ...(checkInOpen
@@ -115,16 +115,7 @@ export async function NextStage({ tenant, tournament, organizer }: Props) {
         />
       )}
       <Tile>
-        <Section
-          title={t("title", { number: entry.number })}
-          action={
-            <StatusTag status={checkInOpen ? "check_in" : "waiting"}>
-              {t(
-                `state.${entry.status === "check_in" ? "check_in" : "pending"}`,
-              )}
-            </StatusTag>
-          }
-        >
+        <Section title={t("title", { number: entry.number })}>
           <Stack gap={5}>
             <Stack gap={2}>
               <p>{rule}</p>

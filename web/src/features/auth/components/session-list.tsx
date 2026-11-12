@@ -66,7 +66,7 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
         {/* Fora do div, o Stack esticaria a etiqueta até a largura máxima dela. */}
         {session.current && (
           <div>
-            <StatusTag status="confirmed">{t("current")}</StatusTag>
+            <StatusTag status="neutral">{t("current")}</StatusTag>
           </div>
         )}
       </Stack>

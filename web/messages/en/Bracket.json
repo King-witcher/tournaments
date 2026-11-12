@@ -47,7 +47,6 @@
   "matchSides": "{a} × {b}",
   "nextMap": "Next map: {map}",
   "result": {
-    "pending": "Game waiting for confirmation",
     "contested": "Game disputed",
     "drawn": "Tie"
   },

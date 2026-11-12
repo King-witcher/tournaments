@@ -9,15 +9,19 @@ type Props = {
   name: string;
   /** Antes do nome (o logo). */
   logo?: ReactNode;
-  /** Embaixo do nome (o estado, o papel de quem vê). */
-  tags?: ReactNode;
+  /**
+   * Embaixo do nome, em texto secundário: o estado da área ou o papel de
+   * quem vê ("Em andamento", "Organizador"). Texto, não etiqueta: está em
+   * toda página da área e quase sempre é o caso esperado.
+   */
+  detail?: ReactNode;
 };
 
 /**
  * O topo do `AppSideNav` (prop `header`), como no IBM Cloud: o tipo da área
- * num rótulo pequeno e o nome dela, com o logo e as tags opcionais.
+ * num rótulo pequeno e o nome dela, com o logo e o detalhe opcionais.
  */
-export function AppSideNavTitle({ kind, name, logo, tags }: Props) {
+export function AppSideNavTitle({ kind, name, logo, detail }: Props) {
   return (
     <>
       <p className={styles.kind}>{kind}</p>
@@ -25,7 +29,7 @@ export function AppSideNavTitle({ kind, name, logo, tags }: Props) {
         {logo}
         <p className={styles.name}>{name}</p>
       </div>
-      {tags && <div className={styles.tags}>{tags}</div>}
+      {detail && <p className={styles.detail}>{detail}</p>}
     </>
   );
 }

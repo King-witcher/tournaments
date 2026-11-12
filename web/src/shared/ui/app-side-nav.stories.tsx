@@ -6,7 +6,6 @@ import { AppSideNav } from "./app-side-nav";
 import { AppSideNavLink } from "./app-side-nav-link";
 import { AppSideNavTitle } from "./app-side-nav-title";
 import { SideNavDivider, SideNavMenu } from "./carbon/ui-shell";
-import { StatusTag } from "./status-tag";
 
 const meta = {
   title: "Página/AppSideNav",
@@ -40,15 +39,7 @@ export const Area: Story = {
   args: {
     label: "Menu da comunidade",
     header: (
-      <AppSideNavTitle
-        kind="Comunidade"
-        name="Arena Sul"
-        tags={
-          <StatusTag status="neutral" size="sm">
-            Dono
-          </StatusTag>
-        }
-      />
+      <AppSideNavTitle kind="Comunidade" name="Arena Sul" detail="Dono" />
     ),
     children: (
       <>
@@ -77,11 +68,7 @@ export const Item: Story = {
       <AppSideNavTitle
         kind="Torneio"
         name="Copa Arena Sul de Duelo, temporada de primavera"
-        tags={
-          <StatusTag status="in_progress" size="sm">
-            Em andamento
-          </StatusTag>
-        }
+        detail="Em andamento"
       />
     ),
     children: (

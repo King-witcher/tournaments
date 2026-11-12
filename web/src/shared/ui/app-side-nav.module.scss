@@ -50,8 +50,11 @@
   color: theme.$text-primary;
 }
 
-.tags {
-  margin-block-start: spacing.$spacing-03;
+.detail {
+  @include type.type-style("helper-text-01");
+
+  margin-block-start: spacing.$spacing-02;
+  color: theme.$text-secondary;
 }
 
 // O invólucro só leva a marca que a casca procura: some do layout.

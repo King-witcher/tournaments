@@ -109,7 +109,7 @@ const exemplo = (
             { href: "/arena-brasil", label: "Arena Brasil" },
           ]}
           title="Copa de Duelo"
-          tags={<StatusTag status="registration">Inscrições abertas</StatusTag>}
+          tags={<StatusTag status="neutral">Rascunho</StatusTag>}
           meta="Duelo · melhor de 3 · começa amanhã às 21h · 18/32 inscritos"
           actions={
             <>

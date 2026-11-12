@@ -1,26 +1,35 @@
 import type { components } from "@/shared/api/schema";
-import type { Status } from "@/shared/ui/status-tag";
 
 /**
- * Cor da etiqueta pelo significado da situação de alguém num torneio. É o
- * mapa único: "Seus torneios", o perfil do membro e "Sua situação" importam
- * daqui, para a mesma situação ter a mesma cor em todas as listas.
+ * Como a situação de alguém num torneio aparece (`SituationMark`). Só a
+ * exceção tem marca: quem ficou fora ou desistiu, em vermelho; quem ficou de
+ * reserva sem time, em cinza; o empate que a organização ainda decide, com o
+ * indicador de cuidado. O caminho esperado (inscrito, check-in feito, na
+ * chave, eliminado, campeão…) é texto (`null`). É o mapa único: "Seus
+ * torneios", o perfil do membro e "Sua situação" importam daqui.
  */
-export const SITUATION_STATUS: Record<
+export const SITUATION_MARK: Record<
   components["schemas"]["Situation"],
-  Status
+  "cancelled" | "neutral" | "caution" | null
 > = {
-  registered: "registration",
-  check_in_pending: "check_in",
-  checked_in: "confirmed",
+  registered: null,
+  check_in_pending: null,
+  checked_in: null,
   missed_check_in: "cancelled",
   reserve: "neutral",
-  playing: "in_progress",
-  tie_pending: "in_progress",
-  eliminated: "finished",
+  playing: null,
+  tie_pending: "caution",
+  eliminated: null,
   withdrawn: "cancelled",
-  champion: "confirmed",
-  awaiting_stage: "waiting",
-  stage_check_in_pending: "check_in",
-  substitute: "neutral",
+  champion: null,
+  awaiting_stage: null,
+  stage_check_in_pending: null,
+  substitute: null,
 };
+
+/** A situação tem marca (vai onde ficam as etiquetas, não no texto). */
+export function hasSituationMark(
+  situation: components["schemas"]["Situation"],
+) {
+  return SITUATION_MARK[situation] != null;
+}

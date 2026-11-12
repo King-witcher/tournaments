@@ -1,8 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { StatusTag } from "@/shared/ui/status-tag";
-import { SITUATION_STATUS } from "../lib/situation";
+import { SituationMark } from "./situation-mark";
 
 type Schemas = components["schemas"];
 
@@ -13,10 +12,11 @@ type Props = {
 };
 
 /**
- * A situação de quem joga depois do início, na etiqueta: na chave, fora por
- * não ter feito check-in, eliminado (com a colocação), desistiu, campeão.
+ * A situação de quem joga depois do início (`SituationMark`): na chave,
+ * eliminado (com a colocação) e campeão em texto; fora por não ter feito
+ * check-in, desistiu e o empate a decidir com marca.
  */
-export function BracketSituationTag({ entry, tournament }: Props) {
+export function BracketSituation({ entry, tournament }: Props) {
   const t = useTranslations("Participants");
   const situation: Schemas["Situation"] =
     entry?.situation ??
@@ -34,8 +34,9 @@ export function BracketSituationTag({ entry, tournament }: Props) {
       : t("situation.rank", { rank: placement.rank })
     : "";
   return (
-    <StatusTag status={SITUATION_STATUS[situation]}>
-      {t(`situation.${situation}`, { place, stage: entry?.stage ?? "" })}
-    </StatusTag>
+    <SituationMark
+      situation={situation}
+      label={t(`situation.${situation}`, { place, stage: entry?.stage ?? "" })}
+    />
   );
 }

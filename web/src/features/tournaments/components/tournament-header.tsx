@@ -25,9 +25,9 @@ type Props = {
 
 /**
  * O topo da página do torneio: a trilha até a comunidade, o nome no idioma
- * de quem vê, o estado (e "Só por link"), a linha modalidade · formato · melhor
- * de · início · inscritos e as ações de quem vê, com o raro e o destrutivo
- * no ⋯.
+ * de quem vê, a etiqueta "Rascunho" (os outros estados ficam no menu lateral
+ * e no ciclo), a linha modalidade · formato · melhor de · início · inscritos
+ * (· "Só por link") e as ações de quem vê, com o raro e o destrutivo no ⋯.
  */
 export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const t = useTranslations("Tournament");
@@ -56,16 +56,12 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
           {localizedName(tournament, locale)}
         </span>
       }
+      // O estado está no menu lateral e no ciclo da mesma página: a etiqueta
+      // fica só no rascunho, que ainda não é público.
       tags={
-        <>
-          <StatusTag status={tournament.status}>
-            {tStatus(tournament.status)}
-          </StatusTag>
-          {tournament.admission === "invite_only" &&
-            participantsEditable(tournament.status) && (
-              <StatusTag status="neutral">{tAdmission("inviteOnly")}</StatusTag>
-            )}
-        </>
+        tournament.status === "draft" && (
+          <StatusTag status="neutral">{tStatus("draft")}</StatusTag>
+        )
       }
       meta={
         <>
@@ -93,6 +89,13 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
             count: tournament.participants,
             max: tournament.max_participants,
           })}
+          {tournament.admission === "invite_only" &&
+            participantsEditable(tournament.status) && (
+              <>
+                {" · "}
+                {tAdmission("inviteOnly")}
+              </>
+            )}
         </>
       }
       actions={

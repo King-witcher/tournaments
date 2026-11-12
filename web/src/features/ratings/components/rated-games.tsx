@@ -8,7 +8,6 @@ import { Avatar } from "@/shared/ui/avatar";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Section } from "@/shared/ui/section";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { formatPoints } from "../lib/format-points";
 import styles from "./rated-games.module.scss";
 
@@ -68,11 +67,7 @@ export function RatedGames({ tenant, games }: Props) {
               map: g.map
                 ? t("mapValue", { map: g.map, number: g.game })
                 : t("noMap", { number: g.game }),
-              result: (
-                <StatusTag status={g.won ? "confirmed" : "neutral"} size="sm">
-                  {g.won ? t("won") : t("lost")}
-                </StatusTag>
-              ),
+              result: g.won ? t("won") : t("lost"),
               points: (
                 <span className={styles.number}>
                   {formatPoints(g.delta, locale)}

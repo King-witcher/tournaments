@@ -1,4 +1,6 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
 
 // A altura de uma etiqueta pequena mesmo sem etiqueta: os cartões de uma
 // rodada ficam do mesmo tamanho.
@@ -7,4 +9,11 @@
   align-items: center;
   min-block-size: spacing.$spacing-07;
   padding-inline: spacing.$spacing-03;
+}
+
+// O empate: o resultado, sem chamar atenção.
+.text {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
 }

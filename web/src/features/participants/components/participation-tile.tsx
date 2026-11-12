@@ -8,9 +8,12 @@ import { MY_PARTICIPATION_ID } from "../lib/focus";
 import styles from "./participation-tile.module.scss";
 
 type Props = {
-  /** A etiqueta da situação (`StatusTag`), ao lado do título. */
-  tag?: ReactNode;
-  /** A ação que falta, a data ou o link da próxima partida (a situação já está na etiqueta). */
+  /**
+   * A situação (`SituationMark`), a primeira linha embaixo do título: texto
+   * no caminho esperado, etiqueta na exceção.
+   */
+  situation?: ReactNode;
+  /** A ação que falta, a data ou o link da próxima partida. */
   children?: ReactNode;
   /** Sugere ativar as notificações num bloco à parte, abaixo do bloco. */
   suggestPush?: boolean;
@@ -22,17 +25,17 @@ type Props = {
  * trocam o botão do cabeçalho no refresh. `suggestPush`: embaixo dele, a
  * sugestão (dispensável) de ativar as notificações.
  */
-export function ParticipationTile({ tag, children, suggestPush }: Props) {
+export function ParticipationTile({ situation, children, suggestPush }: Props) {
   const t = useTranslations("Participants.situation");
   const tile = (
     <Tile id={MY_PARTICIPATION_ID} tabIndex={-1}>
       <div className={styles.content}>
-        <div className={styles.heading}>
-          <h2 className={styles.title}>{t("title")}</h2>
-          {tag}
-        </div>
-        {Children.toArray(children).length > 0 && (
-          <div className={styles.body}>{children}</div>
+        <h2 className={styles.title}>{t("title")}</h2>
+        {(situation || Children.toArray(children).length > 0) && (
+          <div className={styles.body}>
+            {situation}
+            {children}
+          </div>
         )}
       </div>
     </Tile>

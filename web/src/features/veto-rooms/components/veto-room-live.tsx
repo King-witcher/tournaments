@@ -9,7 +9,6 @@ import { useVetoBoard } from "@/features/matches/hooks/use-veto-board";
 import { Accordion } from "@/shared/ui/carbon/accordion";
 import { PageColumns } from "@/shared/ui/page-columns";
 import { PageHeader } from "@/shared/ui/page-header";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { useVetoRoom } from "../hooks/use-veto-room";
 import { VetoRoomGone } from "./veto-room-gone";
 import { VetoRoomJoin } from "./veto-room-join";
@@ -48,8 +47,9 @@ export function VetoRoomLive({ signedIn }: { signedIn: boolean }) {
     <>
       <PageHeader
         title={t("title")}
-        tags={who && <StatusTag status="neutral">{who}</StatusTag>}
-        meta={`${mode} · ${t("bestOf", { count: room.best_of })}`}
+        meta={[mode, t("bestOf", { count: room.best_of }), who]
+          .filter(Boolean)
+          .join(" · ")}
         actions={<VetoSoundToggle />}
       />
       {needsName ? (

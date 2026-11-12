@@ -7,7 +7,6 @@ import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable } from "@/shared/ui/data-table";
 import { Link } from "@/shared/ui/link";
-import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import { eliminationOf, placementSeriesOf } from "../lib/standings";
 import { DepartureTag } from "./departure-tag";
@@ -85,11 +84,7 @@ export function StandingsTable({ tenant, bracket, basePath }: Props) {
         ),
         result: (
           <span className={styles.result}>
-            {champion && (
-              <StatusTag status="confirmed" size="sm">
-                {t("champion")}
-              </StatusTag>
-            )}
+            {champion && <span>{t("champion")}</span>}
             {team && (
               <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />
             )}

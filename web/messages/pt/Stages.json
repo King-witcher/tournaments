@@ -1,9 +1,6 @@
 {
   "title": "Fase {number}",
-  "state": {
-    "pending": "Esperando o início",
-    "check_in": "Check-in aberto"
-  },
+  "checkInOpen": "Check-in aberto",
   "enters": "{count, plural, one {Entra # {tdm, select, yes {time} other {jogador}}} other {Entram # {tdm, select, yes {times} other {jogadores}}}}",
   "substitutes": "{count, plural, one {# suplente} other {# suplentes}}",
   "confirmed": "{count} de {total} fizeram check-in",

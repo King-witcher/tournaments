@@ -2,8 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { getCurrentUser } from "@/features/auth/server";
 import { getFormation } from "@/features/teams/server";
-import { StatusTag } from "@/shared/ui/status-tag";
-import { SITUATION_STATUS } from "../lib/situation";
+import { SituationMark } from "./situation-mark";
 
 type Props = {
   tenant: string;
@@ -13,14 +12,14 @@ type Props = {
 };
 
 /**
- * A etiqueta de "Sua situação" no TDM antes do início: com algum time já
- * formado e quem vê fora de todos, "Reserva, sem time" no lugar de
- * `situation` (quem se inscreve ou faz o check-in depois de formados os
- * times fica de reserva, e "Check-in feito" sozinho daria a entender que
- * está na chave). Lê a formação e a sessão: fica em `<Suspense>`, com a
- * etiqueta de `situation` enquanto carrega.
+ * A situação de "Sua situação" no TDM antes do início: com algum time já
+ * formado e quem vê fora de todos, a etiqueta "Reserva, sem time" no lugar
+ * do texto de `situation` (quem se inscreve ou faz o check-in depois de
+ * formados os times fica de reserva, e "Check-in feito" sozinho daria a
+ * entender que está na chave). Lê a formação e a sessão: fica em
+ * `<Suspense>`, com o texto de `situation` enquanto carrega.
  */
-export async function TeamSituationTag({ tenant, slug, situation }: Props) {
+export async function TeamSituation({ tenant, slug, situation }: Props) {
   const [t, formation, user] = await Promise.all([
     getTranslations("Participants.situation"),
     getFormation(tenant, slug),
@@ -34,9 +33,5 @@ export async function TeamSituationTag({ tenant, slug, situation }: Props) {
       team.members.some((member) => member.user_id === user.id),
     );
   const shown = reserve ? "reserve" : situation;
-  return (
-    <StatusTag status={SITUATION_STATUS[shown]}>
-      {t(shown, { place: "" })}
-    </StatusTag>
-  );
+  return <SituationMark situation={shown} label={t(shown, { place: "" })} />;
 }

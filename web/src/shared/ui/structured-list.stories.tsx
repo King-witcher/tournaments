@@ -53,8 +53,8 @@ export const WithTags: Story = {
         cells: [
           "C1",
           "Lobo x Mariana",
-          <StatusTag key="s" status="in_progress">
-            Em andamento
+          <StatusTag key="s" status="contested">
+            Contestada
           </StatusTag>,
         ],
       },
@@ -63,8 +63,8 @@ export const WithTags: Story = {
         cells: [
           "C2",
           "Rafael x Camila",
-          <StatusTag key="s" status="waiting">
-            Aguardando
+          <StatusTag key="s" status="action">
+            Sua vez no veto
           </StatusTag>,
         ],
       },
