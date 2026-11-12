@@ -3,47 +3,45 @@
     "check_in": {
       "opened": {
         "title": "Check-in aberto",
-        "body": "{tournament}: faça o check-in para jogar."
+        "body": "Faça o check-in para jogar."
       }
     },
     "match": {
       "ready": {
-        "title": "Sua série está pronta",
-        "body": "{tournament}: você contra {opponent}."
+        "title": "Sua série contra {opponent} está pronta"
       },
       "game_reported": {
         "title": "{opponent} enviou a partida {game}",
-        "body": "{tournament}: confirme ou conteste até {deadline}. Sem resposta, a partida vale."
+        "body": "Confirme ou conteste até {deadline}. Sem resposta, a partida vale."
       },
       "game_contested": {
-        "title": "Partida contestada",
-        "body": "{tournament}: {player} contestou a partida {game}. Resolva na série."
+        "title": "{player} contestou a partida {game}",
+        "body": "A série fica parada até você resolver."
       },
       "contest_received": {
-        "title": "{player} contestou a partida {game}",
-        "body": "{tournament}: aceite e corrija o placar, ou a organização resolve."
+        "title": "{player} contestou seu envio",
+        "body": "Aceite ou espere a organização resolver."
       },
       "contest_accepted": {
         "title": "{player} aceitou sua contestação",
-        "body": "{tournament}: confira o placar da partida {game}. Se continuar errado, conteste de novo."
+        "body": "Confira o placar da partida {game}."
       },
       "opponent_ready": {
-        "title": "{opponent} está pronto",
-        "body": "{tournament}: clique em “Pronto” para o veto começar."
+        "title": "{opponent} marcou Pronto. Falta você."
       },
       "veto_started": {
-        "title": "O veto começou",
-        "body": "{tournament}: contra {opponent}. Se o tempo de um passo acabar, a escolha é sorteada."
+        "title": "O veto contra {opponent} começou",
+        "body": "Passo sem resposta no tempo é sorteado."
       },
       "team_pick_open": {
         "title": "Escolha seus campeões",
-        "body": "{tournament}: um campeão para cada partida da série. O que faltar no fim é sorteado."
+        "body": "Um por partida. O que faltar é sorteado."
       }
     },
     "tournament": {
       "tie_pending": {
-        "title": "Empate a decidir",
-        "body": "{tournament}: as séries acabaram com empate na classificação. Decida a ordem."
+        "title": "Empate na classificação",
+        "body": "Decida a ordem para encerrar."
       },
       "won": {
         "title": "Você venceu {tournament}",
@@ -61,13 +59,13 @@
     "tenant": {
       "deletion_due": {
         "title": "{tenant} vai ser excluída",
-        "body": "Para manter a comunidade, cancele a exclusão nas configurações até {deadline}."
+        "body": "Cancele a exclusão até {deadline} para manter a comunidade."
       }
     },
     "stage": {
       "check_in_opened": {
         "title": "Check-in da fase {stage} aberto",
-        "body": "{tournament}: confirme sua presença para jogar."
+        "body": "Faça o check-in para jogar a fase."
       }
     }
   },

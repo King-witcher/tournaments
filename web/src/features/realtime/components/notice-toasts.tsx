@@ -28,11 +28,12 @@ export function NoticeToasts({ notices, onClose }: Props) {
       label={t("region")}
       onClose={onClose}
       items={notices.map(({ id, notice }) => {
-        const { title, body, open } = text(notice);
+        const { title, body, context, open } = text(notice);
         return {
           id,
           title,
           subtitle: body,
+          caption: context,
           link:
             notice.path === pathname
               ? undefined

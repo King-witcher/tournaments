@@ -10,7 +10,9 @@
  *   visível, não mostra nada (a página já mostrou o toast pelo WebSocket);
  *   senão, a notificação no idioma da inscrição, com `tag` por código e
  *   caminho (o aviso repetido substitui o anterior, tocando de novo) e o
- *   endereço `/{locale}{path}`.
+ *   endereço `/{locale}{path}`. O corpo é a frase do aviso (nem todo código
+ *   tem) e, na última linha, o torneio ou a comunidade, menos quando o título
+ *   já o tem (a regra de `useNoticeText`).
  * - `notificationclick`: foca a janela que já está nesse endereço ou abre
  *   uma nova.
  * - `install`/`activate`: a versão nova assume na hora.
@@ -71,7 +73,12 @@ function text(notice) {
   for (const key of ["opponent", "player", "team", "champion"]) {
     if (values[key] === "") values[key] = MESSAGES[locale].deletedAccount;
   }
-  return { locale, title: fill(entry.title, values), body: fill(entry.body, values) };
+  const lines = entry.body ? [fill(entry.body, values)] : [];
+  const context = ["tournament", "tenant"].find(
+    (key) => typeof values[key] === "string" && !entry.title.includes("{" + key + "}"),
+  );
+  if (context) lines.push(values[context]);
+  return { locale, title: fill(entry.title, values), body: lines.join("\n") };
 }
 
 async function windows() {

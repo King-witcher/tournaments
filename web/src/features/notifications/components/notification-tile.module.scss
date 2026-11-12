@@ -1,9 +1,17 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/type";
 
-// A frase e, embaixo, quando chegou: duas linhas do metadado do tile.
+// Embaixo do título, uma linha cada no metadado do tile: a frase (quando há),
+// o torneio e quando chegou.
 .body {
   display: block;
+}
+
+.context {
+  @include type.type-style("helper-text-01");
+
+  display: block;
+  margin-block-start: spacing.$spacing-02;
 }
 
 .when {

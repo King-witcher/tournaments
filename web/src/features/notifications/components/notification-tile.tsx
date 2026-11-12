@@ -10,9 +10,10 @@ import styles from "./notification-tile.module.scss";
 
 /**
  * Uma notificação do sininho: o tile inteiro leva à partida ou ao torneio,
- * com o título, a frase do aviso e há quanto tempo chegou. Abrir outra página
- * já marca como lida (`useMarkVisitedPageRead`); a página em que a pessoa já
- * está não abre de novo, então marca aqui.
+ * com o título, a frase do aviso (quando há), o torneio (ou a comunidade) e
+ * há quanto tempo chegou. Abrir outra página já marca como lida
+ * (`useMarkVisitedPageRead`); a página em que a pessoa já está não abre de
+ * novo, então marca aqui.
  */
 export function NotificationTile({
   notification: { notice, read, created_at },
@@ -22,7 +23,7 @@ export function NotificationTile({
   const text = useNoticeText();
   const pathname = usePathname();
   const markPageRead = useMarkPageRead();
-  const { title, body } = text(notice);
+  const { title, body, context } = text(notice);
   return (
     <LinkTile
       href={notice.path}
@@ -32,7 +33,8 @@ export function NotificationTile({
       }}
       meta={
         <>
-          <span className={styles.body}>{body}</span>
+          {body && <span className={styles.body}>{body}</span>}
+          {context && <span className={styles.context}>{context}</span>}
           <span className={styles.when}>
             <TimeAgo value={created_at} />
           </span>

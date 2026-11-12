@@ -10,6 +10,7 @@ const items: ToastItem[] = [
     id: "1",
     title: "Série pronta",
     subtitle: "Sua série começa em 5 minutos.",
+    caption: "Copa de Novembro",
   },
   {
     id: "2",

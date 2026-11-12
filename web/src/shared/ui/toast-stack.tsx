@@ -14,6 +14,8 @@ export type ToastItem = {
   title: string;
   /** Uma frase com o detalhe. */
   subtitle?: string;
+  /** A linha de baixo, menor: de onde o aviso vem (o torneio). */
+  caption?: string;
   /** Para onde o aviso leva: o aviso inteiro vira este link. Sem ele (a pessoa já está lá), não é clicável. */
   link?: { href: Href; label: string };
 };
@@ -107,6 +109,7 @@ function StackedToast({
         lowContrast
         title={item.title}
         subtitle={item.subtitle}
+        caption={item.caption}
         onClose={() => {
           onClose(item.id);
           return false;

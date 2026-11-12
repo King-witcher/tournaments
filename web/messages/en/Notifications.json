@@ -3,47 +3,45 @@
     "check_in": {
       "opened": {
         "title": "Check-in open",
-        "body": "{tournament}: check in to play."
+        "body": "Check in to play."
       }
     },
     "match": {
       "ready": {
-        "title": "Your match is ready",
-        "body": "{tournament}: you vs. {opponent}."
+        "title": "Your match against {opponent} is ready"
       },
       "game_reported": {
-        "title": "{opponent} submitted game {game}",
-        "body": "{tournament}: confirm or dispute by {deadline}. Without a response, the game counts."
+        "title": "{opponent} reported game {game}",
+        "body": "Confirm or dispute by {deadline}. Without a response, the game counts."
       },
       "game_contested": {
-        "title": "Game disputed",
-        "body": "{tournament}: {player} disputed game {game}. Resolve it in the match."
+        "title": "{player} disputed game {game}",
+        "body": "The match is on hold until you resolve it."
       },
       "contest_received": {
-        "title": "{player} disputed game {game}",
-        "body": "{tournament}: accept and correct the score, or the organizers will resolve it."
+        "title": "{player} disputed your report",
+        "body": "Accept it or wait for the organizers to resolve it."
       },
       "contest_accepted": {
         "title": "{player} accepted your dispute",
-        "body": "{tournament}: check the score for game {game}. If it's still wrong, dispute it again."
+        "body": "Check the score for game {game}."
       },
       "opponent_ready": {
-        "title": "{opponent} is ready",
-        "body": "{tournament}: click “Ready” to start the veto."
+        "title": "{opponent} marked Ready. Waiting on you."
       },
       "veto_started": {
-        "title": "The veto has started",
-        "body": "{tournament}: against {opponent}. If a step's time runs out, the pick is drawn at random."
+        "title": "The veto against {opponent} has started",
+        "body": "A step not taken in time is drawn at random."
       },
       "team_pick_open": {
         "title": "Pick your champions",
-        "body": "{tournament}: one champion for each game in the match. Whatever is missing at the end is drawn at random."
+        "body": "One per game. Any left unpicked is drawn at random."
       }
     },
     "tournament": {
       "tie_pending": {
-        "title": "Tie to decide",
-        "body": "{tournament}: the matches ended with a tie in the standings. Decide the order."
+        "title": "Tie in the standings",
+        "body": "Decide the order to finish."
       },
       "won": {
         "title": "You won {tournament}",
@@ -61,13 +59,13 @@
     "tenant": {
       "deletion_due": {
         "title": "{tenant} will be deleted",
-        "body": "To keep the community, cancel the deletion in settings by {deadline}."
+        "body": "Cancel the deletion by {deadline} to keep the community."
       }
     },
     "stage": {
       "check_in_opened": {
-        "title": "Stage {stage} check-in is open",
-        "body": "{tournament}: confirm your attendance to play."
+        "title": "Stage {stage} check-in open",
+        "body": "Check in to play the stage."
       }
     }
   },
