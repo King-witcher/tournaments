@@ -16,6 +16,7 @@
     "titleStage": "Empate en la fase {stage}",
     "meta": "Decide el orden para terminar el torneo.",
     "metaStage": "Decide el orden para terminar la fase.",
+    "hint": "Decide el orden para liberar el resultado.",
     "action": "Abrir clasificación"
   },
   "stageDue": {

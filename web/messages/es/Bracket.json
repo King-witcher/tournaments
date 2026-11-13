@@ -102,11 +102,12 @@
     "against": "{match} contra {opponent}",
     "open": "Abrir serie",
     "deadline": "Confirma o impugna. Sin respuesta, la partida vale <deadline></deadline>.",
+    "acceptContest": "Acepta o espera a que la organización resuelva.",
     "notice": {
       "report": "Te toca enviar la partida {game}",
-      "respond": "Partida {game} enviada por {opponent}",
-      "accept_contest": "{player} impugnó tu envío",
-      "accept_contest_unknown": "Impugnaron tu envío",
+      "respond": "{opponent} envió la partida {game}",
+      "accept_contest": "{player} impugnó tu resultado",
+      "accept_contest_unknown": "Impugnaron tu resultado",
       "ready": "{opponent} marcó “Listo”. Faltas tú.",
       "ready_first": "Te toca marcar “Listo”",
       "veto": "Tu turno en el veto",
@@ -114,7 +115,7 @@
       "pick_map": "Te toca elegir un mapa",
       "ban_champion": "Te toca banear un campeón",
       "pick_champion": "Te toca elegir un campeón",
-      "resolve": "{player} impugnó el envío de {reporter}",
+      "resolve": "{player} impugnó el resultado de {reporter}",
       "resolve_game": "{player} impugnó la partida {game}",
       "resolve_unknown": "Partida {game} impugnada"
     }

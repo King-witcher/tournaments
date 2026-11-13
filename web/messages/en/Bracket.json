@@ -102,11 +102,12 @@
     "against": "{match} against {opponent}",
     "open": "Open match",
     "deadline": "Confirm or dispute. Without a response, the game counts <deadline></deadline>.",
+    "acceptContest": "Accept it, or wait for the organizers to decide.",
     "notice": {
       "report": "Your turn to submit game {game}",
-      "respond": "Game {game} submitted by {opponent}",
-      "accept_contest": "{player} disputed your submission",
-      "accept_contest_unknown": "Your submission was disputed",
+      "respond": "{opponent} submitted game {game}",
+      "accept_contest": "{player} disputed your result",
+      "accept_contest_unknown": "Your result was disputed",
       "ready": "{opponent} marked “Ready”. You're next.",
       "ready_first": "Your turn to mark “Ready”",
       "veto": "Your turn in the veto",
@@ -114,7 +115,7 @@
       "pick_map": "Your turn to pick a map",
       "ban_champion": "Your turn to ban a champion",
       "pick_champion": "Your turn to pick a champion",
-      "resolve": "{player} disputed {reporter}'s submission",
+      "resolve": "{player} disputed {reporter}'s result",
       "resolve_game": "{player} disputed game {game}",
       "resolve_unknown": "Game {game} disputed"
     }

@@ -102,11 +102,12 @@
     "against": "{match} contra {opponent}",
     "open": "Abrir série",
     "deadline": "Confirme ou conteste. Sem resposta, a partida vale <deadline></deadline>.",
+    "acceptContest": "Aceite ou espere a organização resolver.",
     "notice": {
       "report": "Sua vez de enviar a partida {game}",
-      "respond": "Partida {game} enviada por {opponent}",
-      "accept_contest": "{player} contestou seu envio",
-      "accept_contest_unknown": "Contestaram seu envio",
+      "respond": "{opponent} enviou a partida {game}",
+      "accept_contest": "{player} contestou seu resultado",
+      "accept_contest_unknown": "Contestaram seu resultado",
       "ready": "{opponent} marcou “Pronto”. Falta você.",
       "ready_first": "Sua vez de marcar “Pronto”",
       "veto": "Sua vez no veto",
@@ -114,7 +115,7 @@
       "pick_map": "Sua vez de escolher um mapa",
       "ban_champion": "Sua vez de banir um campeão",
       "pick_champion": "Sua vez de escolher um campeão",
-      "resolve": "{player} contestou o envio de {reporter}",
+      "resolve": "{player} contestou o resultado de {reporter}",
       "resolve_game": "{player} contestou a partida {game}",
       "resolve_unknown": "Partida {game} contestada"
     }

@@ -16,6 +16,7 @@
     "titleStage": "Tie in stage {stage}",
     "meta": "Decide the order to finish the tournament.",
     "metaStage": "Decide the order to finish the stage.",
+    "hint": "Decide the order to unblock the result.",
     "action": "Open standings"
   },
   "stageDue": {

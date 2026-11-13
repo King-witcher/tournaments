@@ -97,7 +97,7 @@ export function MyTaskNotice({ kind, entry, focusAfter }: Props) {
 /**
  * A série em que é a vez de quem vê: a situação no título e, embaixo, só o que
  * ajuda a agir: a série e o adversário (com o mapa, ao enviar; no veto) ou o
- * prazo da resposta. "Pronto" e a contestação, só o título.
+ * prazo da resposta ou, na contestação, o que fazer. "Pronto", só o título.
  */
 function SeriesTaskNotice({
   kind,
@@ -125,7 +125,9 @@ function SeriesTaskNotice({
         ? against
         : task === "respond"
           ? deadline(detail)
-          : undefined;
+          : task === "accept_contest"
+            ? t("acceptContest")
+            : undefined;
 
   return (
     <TaskNotice

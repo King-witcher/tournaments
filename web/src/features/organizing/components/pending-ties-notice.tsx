@@ -8,7 +8,7 @@ import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio cujas séries acabaram com empate na classificação esperando a
- * organização: só o título e o botão que abre a decisão deles na
+ * organização: o título, o que fazer e o botão que abre a decisão deles na
  * Classificação.
  */
 export function PendingTiesNotice({
@@ -25,6 +25,7 @@ export function PendingTiesNotice({
     <TaskNotice
       kind={kind}
       title={t("title")}
+      meta={t("hint")}
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}/standings?${OPEN_TIES_QUERY}`}
