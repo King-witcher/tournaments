@@ -95,7 +95,7 @@ pub async fn find_by_token(
                union all
                select tenant_id, id from tournaments where invite_token = $1 and status <> 'draft'
            )
-           select t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name,
+           select t.id as "tenant_id!", t.slug as "tenant_slug!", t.name as "tenant_name!",
                   tr.slug as "tournament_slug?",
                   t.description as tenant_description, t.logo_key, t.cover_key,
                   t.deletion_due_at is not null as "tenant_deleting!",
