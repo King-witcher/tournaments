@@ -28,8 +28,8 @@ import { StartDueNotice } from "./start-due-notice";
  * algo, e a home recarrega sozinha pelo canal da pessoa. Fica em `<Suspense>`.
  *
  * `focusAfter`: o alvo do foco quando o check-in feito aqui some da lista.
- * `tenant`: só o desta comunidade (o início dela), sem o nome dela em cada
- * aviso.
+ * `tenant`: só o desta comunidade (o início dela). Os avisos não dizem o
+ * torneio nem a comunidade: quem vê descobre ao abrir.
  */
 export async function WaitingForYou({
   focusAfter,
@@ -63,7 +63,6 @@ export async function WaitingForYou({
     items: T[] | undefined,
   ) => (items ?? []).filter((item) => here(item.tournament.tenant_slug));
 
-  const community = (name: string) => (tenant === undefined ? name : undefined);
   const notice = (
     kind: Severity,
     key: string,
@@ -76,12 +75,7 @@ export async function WaitingForYou({
         severity(playerTask(entry) ?? "check_in"),
         `${entry.tenant_slug}/${entry.tournament.slug}`,
         (kind) => (
-          <MyTaskNotice
-            kind={kind}
-            entry={entry}
-            community={community(entry.tenant_name)}
-            focusAfter={focusAfter}
-          />
+          <MyTaskNotice kind={kind} entry={entry} focusAfter={focusAfter} />
         ),
       ),
     ),
@@ -89,52 +83,28 @@ export async function WaitingForYou({
       notice(
         severity("resolve"),
         `${item.tournament.tenant_slug}/${item.tournament.slug}/${item.key}/${item.game}`,
-        (kind) => (
-          <ContestedGameNotice
-            kind={kind}
-            item={item}
-            community={community(item.tournament.tenant_name)}
-          />
-        ),
+        (kind) => <ContestedGameNotice kind={kind} item={item} />,
       ),
     ),
     ...ofHere(organizing?.start_due).map((item) =>
       notice(
         severity("start_due"),
         `${item.tournament.tenant_slug}/${item.tournament.slug}`,
-        (kind) => (
-          <StartDueNotice
-            kind={kind}
-            item={item}
-            community={community(item.tournament.tenant_name)}
-          />
-        ),
+        (kind) => <StartDueNotice kind={kind} item={item} />,
       ),
     ),
     ...ofHere(organizing?.stage_due).map((item) =>
       notice(
         severity("stage_due"),
         `${item.tournament.tenant_slug}/${item.tournament.slug}/${item.stage}`,
-        (kind) => (
-          <StageDueNotice
-            kind={kind}
-            item={item}
-            community={community(item.tournament.tenant_name)}
-          />
-        ),
+        (kind) => <StageDueNotice kind={kind} item={item} />,
       ),
     ),
     ...ofHere(organizing?.pending_ties).map((item) =>
       notice(
         severity("pending_ties"),
         `${item.tournament.tenant_slug}/${item.tournament.slug}/ties`,
-        (kind) => (
-          <PendingTiesNotice
-            kind={kind}
-            item={item}
-            community={community(item.tournament.tenant_name)}
-          />
-        ),
+        (kind) => <PendingTiesNotice kind={kind} item={item} />,
       ),
     ),
   ]);

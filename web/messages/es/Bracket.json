@@ -102,7 +102,6 @@
     "against": "{match} contra {opponent}",
     "open": "Abrir serie",
     "deadline": "Confirma o impugna. Sin respuesta, la partida vale <deadline></deadline>.",
-    "acceptContest": "Acepta o espera a que la organización lo resuelva.",
     "notice": {
       "report": "Te toca enviar la partida {game}",
       "respond": "Partida {game} enviada por {opponent}",

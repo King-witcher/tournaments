@@ -10,9 +10,9 @@ type Detail = components["schemas"]["TaskDetail"];
  * Os textos do aviso de uma série que espera quem vê (a home e "Séries que
  * esperam você"). `title`: a situação, com quem agiu ("Partida 2 enviada por
  * P4"); `opponent` é o nome do adversário, quando quem vê joga. Sem o
- * detalhe, ou sem o nome de que a frase precisa, sai a frase sem ele. `note`:
- * o que fazer quando o título não diz (o prazo da resposta, o aceite da
- * contestação), ou nada. Serve a Server e a Client Components.
+ * detalhe, ou sem o nome de que a frase precisa, sai a frase sem ele. `deadline`:
+ * o prazo da resposta (`respond`, na home), ou nada. Serve a Server e a
+ * Client Components.
  */
 export function useTaskNoticeText() {
   const t = useTranslations("Bracket.pending");
@@ -51,15 +51,12 @@ export function useTaskNoticeText() {
     }
   };
 
-  const note = (task: ActionableTask, detail: Detail | null | undefined) => {
-    const deadline = detail?.confirm_by;
-    if (task === "respond" && deadline)
-      return t.rich("deadline", {
-        deadline: () => <LocalDayTime value={deadline} />,
-      });
-    if (task === "accept_contest") return t("acceptContest");
-    return undefined;
+  const deadline = (detail: Detail | null | undefined) => {
+    const by = detail?.confirm_by;
+    return by
+      ? t.rich("deadline", { deadline: () => <LocalDayTime value={by} /> })
+      : undefined;
   };
 
-  return { title, note };
+  return { title, deadline };
 }

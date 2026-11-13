@@ -5,7 +5,6 @@ import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { MetaLines } from "@/shared/ui/meta-lines";
 import { TaskNotice } from "@/shared/ui/task-notice";
 import { TaskNoticeList } from "@/shared/ui/task-notice-list";
 import { useMatchLabels } from "../hooks/use-match-labels";
@@ -25,16 +24,15 @@ type Props = {
 /**
  * As séries que esperam uma ação de quem vê (enviar, responder, o veto ou,
  * para a organização, resolver), um aviso por série: a situação no título
- * (`useTaskNoticeText`, o mesmo da home), a série com os lados embaixo e, se
- * for o caso, o próximo mapa, o prazo da resposta ou o aceite da
- * contestação: numa chave grande ou no celular, o cartão da série pode estar
- * fora da tela. O botão leva à série. As contestações primeiro
+ * (`useTaskNoticeText`, o mesmo da home) e só a série com os lados embaixo:
+ * numa chave grande ou no celular, o cartão da série pode estar fora da tela.
+ * O prazo e o mapa ficam na página da série. O botão leva à série. As contestações primeiro
  * (`warningsFirst`). Some sem pendência.
  */
 export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const t = useTranslations("Bracket");
   const { code } = useMatchLabels(isSingle(bracket.format));
-  const { title, note } = useTaskNoticeText();
+  const { title } = useTaskNoticeText();
   const teamName = useTeamName();
   const teams = new Map(bracket.entrants.map((e) => [e.id, e]));
   const pending = warningsFirst(
@@ -60,20 +58,11 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
             key={m.key}
             kind={kind}
             title={title(m.task, detail, opponent)}
-            meta={
-              <MetaLines
-                lines={[
-                  t("pending.item", {
-                    match: code(m.key),
-                    a: name(m.a),
-                    b: name(m.b),
-                  }),
-                  m.task === "report" && m.next_map
-                    ? t("nextMap", { map: m.next_map.name })
-                    : note(m.task, detail),
-                ]}
-              />
-            }
+            meta={t("pending.item", {
+              match: code(m.key),
+              a: name(m.a),
+              b: name(m.b),
+            })}
             action={
               <ButtonLink href={`${basePath}/${m.key}`} kind="ghost" size="sm">
                 {t("pending.open")}

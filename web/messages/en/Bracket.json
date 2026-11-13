@@ -102,7 +102,6 @@
     "against": "{match} against {opponent}",
     "open": "Open match",
     "deadline": "Confirm or dispute. Without a response, the game counts <deadline></deadline>.",
-    "acceptContest": "Accept or wait for the organizers to resolve it.",
     "notice": {
       "report": "Your turn to submit game {game}",
       "respond": "Game {game} submitted by {opponent}",
