@@ -214,6 +214,7 @@ async fn login_creates_user_identity_and_session() {
     let body: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
     assert_eq!(body["display_name"], "Quaker Global");
     assert_eq!(body["deletion_cancelled"], false);
+    assert_eq!(body["account_created"], true);
 
     let user = sqlx::query!("select id, display_name, avatar_url from users")
         .fetch_one(&db)
@@ -252,9 +253,11 @@ async fn login_creates_user_identity_and_session() {
 async fn second_login_reuses_user_and_updates_avatar() {
     let (db, _lease) = crate::db::test_db().await;
     let first = app(db.clone(), Some(discord_user(Some("old"))), true);
-    do_login(&first).await;
+    let (_, body) = do_login(&first).await;
+    assert_eq!(body["account_created"], true);
     let second = app(db.clone(), Some(discord_user(Some("new"))), true);
-    let (session, _) = do_login(&second).await;
+    let (session, body) = do_login(&second).await;
+    assert_eq!(body["account_created"], false, "a conta já existia");
 
     let users = sqlx::query!("select avatar_url from users")
         .fetch_all(&db)

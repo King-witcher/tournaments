@@ -32,9 +32,10 @@ async fn password_account_links_discord() {
         Some("https://cdn.discordapp.com/avatars/123/av.png")
     );
 
-    // Agora o Discord entra na mesma conta.
+    // Agora o Discord entra na mesma conta, que ele não criou.
     let (_, body) = do_login(&app).await;
     assert_eq!(body["id"], me.id);
+    assert_eq!(body["account_created"], false);
 
     // Já ligado: nem vai para o Discord.
     let (status, body) = authorize(&app, "discord", Some(&me.cookie), None).await;

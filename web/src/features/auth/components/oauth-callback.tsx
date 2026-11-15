@@ -7,6 +7,7 @@ import { getPathname } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
+import { rememberAccountCreated } from "../lib/backup-login";
 import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 import { takeOAuthFlow } from "../lib/oauth-flow";
 import type { Provider } from "../lib/providers";
@@ -17,7 +18,9 @@ import type { Provider } from "../lib/providers";
  * apaga: vale uma vez) e confere o provedor e o state. Batendo, manda o code
  * com o verifier à API, que o troca no provedor. Entrando, carrega o destino
  * do zero (o cabeçalho ainda é de quem não estava logado), ou a conta, se
- * entrar cancelou a exclusão; vinculando, volta para a página de origem.
+ * entrar cancelou a exclusão; se o login criou a conta, marca na aba para o
+ * destino avisar do login reserva (`useBackupLoginToast`); vinculando, volta
+ * para a página de origem.
  * Errado, volta com `?auth_error=<código>`: para a origem, ao vincular; para
  * o início, ao entrar. O callback sai do histórico (`replace`).
  */
@@ -73,6 +76,7 @@ async function finish(provider: Provider, pageLocale: Locale) {
       : api.POST("/auth/google/login", { body }),
   );
   if (!entered.ok) return fail(entered.code);
+  if (entered.data.account_created) rememberAccountCreated();
   return to(
     entered.data.deletion_cancelled ? DELETION_CANCELLED : flow.returnTo,
   );

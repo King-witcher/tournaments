@@ -26,9 +26,19 @@ pub struct ExternalLogin {
     pub account: String,
 }
 
+/// A conta de quem entrou por um provedor.
+pub struct ExternalUser {
+    pub id: i64,
+    /// O login a criou agora.
+    pub created: bool,
+}
+
 /// Acha o usuário pela identidade do provedor (atualizando o avatar, se é o
-/// Discord) ou cria usuário e identidade. Devolve o id do usuário.
-pub async fn upsert_external_user(db: &PgPool, login: &ExternalLogin) -> Result<i64, sqlx::Error> {
+/// Discord) ou cria usuário e identidade.
+pub async fn upsert_external_user(
+    db: &PgPool,
+    login: &ExternalLogin,
+) -> Result<ExternalUser, sqlx::Error> {
     let provider = login.provider.as_str();
     let avatar_url = login
         .avatar_url
@@ -43,7 +53,8 @@ pub async fn upsert_external_user(db: &PgPool, login: &ExternalLogin) -> Result<
     .fetch_optional(&mut *tx)
     .await?;
 
-    let user_id = match existing {
+    let created = existing.is_none();
+    let id = match existing {
         Some(id) => {
             if login.provider.sets_avatar() {
                 set_avatar(&mut tx, id, avatar_url).await?;
@@ -70,7 +81,7 @@ pub async fn upsert_external_user(db: &PgPool, login: &ExternalLogin) -> Result<
         }
     };
     tx.commit().await?;
-    Ok(user_id)
+    Ok(ExternalUser { id, created })
 }
 
 /// Liga o provedor à conta e, se é o Discord, passa a usar o avatar dele.

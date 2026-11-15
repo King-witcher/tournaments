@@ -3433,6 +3433,14 @@ export interface components {
         OAuthRedirect: {
             url: string;
         };
+        /** @description Quem acabou de entrar por um provedor (Discord, Google). */
+        OAuthSignedIn: components["schemas"]["SignedIn"] & {
+            /**
+             * @description O login criou a conta agora: ela só entra por este provedor, e o front
+             *     avisa para pôr um email.
+             */
+            account_created: boolean;
+        };
         /**
          * @description Abrir o OAuth de um provedor para ligá-lo à conta logada, com o que o
          *     navegador gerou e guardou na aba. Para entrar, o front monta a URL de
@@ -5646,13 +5654,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
+            /** @description Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui: `account_created`). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SignedIn"];
+                    "application/json": components["schemas"]["OAuthSignedIn"];
                 };
             };
             /** @description request.invalid_body (também code vazio ou verifier fora do formato) */
@@ -6392,13 +6400,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
+            /** @description Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui: `account_created`). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SignedIn"];
+                    "application/json": components["schemas"]["OAuthSignedIn"];
                 };
             };
             /** @description request.invalid_body (também code vazio ou verifier fora do formato) */

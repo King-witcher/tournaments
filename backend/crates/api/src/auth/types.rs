@@ -217,6 +217,16 @@ pub struct SignedIn {
     pub deletion_cancelled: bool,
 }
 
+/// Quem acabou de entrar por um provedor (Discord, Google).
+#[derive(Serialize, ToSchema)]
+pub struct OAuthSignedIn {
+    #[serde(flatten)]
+    pub signed_in: SignedIn,
+    /// O login criou a conta agora: ela só entra por este provedor, e o front
+    /// avisa para pôr um email.
+    pub account_created: bool,
+}
+
 /// `{id}` de `/auth/sessions/{id}`.
 #[derive(Deserialize)]
 pub struct SessionPath {

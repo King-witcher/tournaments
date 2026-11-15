@@ -60,7 +60,13 @@ async fn authorize_asks_only_id_and_name() {
 async fn login_creates_account_with_the_google_name() {
     let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana Souza")), true);
-    let me = google_login(&app).await;
+    let (status, first, session) = exchange(&app, "google", "login", None, VERIFIER).await;
+    assert_eq!(status, StatusCode::OK, "{first}");
+    assert_eq!(first["account_created"], true);
+    let me = User {
+        id: first["id"].as_i64().unwrap(),
+        cookie: session.unwrap(),
+    };
 
     let user = sqlx::query!("select display_name, avatar_url, email from users")
         .fetch_one(&db)
@@ -92,8 +98,9 @@ async fn login_creates_account_with_the_google_name() {
     .await
     .unwrap();
     let again = providers_app(db.clone(), None, Some(google_user("Ana S.")), true);
-    let second = google_login(&again).await;
-    assert_eq!(second.id, me.id);
+    let (_, second, _) = exchange(&again, "google", "login", None, VERIFIER).await;
+    assert_eq!(second["id"], me.id);
+    assert_eq!(second["account_created"], false);
     let name = sqlx::query_scalar!("select display_name from users where id = $1", me.id)
         .fetch_one(&db)
         .await

@@ -52,6 +52,23 @@ export const Single: Story = { args: { items: items.slice(0, 1) } };
 /** Com `link`, o aviso inteiro leva ao destino (é um link só, o da faixa de baixo). O X só fecha. */
 export const WithLink: Story = { args: { items: items.slice(1, 2) } };
 
+/** `sticky` não some com o tempo, só pelo X; `kind: "warning"` para o risco que pede uma ação. */
+export const Sticky: Story = {
+  args: {
+    timeout: 3000,
+    items: [
+      {
+        id: "sticky",
+        kind: "warning",
+        sticky: true,
+        title: "Se o Discord ficar indisponível, você não consegue entrar.",
+        link: { href: "/login", label: "Adicionar email" },
+      },
+      items[2],
+    ],
+  },
+};
+
 /** Sem itens a região (`role="log"`) continua montada, para o leitor de tela anunciar o que entra. */
 export const Empty: Story = { args: { items: [] } };
 

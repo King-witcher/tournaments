@@ -35,7 +35,7 @@ use super::{
     notify::notify,
     pkce,
     provider::Provider,
-    types::{LoginMethods, OAuthCode, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin},
+    types::{LoginMethods, OAuthCode, OAuthRedirect, OAuthSignedIn, OAuthStart, UnlinkLogin},
 };
 use crate::{
     AppState,
@@ -85,7 +85,7 @@ pub async fn discord_authorize(
     tag = "auth",
     request_body = OAuthCode,
     responses(
-        (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
+        (status = OK, body = OAuthSignedIn, description = "Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui: `account_created`). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.discord_login_limited (muitas entradas deste IP), auth.discord_busy (muitos logins com o Discord ao mesmo tempo: a espera pela saída passou do limite)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier)"),
@@ -98,7 +98,7 @@ pub async fn discord_login(
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
-) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+) -> Result<(CookieJar, Json<OAuthSignedIn>), ApiError> {
     if let Some(bucket) = ip.bucket() {
         let key = format!("discord_login:{bucket}");
         if let Err(wait) = state
@@ -193,7 +193,7 @@ pub async fn google_authorize(
     tag = "auth",
     request_body = OAuthCode,
     responses(
-        (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
+        (status = OK, body = OAuthSignedIn, description = "Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui: `account_created`). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.google_failed (o Google não respondeu ou recusou o code, por exemplo com outro verifier)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
@@ -205,7 +205,7 @@ pub async fn google_login(
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
-) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+) -> Result<(CookieJar, Json<OAuthSignedIn>), ApiError> {
     login(&state, Provider::Google, &ip, &headers, jar, body).await
 }
 
@@ -310,7 +310,7 @@ async fn authorize(
 
 /// Entra pela conta do provedor, criando a conta daqui se é a primeira vez,
 /// com a sessão no cookie, como no login com senha (que também cancela a
-/// exclusão agendada).
+/// exclusão agendada). A resposta diz se a conta foi criada agora.
 async fn login(
     state: &AppState,
     provider: Provider,
@@ -318,10 +318,15 @@ async fn login(
     headers: &HeaderMap,
     jar: CookieJar,
     body: OAuthCode,
-) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+) -> Result<(CookieJar, Json<OAuthSignedIn>), ApiError> {
     let login = fetch_login(state, provider, ip, &body).await?;
-    let user_id = db::upsert_external_user(&state.db, &login).await?;
-    start_session(state, headers, jar, user_id).await
+    let user = db::upsert_external_user(&state.db, &login).await?;
+    let (jar, Json(signed_in)) = start_session(state, headers, jar, user.id).await?;
+    let signed_in = OAuthSignedIn {
+        signed_in,
+        account_created: user.created,
+    };
+    Ok((jar, Json(signed_in)))
 }
 
 /// Liga a conta do provedor à conta logada e avisa por email. Só o code do

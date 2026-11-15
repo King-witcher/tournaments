@@ -18,6 +18,10 @@ export type ToastItem = {
   caption?: string;
   /** Para onde o aviso leva: o aviso inteiro vira este link. Sem ele (a pessoa já está lá), não é clicável. */
   link?: { href: Href; label: string };
+  /** `warning` para o risco que pede uma ação; sem ele, `info`. */
+  kind?: "info" | "warning";
+  /** Fica até fechar no X: para o que a pessoa precisa ler e resolver, não para o que chega e passa. */
+  sticky?: boolean;
 };
 
 type Props = {
@@ -34,7 +38,7 @@ type Props = {
  * Avisos que chegam sozinhos (de outra pessoa, do servidor), empilhados no
  * canto de cima, à direita, com o X e, se houver destino, clicáveis por
  * inteiro. Somem depois de `timeout`, mas não enquanto o ponteiro ou o foco
- * estão num deles. A região (`role="log"`) existe sempre, para o leitor de
+ * estão num deles; o item `sticky` só sai pelo X. A região (`role="log"`) existe sempre, para o leitor de
  * tela anunciar o que entra: monte a pilha uma vez e mude só os `items`. Para
  * "copiado" e afins, use `Toast`.
  */
@@ -85,11 +89,12 @@ function StackedToast({
   onFocusChange,
 }: ToastProps) {
   const t = useTranslations("Common");
+  const { kind = "info", sticky = false } = item;
   useEffect(() => {
-    if (paused) return;
+    if (paused || sticky) return;
     const timer = setTimeout(() => onClose(item.id), timeout);
     return () => clearTimeout(timer);
-  }, [paused, timeout, item.id, onClose]);
+  }, [paused, sticky, timeout, item.id, onClose]);
   const leaveFocus = (event: FocusEvent<HTMLDivElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget)) onFocusChange();
   };
@@ -103,7 +108,7 @@ function StackedToast({
       onBlur={leaveFocus}
     >
       <ToastNotification
-        kind="info"
+        kind={kind}
         className={styles.notification}
         role="status"
         lowContrast
@@ -115,7 +120,7 @@ function StackedToast({
           return false;
         }}
         aria-label={t("close")}
-        statusIconDescription={t("notice.info")}
+        statusIconDescription={t(`notice.${kind}`)}
       />
       {/* Fora do ToastNotification, que recusa conteúdo interativo (lança no efeito). */}
       {item.link && (

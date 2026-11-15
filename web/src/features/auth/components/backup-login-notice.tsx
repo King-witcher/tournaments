@@ -5,29 +5,15 @@ import { useState, useSyncExternalStore } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { ActionableNotification } from "@/shared/ui/actionable-notification";
+import {
+  backupNoticeDismissed,
+  dismissBackupNotice,
+} from "../lib/backup-login";
 import { LOGIN_SECTION } from "../lib/login-sections";
 import type { Provider } from "../lib/providers";
 import styles from "./backup-login-notice.module.scss";
 
-const DISMISSED_KEY = "backup-login-notice-dismissed";
-
 const noSubscription = () => () => {};
-
-function readDismissed() {
-  try {
-    return localStorage.getItem(DISMISSED_KEY) !== null;
-  } catch {
-    return false;
-  }
-}
-
-function rememberDismissed() {
-  try {
-    localStorage.setItem(DISMISSED_KEY, "1");
-  } catch {
-    // Sem o armazenamento, o aviso só volta na próxima visita.
-  }
-}
 
 /**
  * Já nos Logins da conta, foca o campo; de fora, vai até ele. A página visitada antes
@@ -44,7 +30,7 @@ function goToEmailField(router: ReturnType<typeof useRouter>) {
 type Props = {
   /** O único jeito de entrar da conta. */
   provider: Provider;
-  /** Dá para fechar, e fechar vale neste navegador (a home). */
+  /** Dá para fechar, e fechar vale 30 dias neste navegador (a home). */
   dismissible?: boolean;
 };
 
@@ -60,7 +46,7 @@ export function BackupLoginNotice({ provider, dismissible = false }: Props) {
   const router = useRouter();
   const stored = useSyncExternalStore(
     noSubscription,
-    readDismissed,
+    backupNoticeDismissed,
     () => true,
   );
   const [closed, setClosed] = useState(false);
@@ -79,7 +65,7 @@ export function BackupLoginNotice({ provider, dismissible = false }: Props) {
       actionButtonLabel={t("backup.action")}
       onActionButtonClick={() => goToEmailField(router)}
       onCloseButtonClick={() => {
-        rememberDismissed();
+        dismissBackupNotice();
         setClosed(true);
       }}
     />
