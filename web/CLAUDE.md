@@ -117,6 +117,6 @@ Utilidade antes de enfeite: cada estilo precisa de um motivo de uso (hierarquia,
 
 ## MCP do Carbon
 
-- Antes do MCP, o que o projeto já tem: o componente da `shared/ui` (o catálogo acima e o JSDoc dele), um uso dele em `features/` e o `.d.ts` instalado. Cada `docs_search` traz uns 10 mil caracteres: use-o para o padrão que o projeto ainda não usa e, decidido o padrão, registre-o no JSDoc do componente (ou em `docs/design.md`, se for de página), para a próxima tela não buscar de novo.
+- Antes do MCP, o que o projeto já tem: o componente da `shared/ui` (o catálogo acima e o JSDoc dele), um uso dele em `features/` e o `.d.ts` instalado; depois, a skill `carbon` (`.claude/skills/carbon/`: a orientação do Carbon por tema, já filtrada pelas regras daqui). Cada `docs_search` traz uns 10 mil caracteres: use-o para o que nenhum dos dois cobre e, decidido o padrão, registre a orientação do Carbon no `references/` da skill e a decisão do projeto no JSDoc do componente (ou em `docs/design.md`, se for de página), para a próxima tela não buscar de novo.
 - `code_audit` nos arquivos que você criou ou mudou, em lote. Ignore quando ele sugerir `<Theme>` em volta da página ou classes `cds--type-*`: o tema vem do `globals.scss`, o tipo do mixin `type-style`.
 - A versão instalada manda: na dúvida sobre uma prop, confira o `.d.ts` em `node_modules/@carbon/react/lib/components/<Componente>/`.

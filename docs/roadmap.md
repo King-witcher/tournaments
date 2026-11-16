@@ -5,12 +5,13 @@ O que fazer, em que ordem, e o que falta conferir. O que já existe, com as regr
 ## Próximo
 
 - **Mapas e campeões por fase**: decidido com o usuário em 07/11, depois do ensaio das fases ligadas. Mapas e Campeões ganham "Mesmas regras em todas as fases" (marcado; só com 2+ fases) e, desmarcado, uma aba por fase com os mesmos campos, começando da cópia; Resultados fica do torneio. Cada fase congela as suas ao começar; a API já busca as regras da série por um lugar só. Detalhe em `docs/decisions/formats.md` ("Fases ligadas").
+- **Estatísticas de mapas e campeões** (escolhido pelo usuário em 16/11): mapas mais banidos e escolhidos, campeões mais escolhidos e banidos e vitórias por mapa, por torneio e por comunidade, a partir do veto e das partidas gravadas (`match_veto_events`, `match_games`). Serve a quem transmite e conversa com a repetição de mapa por time (`decisions.md`, "Em aberto"). Os campeões de cada pessoa podem virar uma aba da página dela. Decisões de escopo e tela ainda por perguntar.
 
 Demais itens de "Depois" ainda não foram escolhidos. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
 
 ## Depois
 
-- Outros formatos: FFA por pontos/frags e grupos (fases em paralelo; os playoffs já são uma fase seguinte com corte). Corte numa eliminação que não é a última fase (só na borda de faixa).
+- Outros formatos: FFA por pontos/frags (sem uso previsto por ora, do usuário em 16/11) e grupos (fases em paralelo; os playoffs já são uma fase seguinte com corte). Corte numa eliminação que não é a última fase (só na borda de faixa).
 - A capa do torneio nos avisos do Discord (embed com `image`; hoje a mensagem é só texto, `discord/render.rs`), sem precisar de página pública.
 
 ## Pendências
