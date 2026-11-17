@@ -25,7 +25,7 @@
     "mdast-util-gfm-table": "^2.0.1",
     "micromark-extension-gfm-autolink-literal": "^2.1.0",
     "micromark-extension-gfm-table": "^2.1.2",
-    "next": "16.4.3",
+    "next": "16.4.6",
     "next-intl": "^4.14.9",
     "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
