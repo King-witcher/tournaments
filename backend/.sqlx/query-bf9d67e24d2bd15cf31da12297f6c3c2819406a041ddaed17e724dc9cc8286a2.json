@@ -1,0 +1,215 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select g.id, t.slug, t.locale, t.name,\n                  coalesce((select json_agg(json_build_object('locale', tr.locale, 'name', tr.name)\n                                            order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '[]') as \"translations!: Json<Vec<NameTranslation>>\",\n                  g.stage, g.match_key,\n                  (s.format = 'elimination' and s.bracket is not distinct from 'single')\n                      as \"single!\",\n                  g.number, mp.slug as \"map_slug?\", mp.name as \"map_name?\",\n                  case p.side when 'a' then g.side_b else g.side_a end as \"opponent!\",\n                  g.winner = case p.side when 'a' then g.side_a else g.side_b end as \"won!\",\n                  case p.side when 'a' then g.a_frags else g.b_frags end as frags,\n                  case p.side when 'a' then g.b_frags else g.a_frags end as opponent_frags,\n                  h.delta as \"delta?\", h.rating_after as \"rating_after?\",\n                  g.confirmed_at as \"at!\",\n                  count(*) over () as \"total!\"\n           from tournaments t\n           join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n           join match_games g on g.id = p.game_id\n           join tournament_stages s on s.tournament_id = t.id and s.position = g.stage\n           left join maps mp on mp.id = g.map_id\n           left join rating_history h\n                  on h.tenant_id = t.tenant_id and h.user_id = p.user_id and h.game_id = g.id\n           where t.tenant_id = $1 and g.status = 'confirmed'\n             and ($3::text is null or t.slug = $3)\n             and ($4::text is null or mp.slug = $4)\n             and ($5::bigint is null or exists (\n                 select 1 from match_game_players o\n                 where o.game_id = g.id and o.user_id = $5 and o.side <> p.side))\n           order by g.confirmed_at desc, g.id desc\n           limit $6 offset $7",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "locale",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "locale"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "translations!: Json<Vec<NameTranslation>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "stage",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "stage"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "single!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "map_slug?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "map_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "opponent!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 12,
+        "name": "won!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 13,
+        "name": "frags",
+        "type_info": "Int2",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 14,
+        "name": "opponent_frags",
+        "type_info": "Int2",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 15,
+        "name": "delta?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "delta"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "rating_after?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "rating_after"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "at!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      null,
+      null,
+      null,
+      null,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "bf9d67e24d2bd15cf31da12297f6c3c2819406a041ddaed17e724dc9cc8286a2"
+}

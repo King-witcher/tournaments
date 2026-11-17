@@ -3,6 +3,7 @@
 
 mod departure;
 mod profile;
+mod record;
 
 use axum::http::StatusCode;
 use serde_json::json;

@@ -3,8 +3,9 @@
 //! organização, reprocessados do zero pelo engine. As tabelas `ratings` e
 //! `rating_history` são cache: um trigger marca o tenant como desatualizado
 //! quando a fonte muda, e o recálculo (`refresh`) roda no agendador, antes de
-//! ler e nas rotas daqui. Rotas: o ranking, o rating de um membro (com os
-//! últimos mapas, o retrospecto por arena e, para a organização, os ajustes),
+//! ler e nas rotas daqui (e, por `fresh`, antes de `members` ler o histórico).
+//! Rotas: o ranking, o rating de um membro (com o histórico inteiro, o
+//! retrospecto por arena e, para a organização, os ajustes),
 //! o ajuste manual e a configuração do Elo. O retrospecto por arena não vem do
 //! cache: conta os mapas confirmados de qualquer torneio da comunidade,
 //! conte ele para o rating ou não. Lê mapas, torneios e membros direto no
@@ -22,7 +23,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use refresh::{current, refresh_stale};
+pub use refresh::{current, fresh_on, refresh_stale};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

@@ -1,0 +1,10 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Três opções curtas: o alternador na largura delas (160px cada), não na da
+// página, onde os botões ficariam longe do rótulo; no celular, a largura toda.
+.modality {
+  @include breakpoint.breakpoint(md) {
+    max-inline-size: calc(spacing.$spacing-13 * 3);
+  }
+}

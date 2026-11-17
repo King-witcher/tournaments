@@ -1,36 +1,17 @@
-import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { MemberProfile } from "@/features/members/components/member-profile";
-import { LiveUpdates } from "@/features/realtime/components/live-updates";
-import { Page } from "@/shared/ui/page";
-import { PageHeaderSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
+import { MemberOverview } from "@/features/members/components/member-overview";
+import { OverviewSkeleton } from "@/features/members/components/overview-skeleton";
 
-/**
- * A pessoa na comunidade. Fica fora do grupo das abas: é uma página própria,
- * com o próprio cabeçalho e a trilha até Membros.
- */
-export default async function MemberPage({
+/** A Visão geral da pessoa. */
+export default function MemberOverviewPage({
   params,
 }: PageProps<"/[locale]/[tenant]/members/[user]">) {
-  const t = await getTranslations("Member");
   return (
-    <Page width="wide">
-      <Suspense
-        fallback={
-          <>
-            <PageHeaderSkeleton meta label={t("loading")} />
-            <TableSkeleton columns={4} rows={3} />
-          </>
-        }
-      >
-        {params.then(({ tenant, user }) => (
-          <>
-            <LiveUpdates tenant={tenant} />
-            <MemberProfile tenant={tenant} user={user} />
-          </>
-        ))}
-      </Suspense>
-    </Page>
+    <Suspense fallback={<OverviewSkeleton />}>
+      {params.then(({ tenant, user }) => (
+        <MemberOverview tenant={tenant} user={user} />
+      ))}
+    </Suspense>
   );
 }

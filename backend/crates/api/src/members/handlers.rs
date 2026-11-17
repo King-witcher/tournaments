@@ -1,8 +1,8 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    db, departure, history,
-    types::{Member, MemberPath, MemberProfile, SetRole, UpdateMyMembership},
+    db, departure,
+    types::{Member, MemberPath, SetRole, UpdateMyMembership},
 };
 use crate::{
     AppState,
@@ -137,7 +137,7 @@ pub async fn list_members(
         ("user_id" = i64, Path, description = "Id do usuário membro"),
     ),
     responses(
-        (status = OK, body = MemberProfile, description = "O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes"),
+        (status = OK, body = Member, description = "O membro na comunidade (o cabeçalho da página dele; as abas têm as rotas `.../tournaments`, `.../career`, `.../games` e `.../opponents`)"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo: nunca foi, saiu ou foi removido)"),
@@ -147,30 +147,12 @@ pub async fn get_member(
     State(state): State<AppState>,
     member: TenantMember,
     PathParams(path): PathParams<MemberPath>,
-) -> Result<Json<MemberProfile>, ApiError> {
-    // Uma conexão para o membro e os torneios dele.
-    let mut conn = state.db.acquire().await?;
-    let Member {
-        user_id,
-        nickname,
-        display_name,
-        avatar_url,
-        role,
-        joined_at,
-    } = db::list(&mut *conn, member.tenant, Some(path.user_id))
+) -> Result<Json<Member>, ApiError> {
+    db::list(&state.db, member.tenant, Some(path.user_id))
         .await?
         .pop()
-        .ok_or(ApiError::not_found("member.not_found"))?;
-    let tournaments = history::of(&mut conn, &member, user_id).await?;
-    Ok(Json(MemberProfile {
-        user_id,
-        nickname,
-        display_name,
-        avatar_url,
-        role,
-        joined_at,
-        tournaments,
-    }))
+        .map(Json)
+        .ok_or(ApiError::not_found("member.not_found"))
 }
 
 #[utoipa::path(

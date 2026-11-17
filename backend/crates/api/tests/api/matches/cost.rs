@@ -338,17 +338,34 @@ async fn what_my_tournaments_cost() {
     }
     check("GET /me/tournaments", &last.unwrap(), micros, 8);
 
-    // O perfil de P1 na comunidade, visto pela organização: a mesma entrada.
+    // Os torneios de P1 na página dele, vistos pela organização: a mesma
+    // entrada. E as outras abas da página.
     let profile = format!("/tenants/quake-br/members/{}", a.id);
     let mut micros = Vec::new();
     let mut last = None;
     for _ in 0..11 {
-        let (body, cost) = request(&meter, &app, Method::GET, &profile, &ana, None).await;
-        assert_eq!(body["tournaments"].as_array().unwrap().len(), 6, "{body}");
+        let uri = format!("{profile}/tournaments");
+        let (body, cost) = request(&meter, &app, Method::GET, &uri, &ana, None).await;
+        assert_eq!(body.as_array().unwrap().len(), 6, "{body}");
         micros.push(cost.micros);
         last = Some(cost);
     }
-    check("GET perfil do membro", &last.unwrap(), micros, 10);
+    check("GET torneios do membro", &last.unwrap(), micros, 10);
+    for (label, tab, ceiling) in [
+        ("GET carreira do membro", "career", 13),
+        ("GET partidas do membro", "games", 6),
+        ("GET adversários do membro", "opponents", 5),
+    ] {
+        let mut micros = Vec::new();
+        let mut last = None;
+        for _ in 0..11 {
+            let uri = format!("{profile}/{tab}");
+            let (_, cost) = request(&meter, &app, Method::GET, &uri, &ana, None).await;
+            micros.push(cost.micros);
+            last = Some(cost);
+        }
+        check(label, &last.unwrap(), micros, ceiling);
+    }
 
     // A entrada de um torneio só, na página dele: em andamento e encerrado.
     for (label, uri) in [

@@ -3,7 +3,7 @@
 //! inscrição e apaga com ela (`participants` não sabe de time). Aqui ficam o
 //! time com os jogadores (`StoredTeam`, que a chave em `matches` carrega por
 //! `seeded`, ou `seeded_in` para vários torneios, a página da pessoa em
-//! `ratings` por `by_ids`, e o time de alguém em vários torneios de uma vez,
+//! `members` por `by_ids`, e o time de alguém em vários torneios de uma vez,
 //! `of_user_in`, para `/me/tournaments` e o perfil do membro) e como a API o
 //! mostra (`Team`), o seeding antes de iniciar (`seeding`; `lifecycle` fecha a
 //! ordem por `finalize_seeding` ao iniciar) e a desistência, que é do time

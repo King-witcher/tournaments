@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) filter (where g.winner = case p.side when 'a' then g.side_a\n                                                               else g.side_b end)::int as \"wins!\",\n                  count(*) filter (where g.winner <> case p.side when 'a' then g.side_a\n                                                                else g.side_b end)::int as \"losses!\",\n                  coalesce(sum(case p.side when 'a' then g.a_frags else g.b_frags end), 0)::int\n                      as \"frags_for!\",\n                  coalesce(sum(case p.side when 'a' then g.b_frags else g.a_frags end), 0)::int\n                      as \"frags_against!\"\n           from tournaments t\n           join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n           join match_games g on g.id = p.game_id\n           where t.tenant_id = $1 and g.status = 'confirmed'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "wins!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "losses!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "frags_for!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "frags_against!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "bafb2d33302b128544ee3a10fc304003b3c6bd771ca88fbb9184439004e59d22"
+}

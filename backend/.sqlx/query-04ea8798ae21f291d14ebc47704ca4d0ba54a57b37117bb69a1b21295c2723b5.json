@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"count!\"\n           from tournaments t\n           join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n           join match_games g on g.id = p.game_id\n           left join maps mp on mp.id = g.map_id\n           where t.tenant_id = $1 and g.status = 'confirmed'\n             and ($3::text is null or t.slug = $3)\n             and ($4::text is null or mp.slug = $4)\n             and ($5::bigint is null or exists (\n                 select 1 from match_game_players o\n                 where o.game_id = g.id and o.user_id = $5 and o.side <> p.side))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "04ea8798ae21f291d14ebc47704ca4d0ba54a57b37117bb69a1b21295c2723b5"
+}

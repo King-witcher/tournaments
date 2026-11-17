@@ -1,10 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
-import { NicknameSection } from "@/features/members/components/nickname-section";
-import { TenantGeneralSection } from "@/features/tenants/components/tenant-general-section";
 import { TenantHeader } from "@/features/tenants/components/tenant-header";
-import { TenantInviteSection } from "@/features/tenants/components/tenant-invite-section";
+import { TenantSettingsGeneral } from "@/features/tenants/components/tenant-settings-general";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Panel } from "@/shared/ui/panel";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
@@ -21,10 +19,10 @@ const SKELETON = (
 );
 
 /**
- * Geral, a primeira página das Configurações da comunidade e a única de quem
- * não é owner: o que o owner decide sobre ela (nome, endereço, descrição e
- * logo), o link de convite (organização), o apelido de quem vê e, por último,
- * a zona de perigo. Rating e Discord têm a página deles.
+ * Geral, a primeira página das Configurações da comunidade e a única do
+ * organizer (o jogador não tem Configurações): o que o owner decide sobre
+ * ela, o link de convite e, por último, a zona de perigo do owner. Rating e
+ * Discord têm a página deles.
  */
 export default async function TenantSettingsPage({
   params,
@@ -47,9 +45,7 @@ export default async function TenantSettingsPage({
       <Suspense fallback={SKELETON}>
         {params.then(({ tenant }) => (
           <Stack gap={7}>
-            <TenantGeneralSection slug={tenant} />
-            <TenantInviteSection slug={tenant} />
-            <NicknameSection slug={tenant} />
+            <TenantSettingsGeneral slug={tenant} />
             <CommunityDangerZone slug={tenant} />
           </Stack>
         ))}

@@ -573,7 +573,7 @@ pub struct TournamentTranslation {
     pub rules: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 pub struct NameTranslation {
     pub locale: Locale,
     pub name: String,

@@ -7,7 +7,8 @@
     "tournaments": "Tournaments",
     "ranking": "Ranking",
     "members": "Members",
-    "settings": "Settings"
+    "settings": "Settings",
+    "profile": "Your profile"
   },
   "description": {
     "more": "Show more",
@@ -52,15 +53,13 @@
       "general": "General",
       "rating": "Rating",
       "discord": "Discord"
-    }
+    },
+    "duringDeletion": "With the deletion scheduled, there is nothing to configure here."
   },
   "nickname": {
-    "title": "Your nickname",
-    "label": "Nickname in this community",
-    "saved": "Nickname saved."
+    "label": "Nickname in this community"
   },
   "leave": {
-    "title": "Leave community",
     "submit": "Leave community",
     "confirm": "You lose access, leave registrations in tournaments that haven't started and, in tournaments in progress, lose pending matches by walkover. Your name stays in the bracket of the tournaments you played, and you can rejoin with an invite, as a player, with the same nickname."
   },

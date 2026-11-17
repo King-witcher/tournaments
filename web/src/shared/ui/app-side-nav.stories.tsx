@@ -57,6 +57,33 @@ export const Area: Story = {
 };
 
 /**
+ * Um endereço dentro de outro link com o próprio item: com `except`, Membros
+ * não fica marcado no perfil de quem vê, que é "Seu perfil".
+ */
+export const Except: Story = {
+  parameters: {
+    nextjs: { navigation: { pathname: "/pt/arena-sul/members/7" } },
+  },
+  args: {
+    label: "Menu da comunidade",
+    header: (
+      <AppSideNavTitle kind="Comunidade" name="Arena Sul" detail="Jogador" />
+    ),
+    children: (
+      <>
+        <AppSideNavLink href="/arena-sul" match="exact">
+          Torneios
+        </AppSideNavLink>
+        <AppSideNavLink href="/arena-sul/members" except="/arena-sul/members/7">
+          Membros
+        </AppSideNavLink>
+        <AppSideNavLink href="/arena-sul/members/7">Seu perfil</AppSideNavLink>
+      </>
+    ),
+  },
+};
+
+/**
  * Dentro de um item da área (o torneio): a volta no topo, um grupo à parte
  * depois do divisor e o segundo nível num `SideNavMenu`.
  */

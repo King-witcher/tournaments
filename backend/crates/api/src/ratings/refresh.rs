@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 
 use engine::rating::{self as er, Elo};
-use sqlx::{PgConnection, PgPool};
+use sqlx::{Connection, PgConnection, PgPool};
 
 use super::{
     db,
@@ -57,10 +57,16 @@ pub async fn elo(conn: &mut PgConnection, tenant: TenantId) -> Result<Elo, ApiEr
 /// Antes de ler o cache: recalcula numa transação própria se o tenant tem
 /// marca (sem marca, só uma consulta).
 pub async fn fresh(db: &PgPool, tenant: TenantId) -> Result<(), ApiError> {
-    if !db::is_dirty(db, tenant).await? {
+    fresh_on(&mut *db.acquire().await?, tenant).await
+}
+
+/// Como `fresh`, na conexão de quem chama (que lê o cache em seguida nela,
+/// sem tirar outra do pool).
+pub async fn fresh_on(conn: &mut PgConnection, tenant: TenantId) -> Result<(), ApiError> {
+    if !db::is_dirty(&mut *conn, tenant).await? {
         return Ok(());
     }
-    let mut tx = db.begin().await?;
+    let mut tx = conn.begin().await?;
     refresh(&mut tx, tenant).await?;
     tx.commit().await?;
     Ok(())

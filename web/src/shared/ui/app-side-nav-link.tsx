@@ -15,6 +15,12 @@ type Props = {
    * também nas páginas dentro dele.
    */
   match?: "exact" | "prefix";
+  /**
+   * Com `prefix`, o endereço (e o que está dentro dele) em que este não fica
+   * marcado, porque outro link do menu é dele (Membros não marca o próprio
+   * perfil, que é "Seu perfil").
+   */
+  except?: string;
   /** Dentro de um `SideNavMenu` (o segundo nível). */
   inMenu?: boolean;
 };
@@ -30,12 +36,16 @@ export function AppSideNavLink({
   href,
   children,
   match = "prefix",
+  except,
   inMenu = false,
 }: Props) {
   const pathname = usePathname();
+  const excepted =
+    except !== undefined &&
+    (pathname === except || pathname.startsWith(`${except}/`));
   const active =
     pathname === href ||
-    (match === "prefix" && pathname.startsWith(`${href}/`));
+    (match === "prefix" && !excepted && pathname.startsWith(`${href}/`));
   const props = {
     as: NavLink,
     href,

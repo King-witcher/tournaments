@@ -1,6 +1,7 @@
-//! O perfil de um membro na comunidade: os torneios dela em que ele se
-//! inscreveu, só os que quem vê vê na lista da comunidade, com a situação e a
-//! colocação dele.
+//! O perfil de um membro na comunidade: o cabeçalho (`GET .../members/{id}`)
+//! e os torneios dela em que ele se inscreveu (`.../tournaments`), só os que
+//! quem vê vê na lista da comunidade, com a situação e a colocação dele. A
+//! carreira, as partidas e os adversários ficam em `record`.
 
 use axum::{
     Router,
@@ -15,9 +16,14 @@ fn uri(of: &User) -> String {
     format!("/tenants/quake-br/members/{}", of.id)
 }
 
+/// O cabeçalho do perfil com os torneios da aba ao lado, em `tournaments`.
 async fn profile(app: &Router, viewer: &User, of: &User) -> Value {
-    let (status, body) = get(app, &uri(of), viewer).await;
+    let (status, mut body) = get(app, &uri(of), viewer).await;
     assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body.get("tournaments"), None, "{body}");
+    let (status, tournaments) = get(app, &format!("{}/tournaments", uri(of)), viewer).await;
+    assert_eq!(status, StatusCode::OK, "{tournaments}");
+    body["tournaments"] = tournaments;
     body
 }
 

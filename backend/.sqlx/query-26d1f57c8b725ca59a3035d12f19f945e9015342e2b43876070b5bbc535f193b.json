@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select at, rating_after as rating, delta, won\n           from rating_history\n           where tenant_id = $1 and user_id = $2\n           order by seq",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "at"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "rating",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "rating_after"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "delta",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "delta"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "won",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "won"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "26d1f57c8b725ca59a3035d12f19f945e9015342e2b43876070b5bbc535f193b"
+}

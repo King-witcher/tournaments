@@ -21,14 +21,14 @@ fn stage_uri(n: u16) -> String {
 
 /// Todos contra todos md1 e, depois, a disputa de posições md1 com `entry`
 /// (`advance`, `check_in`).
-fn linked(entry: Value) -> Value {
+pub fn linked(entry: Value) -> Value {
     let second = with(json!({ "format": "placement", "best_of": 1 }), entry);
     copa(json!({ "stages": [{ "format": "round_robin", "best_of": 1 }, second] }))
 }
 
 /// Joga todas as séries prontas da fase atual, o favorito (o de cima em `p`)
 /// vencendo, até não sobrar nenhuma.
-async fn play_out(app: &Router, p: &[User]) {
+pub async fn play_out(app: &Router, p: &[User]) {
     loop {
         let b = bracket(app, &p[0]).await;
         let ready = keys_in(&b, "ready");
@@ -43,7 +43,7 @@ async fn play_out(app: &Router, p: &[User]) {
 
 /// `who` vence (no lado dele) o mapa 1 da série md1 `key`, confirmado por
 /// `other`.
-async fn wins(app: &Router, who: &User, other: &User, key: &str) {
+pub async fn wins(app: &Router, who: &User, other: &User, key: &str) {
     let b = bracket(app, who).await;
     let (a, _) = sides(&b, find(&b, key));
     let side = if a == who.id { "a" } else { "b" };

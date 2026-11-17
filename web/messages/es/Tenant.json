@@ -7,7 +7,8 @@
     "tournaments": "Torneos",
     "ranking": "Ranking",
     "members": "Miembros",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "profile": "Tu perfil"
   },
   "description": {
     "more": "Ver más",
@@ -52,15 +53,13 @@
       "general": "General",
       "rating": "Rating",
       "discord": "Discord"
-    }
+    },
+    "duringDeletion": "Con la eliminación programada, no hay nada que configurar aquí."
   },
   "nickname": {
-    "title": "Tu apodo",
-    "label": "Apodo en esta comunidad",
-    "saved": "Apodo guardado."
+    "label": "Apodo en esta comunidad"
   },
   "leave": {
-    "title": "Salir de la comunidad",
     "submit": "Salir de la comunidad",
     "confirm": "Pierdes el acceso, sales de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierdes por W.O. las series pendientes. Tu nombre sigue en la llave de los torneos que jugaste, y puedes volver con una invitación, como jugador y con el mismo apodo."
   },

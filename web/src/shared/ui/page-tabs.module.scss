@@ -8,3 +8,10 @@
   padding: 0;
   padding-block-start: spacing.$spacing-07;
 }
+
+// A barra e o painel num bloco só (o `Stack` da página não os separa), que
+// pode ficar mais estreito que a barra: no celular, as abas rolam dentro
+// dela, sem alargar a página.
+.root {
+  min-inline-size: 0;
+}

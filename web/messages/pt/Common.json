@@ -166,5 +166,9 @@
     "moved": "{item} está na posição {position} de {total}.",
     "dropped": "Soltou {item} na posição {position} de {total}.",
     "cancelled": "Cancelado. {item} voltou à posição {position} de {total}."
+  },
+  "chart": {
+    "date": "Data",
+    "group": "Grupo"
   }
 }

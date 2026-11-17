@@ -7,10 +7,5 @@
   align-items: center;
   gap: spacing.$spacing-03;
   min-inline-size: 0;
-  overflow-wrap: anywhere;
-}
-
-// Algarismos da mesma largura: os pontos e os ratings ficam alinhados.
-.number {
-  font-variant-numeric: tabular-nums;
+  overflow-wrap: break-word;
 }

@@ -213,10 +213,10 @@ async fn a_tdm_reserve_before_the_bracket() {
     register(&app, "copa", &[&caio]).await;
     assert_eq!(entry(&app, &caio, "copa").await["situation"], "reserve");
     assert_eq!(mine(&app, &bia).await[0]["situation"], "registered");
-    let uri = format!("/tenants/quake-br/members/{}", caio.id);
+    let uri = format!("/tenants/quake-br/members/{}/tournaments", caio.id);
     let (status, body) = get(&app, &uri, &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    assert_eq!(body["tournaments"][0]["situation"], "reserve");
+    assert_eq!(body[0]["situation"], "reserve");
 }
 
 /// O lado (`"a"` ou `"b"`) de `who` na partida `key`.

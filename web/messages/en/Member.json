@@ -6,6 +6,7 @@
   "since": "Member since <date></date>",
   "editNickname": "Edit nickname",
   "deletedAccount": "Deleted account",
+  "left": "{name} (left)",
   "tournaments": {
     "title": "Tournaments in this community",
     "tournament": "Tournament",
@@ -34,5 +35,95 @@
     "emptyYou": "You haven't played here yet.",
     "browse": "Browse tournaments",
     "withTeam": "{tournament} · team: {team}"
+  },
+  "tabs": {
+    "label": "Profile sections",
+    "overview": "Overview",
+    "games": "Games",
+    "tournaments": "Tournaments",
+    "opponents": "Head-to-head"
+  },
+  "loadingTab": {
+    "overview": "Loading the overview…",
+    "games": "Loading the games…",
+    "tournaments": "Loading the tournaments…",
+    "opponents": "Loading the head-to-head…"
+  },
+  "nicknameModal": {
+    "submit": "Save"
+  },
+  "career": {
+    "title": "Career",
+    "description": "Includes tournaments that don't count toward the rating.",
+    "label": "Career summary",
+    "series": "Matches",
+    "games": "Games",
+    "record": "{wins} W – {losses} L",
+    "recordDraws": "{wins} W – {draws} D – {losses} L",
+    "frags": "Frag difference",
+    "fragsValue": "{diff} ({for} for, {against} against)",
+    "titles": "Titles",
+    "podiums": "Podiums",
+    "best": "Best placement",
+    "streak": "Current streak",
+    "streakWon": "{count, plural, one {# win} other {# wins}}",
+    "streakLost": "{count, plural, one {# loss} other {# losses}}",
+    "none": "—",
+    "empty": "No games yet."
+  },
+  "evolution": {
+    "title": "Rating over time",
+    "label": "Rating over time",
+    "value": "Rating"
+  },
+  "recent": {
+    "title": "Recent matches",
+    "label": "Recent decided matches",
+    "tournament": "Tournament",
+    "opponent": "Opponent",
+    "result": "Result",
+    "when": "When",
+    "won": "Win",
+    "lost": "Loss",
+    "draw": "Draw",
+    "score": "{outcome}, {wins} × {losses}",
+    "walkover": "{outcome} by walkover",
+    "all": "See all games"
+  },
+  "games": {
+    "description": "Includes tournaments that don't count toward the rating.",
+    "label": "The person's games",
+    "tournament": "Tournament",
+    "series": "Series",
+    "map": "Map",
+    "mapValue": "{map} (game {number})",
+    "noMap": "Game {number}",
+    "opponent": "Opponent",
+    "result": "Result",
+    "won": "Win",
+    "lost": "Loss",
+    "score": "{result}, {for} × {against}",
+    "points": "Points",
+    "after": "Rating after",
+    "when": "When",
+    "notRated": "—",
+    "any": "All",
+    "clear": "Clear filters",
+    "empty": "No games yet.",
+    "emptyFiltered": "No games match these filters."
+  },
+  "opponents": {
+    "label": "Head-to-head by opponent",
+    "opponent": "Opponent",
+    "series": "Matches",
+    "games": "Games",
+    "last": "Last faced",
+    "modality": "Mode",
+    "all": "All",
+    "duel": "Duel",
+    "tdm": "TDM",
+    "versus": "You vs. {name}",
+    "versusNone": "You haven't faced each other yet.",
+    "empty": "No head-to-head yet."
   }
 }

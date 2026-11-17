@@ -1,0 +1,51 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select o.user_id,\n                  count(*) filter (where g.winner = case p.side when 'a' then g.side_a\n                                                               else g.side_b end)::int as \"wins!\",\n                  count(*) filter (where g.winner <> case p.side when 'a' then g.side_a\n                                                                else g.side_b end)::int as \"losses!\",\n                  max(g.confirmed_at) as \"last_at!\"\n           from tournaments t\n           join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n           join match_games g on g.id = p.game_id\n           join match_game_players o on o.game_id = g.id and o.side <> p.side\n           where t.tenant_id = $1 and g.status = 'confirmed'\n             and ($3::text is null or t.mode = $3)\n           group by o.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "wins!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "losses!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "last_at!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "5ecde78a40e6efeca30a257f2f5dcd5d86f019f097865e92fda0875bd480a349"
+}

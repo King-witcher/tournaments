@@ -7,7 +7,8 @@
     "tournaments": "Torneios",
     "ranking": "Ranking",
     "members": "Membros",
-    "settings": "Configurações"
+    "settings": "Configurações",
+    "profile": "Seu perfil"
   },
   "description": {
     "more": "Ver mais",
@@ -52,15 +53,13 @@
       "general": "Geral",
       "rating": "Rating",
       "discord": "Discord"
-    }
+    },
+    "duringDeletion": "Com a exclusão agendada, não há o que configurar aqui."
   },
   "nickname": {
-    "title": "Seu apelido",
-    "label": "Apelido nesta comunidade",
-    "saved": "Apelido salvo."
+    "label": "Apelido nesta comunidade"
   },
   "leave": {
-    "title": "Sair da comunidade",
     "submit": "Sair da comunidade",
     "confirm": "Você perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as séries pendentes. Seu nome continua na chave dos torneios que você jogou, e você pode voltar por um convite, como jogador e com o mesmo apelido."
   },

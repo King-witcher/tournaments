@@ -1,9 +1,9 @@
 @use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 
-// Abaixo do lg, os mapas descem para baixo do resumo: o espaço entre as
+// Abaixo do lg, a carreira desce para baixo do rating: o espaço entre as
 // seções da página (o `Stack` dela), que o `Grid` sem `withRowGap` não dá.
-.maps {
+.career {
   @include breakpoint.breakpoint-down(lg) {
     margin-block-start: spacing.$spacing-07;
   }

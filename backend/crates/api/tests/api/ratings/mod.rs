@@ -197,37 +197,37 @@ async fn counts_for_rating_changes_until_the_start() {
 }
 
 #[tokio::test]
-async fn member_rating_with_the_last_maps() {
+async fn member_rating_with_the_history() {
     let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     let r = member_rating(&f.app, &f.bia, f.p2.id).await;
     assert_eq!(r["standing"]["rating"], 1431);
     assert_eq!(r["standing"]["position"], 2);
+    assert_eq!(r["ranked"], 2);
     assert_eq!(r["adjusted"], 0);
     assert_eq!(r["adjustments"], Value::Null);
-    let games = r["games"].as_array().unwrap();
-    assert_eq!(games.len(), 2);
-    // O mais recente primeiro.
-    assert_eq!(games[0]["game"], 2);
-    assert_eq!(games[0]["match"], "wb-1-1");
-    assert_eq!(games[0]["map"], "Vestibule of Exile");
-    assert_eq!(games[0]["won"], false);
-    assert_eq!(games[0]["delta"], -29);
-    assert_eq!(games[0]["rating_after"], 1431);
-    // O adversário é o time do outro lado; no duelo, de um jogador.
-    let opponent = &games[0]["opponent"]["members"][0];
-    assert_eq!(opponent["user_id"], f.p1.id);
-    assert_eq!(opponent["nickname"], "P1");
-    assert_eq!(opponent["left"], false);
-    assert_eq!(games[0]["tournament"]["slug"], "copa");
-    assert_eq!(games[1]["delta"], -40);
+    // Do primeiro mapa ao último, com o rating depois de cada um.
+    let points: Vec<_> = r["history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| (p["delta"].clone(), p["rating"].clone(), p["won"].clone()))
+        .collect();
+    assert_eq!(
+        points,
+        [
+            (json!(-40), json!(1460), json!(false)),
+            (json!(-29), json!(1431), json!(false)),
+        ]
+    );
+    assert!(r["history"][0]["at"].is_string());
 
     // Quem ainda não jogou: sem rating e sem mapas.
     let none = member_rating(&f.app, &f.p1, f.bia.id).await;
     assert_eq!(none["standing"], Value::Null);
     assert_eq!(none["initial"], 1500);
-    assert_eq!(none["games"], json!([]));
+    assert_eq!(none["history"], json!([]));
 
     let (status, body) = get(&f.app, &format!("{RATINGS}/999999"), &f.bia).await;
     assert_eq!(
@@ -249,7 +249,7 @@ async fn who_left_leaves_the_ranking() {
         [(f.p1.id, 1569, 2, 2, 0, true)]
     );
     let r = member_rating(&f.app, &f.bia, f.p1.id).await;
-    assert_eq!(r["games"][0]["opponent"]["members"][0]["left"], true);
+    assert_eq!(r["history"].as_array().unwrap().len(), 2);
     let (status, body) = get(&f.app, &format!("{RATINGS}/{}", f.p2.id), &f.bia).await;
     assert_eq!(
         (status, body),

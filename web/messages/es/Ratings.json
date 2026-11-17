@@ -40,23 +40,6 @@
     "title": "Por mapa",
     "description": "Incluye torneos que no cuentan para el rating."
   },
-  "games": {
-    "title": "Últimas partidas",
-    "description": "Las más recientes que contaron para el rating, hasta {count}.",
-    "label": "Últimas partidas que contaron",
-    "tournament": "Torneo",
-    "opponent": "Rival",
-    "map": "Mapa",
-    "mapValue": "{map} (partida {number})",
-    "noMap": "Partida {number}",
-    "result": "Resultado",
-    "won": "Victoria",
-    "lost": "Derrota",
-    "points": "Puntos",
-    "after": "Rating después",
-    "when": "Cuándo",
-    "left": "se fue"
-  },
   "adjustments": {
     "title": "Ajustes manuales",
     "description": "Solo la organización ve esta lista.",

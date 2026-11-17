@@ -55,6 +55,23 @@ type Props = {
   /** Sem nenhuma linha: o que falta e o próximo passo (a ação da barra, se houver, continua nela). Sem ele, só a barra aparece (quando a ação dela basta). */
   empty?: { text: ReactNode; action?: ReactNode };
   size?: "sm" | "md" | "lg";
+  /**
+   * Com a busca na barra (o padrão). Sem ela, a lista curta que não precisa
+   * de busca (as últimas séries) e a paginada pela API (`paging`), em que a
+   * busca só acharia na página.
+   */
+  searchable?: boolean;
+  /**
+   * A paginação é da API: `rows` é só a página `page` (de 1 em diante) de
+   * `totalItems`, com `pageSize` fixo; trocar de página chama `onPageChange`
+   * (que muda o endereço). Sem busca.
+   */
+  paging?: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+  };
 };
 
 const PAGE_SIZES = [25, 50, 100];
@@ -70,9 +87,11 @@ function normalize(text: string) {
 /**
  * Lista grande (inscritos, membros, torneios da comunidade):
  * `DataTable` do Carbon com busca na barra, paginação no cliente (25, 50 ou
- * 100 por página; a API não pagina), linha que abre página, ações por linha
- * e estado vazio com o próximo passo. As células chegam prontas (Server
- * Component pode montar as linhas). Carregando: `TableSkeleton`.
+ * 100 por página), linha que abre página, ações por linha e estado vazio com
+ * o próximo passo. As células chegam prontas (Server Component pode montar as
+ * linhas). Lista que a API pagina (`paging`): as linhas são a página, a
+ * `Pagination` troca de página pelo endereço, e não há busca. Lista curta:
+ * `searchable={false}`. Carregando: `TableSkeleton`.
  */
 export function DataTable({
   columns,
@@ -84,6 +103,8 @@ export function DataTable({
   toolbar,
   empty,
   size = "md",
+  searchable = true,
+  paging,
 }: Props) {
   const t = useTranslations("Common.table");
   const router = useRouter();
@@ -95,7 +116,8 @@ export function DataTable({
   // A barra fica montada quando as linhas vão de 0 para 1 e de volta (a ação
   // não perde o foco); a busca só aparece com linhas, e sem ação nem linhas
   // não há o que mostrar nela.
-  const showBar = rows.length > 0 || toolbar !== undefined;
+  const searching = searchable && !paging;
+  const showBar = (searching && rows.length > 0) || toolbar !== undefined;
 
   const needle = normalize(query.trim());
   const filtered = needle
@@ -106,7 +128,9 @@ export function DataTable({
     : rows;
   const lastPage = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = Math.min(page, lastPage);
-  const visible = filtered.slice((current - 1) * pageSize, current * pageSize);
+  const visible = paging
+    ? rows
+    : filtered.slice((current - 1) * pageSize, current * pageSize);
 
   // Clique fora do link e dos botões da linha leva ao mesmo lugar do link.
   const openRow = (row: DataTableRow) => (event: MouseEvent) => {
@@ -130,7 +154,7 @@ export function DataTable({
       {showBar && (
         <TableToolbar aria-label={label}>
           <TableToolbarContent>
-            {rows.length > 0 && (
+            {searching && rows.length > 0 && (
               <TableToolbarSearch
                 persistent
                 labelText={t("search")}
@@ -200,19 +224,31 @@ export function DataTable({
           </TableBody>
         </Table>
       )}
-      {filtered.length > PAGE_SIZES[0] && (
-        <Pagination
-          page={current}
-          pageSize={pageSize}
-          pageSizes={PAGE_SIZES}
-          totalItems={filtered.length}
-          size={size}
-          onChange={(next) => {
-            setPage(next.page);
-            setPageSize(next.pageSize);
-          }}
-        />
-      )}
+      {paging
+        ? paging.totalItems > paging.pageSize && (
+            <Pagination
+              page={paging.page}
+              pageSize={paging.pageSize}
+              pageSizes={[paging.pageSize]}
+              pageSizeInputDisabled
+              totalItems={paging.totalItems}
+              size={size}
+              onChange={(next) => paging.onPageChange(next.page)}
+            />
+          )
+        : filtered.length > PAGE_SIZES[0] && (
+            <Pagination
+              page={current}
+              pageSize={pageSize}
+              pageSizes={PAGE_SIZES}
+              totalItems={filtered.length}
+              size={size}
+              onChange={(next) => {
+                setPage(next.page);
+                setPageSize(next.pageSize);
+              }}
+            />
+          )}
     </TableContainer>
   );
 }

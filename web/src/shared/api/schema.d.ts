@@ -948,6 +948,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/members/{user_id}/career": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_member_career"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/members/{user_id}/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_member_games"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/members/{user_id}/opponents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_member_opponents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/members/{user_id}/role": {
         parameters: {
             query?: never;
@@ -957,6 +1005,22 @@ export interface paths {
         };
         get?: never;
         put: operations["set_member_role"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/members/{user_id}/tournaments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_member_tournaments"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2617,6 +2681,15 @@ export interface components {
             task?: components["schemas"]["ViewerTask"] | null;
             winner: components["schemas"]["Side"];
         };
+        /** @description As opções dos filtros de partidas. */
+        GameFilters: {
+            /** @description As arenas que ele jogou, por nome. */
+            maps: components["schemas"]["MapLabel"][];
+            /** @description Quem esteve do outro lado em algum mapa, por apelido. */
+            opponents: components["schemas"]["PersonLabel"][];
+            /** @description Os torneios em que o membro jogou, do mapa mais recente. */
+            tournaments: components["schemas"]["TournamentLabel"][];
+        };
         /** @description Um mapa da série: o mapa e o placar. O vencedor é quem fez mais frags. */
         GameInput: {
             /**
@@ -2633,6 +2706,26 @@ export interface components {
              * @example blood-covenant
              */
             map?: string | null;
+        };
+        /** @description Os pontos que um mapa deu ou tirou do rating. */
+        GameRating: {
+            /**
+             * Format: int32
+             * @description Ganhos (positivo) ou perdidos (negativo).
+             */
+            delta: number;
+            /**
+             * Format: int32
+             * @description O rating depois do mapa.
+             */
+            rating_after: number;
+        };
+        /** @description Vitórias e derrotas em mapas. */
+        GameRecord: {
+            /** Format: int32 */
+            losses: number;
+            /** Format: int32 */
+            wins: number;
         };
         GameScreenshots: {
             /** @description Quem vê pode anexar mais um screenshot a este mapa agora. */
@@ -2817,6 +2910,12 @@ export interface components {
             /** @example blood-covenant */
             slug: string;
         };
+        MapLabel: {
+            /** @description Nome próprio do mapa, igual em todos os idiomas. */
+            name: string;
+            /** @example vestibule-of-exile */
+            slug: string;
+        };
         /**
          * @description Como sai o mapa de cada partida da série.
          * @enum {string}
@@ -2970,26 +3069,108 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
-        /** @description Um membro na comunidade, com os torneios dela em que se inscreveu. */
-        MemberProfile: {
-            avatar_url?: string | null;
-            /** @description Nome exibido do usuário: o do Discord ou o do cadastro. */
-            display_name: string;
-            /** Format: date-time */
-            joined_at: string;
-            nickname: string;
-            role: components["schemas"]["Role"];
+        /**
+         * @description A carreira de um membro na comunidade: as séries decididas e os mapas
+         *     confirmados de todos os torneios dela, com rating ligado ou não.
+         */
+        MemberCareer: {
+            best_placement?: components["schemas"]["MyPlacement"] | null;
             /**
-             * @description Os torneios da comunidade em que ele se inscreveu, só os que quem vê
-             *     vê na lista dela, do início mais recente ao mais antigo (os sem data,
-             *     só rascunhos, primeiro; no empate, o criado por último).
+             * Format: int32
+             * @description Frags sofridos nos mapas com placar.
              */
-            tournaments: components["schemas"]["MemberTournament"][];
+            frags_against: number;
+            /**
+             * Format: int32
+             * @description Frags feitos nos mapas com placar.
+             */
+            frags_for: number;
+            /** @description Os mapas confirmados. */
+            games: components["schemas"]["GameRecord"];
+            /**
+             * Format: int32
+             * @description Torneios terminados entre os três primeiros (os títulos incluídos).
+             */
+            podiums: number;
+            /** @description As últimas séries decididas, da mais recente. */
+            recent_series: components["schemas"]["MemberSeries"][];
+            /** @description As séries decididas, W.O. incluído. */
+            series: components["schemas"]["SeriesRecord"];
+            streak?: components["schemas"]["Streak"] | null;
+            /**
+             * Format: int32
+             * @description Torneios vencidos.
+             */
+            titles: number;
+        };
+        /** @description Um mapa confirmado de um membro. */
+        MemberGame: {
+            /**
+             * Format: date-time
+             * @description Quando o mapa confirmou.
+             */
+            at: string;
+            /**
+             * Format: int32
+             * @description Frags do lado do membro; `null` sem placar.
+             */
+            frags?: number | null;
+            /**
+             * Format: int32
+             * @description Número do mapa na série.
+             */
+            game: number;
+            map?: components["schemas"]["MapLabel"] | null;
+            /**
+             * @description A partida, pelo código público (`wb-1-3`; `s2-wb-1-3` da fase 2 em
+             *     diante).
+             */
+            match: string;
+            /** @description O time do outro lado do mapa (no duelo, o do adversário). */
+            opponent: components["schemas"]["Team"];
+            /**
+             * Format: int32
+             * @description Frags do outro lado; `null` sem placar.
+             */
+            opponent_frags?: number | null;
+            rating?: components["schemas"]["GameRating"] | null;
+            /**
+             * @description A fase da partida é eliminação simples (o nome curto dela é outro:
+             *     "Final", não "C3.1").
+             */
+            single: boolean;
+            tournament: components["schemas"]["TournamentLabel"];
+            won: boolean;
+        };
+        /** @description Uma página dos mapas de um membro. */
+        MemberGames: {
+            /**
+             * @description As opções de cada filtro, de todos os mapas do membro (não só os do
+             *     filtro atual).
+             */
+            filters: components["schemas"]["GameFilters"];
+            /** @description Do mais recente ao mais antigo. */
+            games: components["schemas"]["MemberGame"][];
             /** Format: int64 */
-            user_id: number;
+            page: number;
+            /** Format: int64 */
+            page_size: number;
+            /**
+             * Format: int64
+             * @description Quantos mapas o filtro acha, em todas as páginas.
+             */
+            total: number;
+        };
+        /** @description O confronto direto de um membro com cada pessoa que esteve do outro lado. */
+        MemberOpponents: {
+            /**
+             * @description Da pessoa com mais séries contra o membro à com menos (no empate, mais
+             *     mapas, depois o apelido).
+             */
+            opponents: components["schemas"]["OpponentRecord"][];
         };
         /**
-         * @description O rating de um membro, com os últimos mapas que contaram e o retrospecto
+         * @description O rating de um membro, com o histórico dele e o retrospecto
          *     por arena.
          */
         MemberRating: {
@@ -3011,17 +3192,49 @@ export interface components {
              */
             by_map: components["schemas"]["MapRecord"][];
             /**
-             * @description Os últimos mapas que contaram, do mais recente ao mais antigo, só dos
-             *     torneios que quem vê vê na lista da comunidade.
+             * @description O histórico inteiro do rating, do primeiro evento ao último (os mapas
+             *     que contaram e os ajustes, na ordem do recálculo). Vazio sem nenhum.
              */
-            games: components["schemas"]["RatedGame"][];
+            history: components["schemas"]["RatingPoint"][];
             /** Format: int32 */
             initial: number;
             /** Format: int32 */
             provisional_games: number;
+            /**
+             * Format: int32
+             * @description Quantas pessoas há no ranking (o "de N" da posição).
+             */
+            ranked: number;
             standing?: components["schemas"]["RankingEntry"] | null;
             /** Format: int64 */
             user_id: number;
+        };
+        /** @description Uma série decidida de um membro. */
+        MemberSeries: {
+            /**
+             * Format: date-time
+             * @description Quando a série foi decidida.
+             */
+            at: string;
+            /**
+             * Format: int32
+             * @description Mapas vencidos pelo outro lado; `null` no W.O.
+             */
+            losses?: number | null;
+            /**
+             * @description A partida, pelo código público (`wb-1-3`; `s2-wb-1-3` da fase 2 em
+             *     diante).
+             */
+            match: string;
+            /** @description O time do outro lado (no duelo, o do adversário). */
+            opponent: components["schemas"]["Team"];
+            outcome: components["schemas"]["SeriesOutcome"];
+            tournament: components["schemas"]["TournamentLabel"];
+            /**
+             * Format: int32
+             * @description Mapas vencidos pelo lado do membro; `null` no W.O.
+             */
+            wins?: number | null;
         };
         /** @description Um torneio em que o membro se inscreveu. */
         MemberTournament: {
@@ -3473,6 +3686,19 @@ export interface components {
             tenant_slug: string;
             tournament: components["schemas"]["TournamentSummary"];
         };
+        /** @description O confronto de um membro com uma pessoa, do ponto de vista do membro. */
+        OpponentRecord: {
+            /** @description Os mapas confirmados em lados opostos. */
+            games: components["schemas"]["GameRecord"];
+            /**
+             * Format: date-time
+             * @description O último mapa ou série entre os dois.
+             */
+            last_at: string;
+            person: components["schemas"]["PersonLabel"];
+            /** @description As séries decididas em lados opostos. */
+            series: components["schemas"]["SeriesRecord"];
+        };
         /**
          * @description O que espera a organização nas comunidades em que quem vê é organizer ou
          *     owner ativo. Para quem não organiza nenhuma, as listas vêm vazias.
@@ -3571,6 +3797,16 @@ export interface components {
             tenant_slug: string;
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
+        };
+        /** @description Uma pessoa da comunidade, ativa ou não. */
+        PersonLabel: {
+            /** @description Ainda é membro (quem saiu não tem página). */
+            active: boolean;
+            avatar_url?: string | null;
+            /** @description Vazio: conta excluída. */
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
         };
         /**
          * @description A ordem das escolhas de campeão, depois dos bans.
@@ -3675,44 +3911,6 @@ export interface components {
             /** Format: int32 */
             wins: number;
         };
-        /** @description Um mapa que contou para o rating de alguém. */
-        RatedGame: {
-            /**
-             * Format: date-time
-             * @description Quando o mapa confirmou.
-             */
-            at: string;
-            /**
-             * Format: int32
-             * @description Pontos ganhos (positivo) ou perdidos (negativo) neste mapa.
-             */
-            delta: number;
-            /**
-             * Format: int32
-             * @description Número do mapa na série.
-             */
-            game: number;
-            /** @description Nome do mapa; `null` nas séries antigas enviadas sem o detalhe. */
-            map?: string | null;
-            /** @description A partida (`wb-1-3`). */
-            match: string;
-            /** @description O time do outro lado do mapa (no duelo, o do adversário). */
-            opponent: components["schemas"]["Team"];
-            /**
-             * Format: int32
-             * @description O rating depois dele.
-             */
-            rating_after: number;
-            tournament: components["schemas"]["RatedTournament"];
-            won: boolean;
-        };
-        RatedTournament: {
-            locale: components["schemas"]["Locale"];
-            /** @description No idioma original; as traduções ao lado. */
-            name: string;
-            slug: string;
-            translations: components["schemas"]["NameTranslation"][];
-        };
         /** @description Um ajuste manual. */
         RatingAdjustment: {
             /** Format: date-time */
@@ -3723,6 +3921,26 @@ export interface components {
             /** Format: int64 */
             id: number;
             reason: string;
+        };
+        /** @description Um evento do rating de alguém: um mapa que contou ou um ajuste. */
+        RatingPoint: {
+            /**
+             * Format: date-time
+             * @description Quando o mapa confirmou ou o ajuste foi feito.
+             */
+            at: string;
+            /**
+             * Format: int32
+             * @description Pontos ganhos (positivo) ou perdidos (negativo).
+             */
+            delta: number;
+            /**
+             * Format: int32
+             * @description O rating depois do evento.
+             */
+            rating: number;
+            /** @description No mapa, se venceu; `null` no ajuste. */
+            won?: boolean | null;
         };
         /**
          * @description Os parâmetros do Elo da comunidade. Mudar recalcula todos os ratings com
@@ -3848,6 +4066,20 @@ export interface components {
         SeedingOrder: {
             /** @description Todos os times elegíveis, cada um uma vez, do seed 1 em diante. */
             team_ids: number[];
+        };
+        /** @enum {string} */
+        SeriesOutcome: "won" | "lost" | "draw";
+        /**
+         * @description Vitórias, derrotas e empates em séries (empate só na série de número par
+         *     de mapas do todos contra todos).
+         */
+        SeriesRecord: {
+            /** Format: int32 */
+            draws: number;
+            /** Format: int32 */
+            losses: number;
+            /** Format: int32 */
+            wins: number;
         };
         /** @description Da API para o navegador. */
         ServerMessage: (components["schemas"]["Changed"] & {
@@ -4224,6 +4456,16 @@ export interface components {
             /** @description `registration` ou `check_in`. */
             status: components["schemas"]["TournamentStatus"];
             tournament: components["schemas"]["PendingTournament"];
+        };
+        /** @description A sequência atual: as últimas séries decididas com o mesmo resultado. */
+        Streak: {
+            /**
+             * Format: int32
+             * @description Quantas seguidas, de 1 em diante.
+             */
+            count: number;
+            /** @description `true`: vitórias; `false`: derrotas. */
+            won: boolean;
         };
         SubscriptionKeys: {
             /** @description Segredo de autenticação (base64url). */
@@ -4649,6 +4891,14 @@ export interface components {
              *     de posições.
              */
             total_rounds?: number | null;
+        };
+        /** @description O nome de um torneio, para mostrar no idioma de quem vê. */
+        TournamentLabel: {
+            locale: components["schemas"]["Locale"];
+            /** @description No idioma original; as traduções ao lado. */
+            name: string;
+            slug: string;
+            translations: components["schemas"]["NameTranslation"][];
         };
         /**
          * @description A modalidade: duelo (um contra um) ou TDM (times de 2 a 4, `team_size`).
@@ -9097,13 +9347,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes */
+            /** @description O membro na comunidade (o cabeçalho da página dele; as abas têm as rotas `.../tournaments`, `.../career`, `.../games` e `.../opponents`) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberProfile"];
+                    "application/json": components["schemas"]["Member"];
                 };
             };
             /** @description request.invalid_path */
@@ -9203,6 +9453,174 @@ export interface operations {
             };
         };
     };
+    get_member_career: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A carreira do membro em todos os torneios da comunidade, com rating ou não: séries decididas (W.O. incluído; a série é de quem jogou algum mapa confirmado dela ou, sem nenhum, do time), mapas confirmados, frags dos mapas com placar, títulos, pódios e a melhor colocação (dos torneios que quem vê vê; o empate a decidir não conta), a sequência atual e as 5 últimas séries */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberCareer"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_member_games: {
+        parameters: {
+            query?: {
+                /** @description Página, de 1 em diante. Sem ela, 1. */
+                page?: number;
+                /** @description Só os mapas deste torneio (slug). */
+                tournament?: string;
+                /** @description Só os mapas desta arena (slug). */
+                map?: string;
+                /** @description Só os mapas em que esta pessoa (`user_id`) estava do outro lado. */
+                opponent?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Uma página (25) dos mapas confirmados do membro em todos os torneios da comunidade, do mais recente, com o efeito no rating nos que contaram (recalculado antes de ler, se algo mudou), quantos o filtro acha e as opções de cada filtro. Página além do fim: vazia, com o total */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberGames"];
+                };
+            };
+            /** @description request.invalid_path, request.invalid_query (página abaixo de 1) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_member_opponents: {
+        parameters: {
+            query?: {
+                /** @description Só os torneios desta modalidade. Sem ele, todos. */
+                modality?: components["schemas"]["TournamentMode"];
+            };
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O confronto direto do membro com cada pessoa que esteve do outro lado, em todos os torneios da comunidade (com rating ou não; duelo e TDM juntos, ou só a `modality`): séries decididas (no TDM, quem jogou algum mapa confirmado dela; no W.O., os times) e mapas confirmados em lados opostos, e o último confronto. Inclui quem saiu da comunidade (`active` falso) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOpponents"];
+                };
+            };
+            /** @description request.invalid_path, request.invalid_query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     set_member_role: {
         parameters: {
             query?: never;
@@ -9277,6 +9695,58 @@ export interface operations {
             };
             /** @description request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_member_tournaments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os torneios da comunidade em que o membro se inscreveu e que quem vê vê na lista dela (player não vê rascunho), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberTournament"][];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9445,7 +9915,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O rating do membro, os últimos 20 mapas que contaram e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes */
+            /** @description O rating do membro, o histórico inteiro dele (cada mapa que contou e cada ajuste, com o rating depois) e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -93,7 +93,7 @@ pub enum Situation {
 }
 
 /// Faixa de colocação: `rank` 5 com `tied` 4 é 5º–8º.
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MyPlacement {
     pub rank: u16,
     pub tied: u16,

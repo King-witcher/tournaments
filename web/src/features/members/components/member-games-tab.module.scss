@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O que a aba conta, embaixo das abas, como a descrição de uma seção.
+.description {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}

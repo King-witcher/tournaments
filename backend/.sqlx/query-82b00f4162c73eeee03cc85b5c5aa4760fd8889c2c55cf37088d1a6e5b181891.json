@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select slug from maps where active order by slug collate \"C\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "82b00f4162c73eeee03cc85b5c5aa4760fd8889c2c55cf37088d1a6e5b181891"
+}

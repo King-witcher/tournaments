@@ -37,7 +37,11 @@ async fn organizer_adjusts_with_a_reason() {
     // Depois do ajuste, o primeiro mapa ainda tem K 80: 1550 contra 1500.
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     let p1 = member_rating(&f.app, &f.bia, f.p1.id).await;
-    assert_eq!(p1["games"][1]["delta"], 34);
+    // No histórico, o ajuste vem antes dos dois mapas.
+    assert_eq!(p1["history"][0]["delta"], 50);
+    assert_eq!(p1["history"][0]["rating"], 1550);
+    assert_eq!(p1["history"][0]["won"], Value::Null);
+    assert_eq!(p1["history"][1]["delta"], 34);
     assert_eq!(p1["adjusted"], 50);
     // O player vê a soma, não a lista; a organização vê a lista.
     assert_eq!(p1["adjustments"], Value::Null);

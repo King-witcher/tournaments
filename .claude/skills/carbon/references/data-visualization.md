@@ -2,13 +2,11 @@
 
 ## Situação no projeto
 
-O projeto **ainda não tem** `@carbon/charts-react` (o `web/package.json` só traz `@carbon/react` e `@carbon/icons-react`). Hoje os números aparecem em tabela, `StructuredList` e tiles (ranking, "Por mapa" na página da pessoa, classificação). Antes do primeiro gráfico:
+Desde 16/11 o projeto tem `@carbon/charts-react` (e `date-fns`, para o idioma do eixo do tempo), num gráfico só: a evolução do rating na página da pessoa (`docs/decisions/interface.md`, "Página da pessoa"). O resto dos números continua em tabela, `StructuredList` e tiles. Para um gráfico novo:
 
 - Pergunte se um gráfico responde a pergunta melhor que a tabela ou o tile que já existem (utilitarismo: o gráfico precisa de um motivo de uso).
-- Instalar é decisão do projeto: registre em `docs/decisions/interface.md` com o motivo e o custo medido (JavaScript e CSS a mais na rota). Com Bun: `bun add @carbon/charts-react @carbon/charts` (o MCP sugere npm; o projeto usa só Bun).
-- O CSS entra por `import "@carbon/charts/styles.css"`; ponha só onde houver gráfico, não no layout raiz, para não pesar em toda página.
-- O gráfico desenha no DOM do navegador: componente de cliente (`"use client"`) na folha, num invólucro novo da `shared/ui`, com o esqueleto do mesmo tamanho no `<Suspense>`.
-- O tema do projeto vem do CSS (`g10`/`g100` por `prefers-color-scheme` e `data-theme`); o Carbon Charts recebe o tema em `options.theme` (`"white" | "g10" | "g90" | "g100"`), então o invólucro precisa ler o tema ativo e trocar quando ele mudar.
+- No projeto: `LineChart` de `shared/ui` (`line-chart.tsx`), que carrega o pacote e o CSS por `next/dynamic` só no navegador e só na página que o usa (113 KB de JS e 20 KB de CSS com gzip), com o esqueleto da altura dele, o tema seguindo o do site (`white` no claro, `g90` no escuro, a camada do `Panel`) e as datas e números no idioma da página. Outro tipo de gráfico: um invólucro irmão, no mesmo molde.
+- Armadilha: o eixo do tempo formata as marcas com o date-fns (`timeScale.localeObject`), não com `locale.date`/`locale.time`; e, com pontos a menos de 15 segundos uns dos outros, cai no formato do d3 em inglês, com milissegundos (dado de teste confirmado no mesmo segundo).
 
 ## Pacote
 

@@ -1,5 +1,6 @@
 import { Add } from "@carbon/icons-react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
 
 import { Avatar } from "./avatar";
@@ -204,4 +205,33 @@ export const EmptyToolbarOnly: Story = {
 export const Phone: Story = {
   args: { rows: players(30) },
   globals: { viewport: { value: "phone", isRotated: false } },
+};
+
+/** Lista curta (as últimas séries): sem a busca na barra. */
+export const NotSearchable: Story = {
+  args: { rows: players(5), searchable: false },
+};
+
+/**
+ * Paginada pela API: as linhas são a página atual, a paginação não tem "por
+ * página" e não há busca. Aqui a troca só fica no estado da história; na
+ * página, muda o endereço.
+ */
+export const ServerPaging: Story = {
+  render: function ServerPagingStory(args) {
+    const all = players(60);
+    const [page, setPage] = useState(1);
+    return (
+      <DataTable
+        {...args}
+        rows={all.slice((page - 1) * 25, page * 25)}
+        paging={{
+          page,
+          pageSize: 25,
+          totalItems: all.length,
+          onPageChange: setPage,
+        }}
+      />
+    );
+  },
 };

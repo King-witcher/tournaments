@@ -2,7 +2,7 @@
 //! histórico que o engine reprocessa e o cache (`ratings`, `rating_history`).
 
 use chrono::{DateTime, Utc};
-use sqlx::{PgConnection, PgPool};
+use sqlx::{PgConnection, PgExecutor, PgPool};
 
 use crate::{
     ratings::history::{Cache, HistoryRow, RatingRow, Source, SourceKind},
@@ -27,7 +27,7 @@ pub async fn lock(conn: &mut PgConnection, tenant: TenantId) -> Result<(), sqlx:
 }
 
 /// Se o tenant tem marca de rating desatualizado.
-pub async fn is_dirty(db: &PgPool, tenant: TenantId) -> Result<bool, sqlx::Error> {
+pub async fn is_dirty(db: impl PgExecutor<'_>, tenant: TenantId) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar!(
         r#"select exists(select 1 from rating_dirty where tenant_id = $1) as "dirty!""#,
         tenant.get()

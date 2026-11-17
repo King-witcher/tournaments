@@ -13,8 +13,6 @@ use crate::{
     tenants::{self, Organizer, Owner, Role, TenantMember},
 };
 
-/// Mapas na página de um membro.
-const RECENT_GAMES: i64 = 20;
 /// Tamanho do motivo de um ajuste (o mesmo check está na tabela).
 const MAX_REASON: usize = 280;
 
@@ -55,7 +53,7 @@ pub async fn get_ranking(
         ("user_id" = i64, Path, description = "Id do usuário membro"),
     ),
     responses(
-        (status = OK, body = MemberRating, description = "O rating do membro, os últimos 20 mapas que contaram e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes"),
+        (status = OK, body = MemberRating, description = "O rating do membro, o histórico inteiro dele (cada mapa que contou e cada ajuste, com o rating depois) e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo)"),
@@ -73,21 +71,21 @@ pub async fn get_member_rating(
         .await?
         .config()
         .initial;
-    let standing = db::ranking(&state.db, member.tenant)
-        .await?
-        .into_iter()
-        .find(|e| e.user_id == user);
+    let ranking = db::ranking(&state.db, member.tenant).await?;
+    let ranked = u32::try_from(ranking.len()).unwrap_or(u32::MAX);
+    let standing = ranking.into_iter().find(|e| e.user_id == user);
     let staff = member.role >= Role::Organizer;
-    let games = db::recent_games(&state.db, member.tenant, user, RECENT_GAMES).await?;
+    let history = db::history(&state.db, member.tenant, user).await?;
     let by_map = db::map_records(&state.db, member.tenant, user).await?;
     let adjustments = db::adjustments(&state.db, member.tenant, user).await?;
     Ok(Json(MemberRating {
         user_id: user,
         standing,
+        ranked,
         initial,
         provisional_games: PROVISIONAL_GAMES,
         adjusted: adjustments.iter().map(|a| a.delta).sum(),
-        games,
+        history,
         by_map,
         adjustments: staff.then_some(adjustments),
     }))

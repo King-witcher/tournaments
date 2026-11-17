@@ -46,29 +46,34 @@ const TabLink = IntlLink as unknown as ComponentType;
  * Aba que não se aplica (Regras sem regras, Configurações para jogador) não
  * entra em `tabs`. O respiro entre a barra e o conteúdo já vem do painel: o
  * conteúdo da aba não leva margem nem `Stack` extra para isso. Setas movem
- * entre as abas; Enter abre.
+ * entre as abas; Enter abre. A barra e o painel ficam num bloco só, que
+ * pode ser mais estreito que a barra: no `Stack` da página não ganham o
+ * espaço entre blocos, e no celular as abas rolam dentro da barra sem
+ * alargar a página.
  */
 export function PageTabs({ tabs, label, children }: Props) {
   const pathname = usePathname();
   const selected = currentIndex(tabs, pathname);
   return (
-    <Tabs selectedIndex={selected}>
-      <TabList aria-label={label} activation="manual">
-        {tabs.map((tab) => (
-          <Tab key={tab.href} as={TabLink} {...{ href: tab.href }}>
-            {tab.label}
-          </Tab>
-        ))}
-      </TabList>
-      {children !== undefined && (
-        <TabPanels>
-          {tabs.map((tab, index) => (
-            <TabPanel key={tab.href} className={styles.panel}>
-              {index === selected ? children : null}
-            </TabPanel>
+    <div className={styles.root}>
+      <Tabs selectedIndex={selected}>
+        <TabList aria-label={label} activation="manual">
+          {tabs.map((tab) => (
+            <Tab key={tab.href} as={TabLink} {...{ href: tab.href }}>
+              {tab.label}
+            </Tab>
           ))}
-        </TabPanels>
-      )}
-    </Tabs>
+        </TabList>
+        {children !== undefined && (
+          <TabPanels>
+            {tabs.map((tab, index) => (
+              <TabPanel key={tab.href} className={styles.panel}>
+                {index === selected ? children : null}
+              </TabPanel>
+            ))}
+          </TabPanels>
+        )}
+      </Tabs>
+    </div>
   );
 }

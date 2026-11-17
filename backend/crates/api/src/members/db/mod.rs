@@ -1,4 +1,13 @@
-use sqlx::{PgConnection, PgExecutor, PgPool};
+//! SQL dos membros: a lista, o papel, a saída e o apelido aqui; o
+//! retrospecto de um membro (séries, mapas, adversários) em `record`.
+
+mod record;
+
+use sqlx::{PgConnection, PgExecutor};
+
+pub use record::{
+    GamesFilter, game_filters, game_totals, games_by_opponent, games_page, people, series,
+};
 
 use super::types::Member;
 use crate::{
@@ -45,7 +54,7 @@ pub async fn list(
 
 /// Papel do usuário no tenant; `None` se ele não é membro ativo.
 pub async fn role_of(
-    db: &PgPool,
+    db: impl PgExecutor<'_>,
     tenant: TenantId,
     user_id: i64,
 ) -> Result<Option<Role>, ApiError> {

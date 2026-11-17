@@ -40,23 +40,6 @@
     "title": "By map",
     "description": "Includes tournaments that don't count toward the rating."
   },
-  "games": {
-    "title": "Recent games",
-    "description": "The most recent games that counted toward the rating, up to {count}.",
-    "label": "Recent games that counted",
-    "tournament": "Tournament",
-    "opponent": "Opponent",
-    "map": "Map",
-    "mapValue": "{map} (game {number})",
-    "noMap": "Game {number}",
-    "result": "Result",
-    "won": "Win",
-    "lost": "Loss",
-    "points": "Points",
-    "after": "Rating after",
-    "when": "When",
-    "left": "left"
-  },
   "adjustments": {
     "title": "Manual adjustments",
     "description": "Only the organizers see this list.",

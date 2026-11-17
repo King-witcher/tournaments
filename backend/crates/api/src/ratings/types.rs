@@ -2,8 +2,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{shared::Locale, teams::Team, tournaments::NameTranslation};
-
 /// O ranking da comunidade.
 #[derive(Serialize, ToSchema)]
 pub struct Ranking {
@@ -42,7 +40,7 @@ pub struct RankingEntry {
     pub provisional: bool,
 }
 
-/// O rating de um membro, com os últimos mapas que contaram e o retrospecto
+/// O rating de um membro, com o histórico dele e o retrospecto
 /// por arena.
 #[derive(Serialize, ToSchema)]
 pub struct MemberRating {
@@ -50,13 +48,15 @@ pub struct MemberRating {
     /// `null` enquanto não tem nenhum mapa nem ajuste (o rating seria o
     /// `initial`).
     pub standing: Option<RankingEntry>,
+    /// Quantas pessoas há no ranking (o "de N" da posição).
+    pub ranked: u32,
     pub initial: i32,
     pub provisional_games: u32,
     /// Soma dos ajustes manuais da organização, já dentro do rating.
     pub adjusted: i32,
-    /// Os últimos mapas que contaram, do mais recente ao mais antigo, só dos
-    /// torneios que quem vê vê na lista da comunidade.
-    pub games: Vec<RatedGame>,
+    /// O histórico inteiro do rating, do primeiro evento ao último (os mapas
+    /// que contaram e os ajustes, na ordem do recálculo). Vazio sem nenhum.
+    pub history: Vec<RatingPoint>,
     /// O retrospecto da pessoa em cada arena que jogou, da mais jogada à menos
     /// (no empate, por nome). Conta os mapas confirmados (jogos) com a arena
     /// conhecida, de todos os torneios da comunidade, com ou sem rating; W.O. e
@@ -79,35 +79,17 @@ pub struct MapRecord {
     pub losses: i32,
 }
 
-/// Um mapa que contou para o rating de alguém.
+/// Um evento do rating de alguém: um mapa que contou ou um ajuste.
 #[derive(Serialize, ToSchema)]
-pub struct RatedGame {
-    pub tournament: RatedTournament,
-    /// A partida (`wb-1-3`).
-    #[serde(rename = "match")]
-    pub match_key: String,
-    /// Número do mapa na série.
-    pub game: i16,
-    /// Nome do mapa; `null` nas séries antigas enviadas sem o detalhe.
-    pub map: Option<String>,
-    /// O time do outro lado do mapa (no duelo, o do adversário).
-    pub opponent: Team,
-    pub won: bool,
-    /// Pontos ganhos (positivo) ou perdidos (negativo) neste mapa.
-    pub delta: i32,
-    /// O rating depois dele.
-    pub rating_after: i32,
-    /// Quando o mapa confirmou.
+pub struct RatingPoint {
+    /// Quando o mapa confirmou ou o ajuste foi feito.
     pub at: DateTime<Utc>,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct RatedTournament {
-    pub slug: String,
-    pub locale: Locale,
-    /// No idioma original; as traduções ao lado.
-    pub name: String,
-    pub translations: Vec<NameTranslation>,
+    /// O rating depois do evento.
+    pub rating: i32,
+    /// Pontos ganhos (positivo) ou perdidos (negativo).
+    pub delta: i32,
+    /// No mapa, se venceu; `null` no ajuste.
+    pub won: Option<bool>,
 }
 
 /// Um ajuste manual.

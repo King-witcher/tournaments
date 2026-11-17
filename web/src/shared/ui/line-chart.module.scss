@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+
+// 320px: cabe a variação de um ano de mapas sem a linha ficar achatada, e no
+// celular sobra a primeira tela para o resto da página. O gráfico ocupa a
+// altura do bloco (`height: 100%`), e o esqueleto tem a mesma.
+.chart,
+.skeleton {
+  inline-size: 100%;
+  block-size: calc(spacing.$spacing-13 * 2);
+}
+
+.skeleton {
+  @include skeleton;
+}

@@ -6,6 +6,7 @@
   "since": "Membro desde <date></date>",
   "editNickname": "Editar apelido",
   "deletedAccount": "Conta excluída",
+  "left": "{name} (saiu)",
   "tournaments": {
     "title": "Torneios nesta comunidade",
     "tournament": "Torneio",
@@ -34,5 +35,95 @@
     "emptyYou": "Você ainda não jogou aqui.",
     "browse": "Ver os torneios",
     "withTeam": "{tournament} · time: {team}"
+  },
+  "tabs": {
+    "label": "Seções do perfil",
+    "overview": "Visão geral",
+    "games": "Partidas",
+    "tournaments": "Torneios",
+    "opponents": "Confrontos"
+  },
+  "loadingTab": {
+    "overview": "Carregando a visão geral…",
+    "games": "Carregando as partidas…",
+    "tournaments": "Carregando os torneios…",
+    "opponents": "Carregando os confrontos…"
+  },
+  "nicknameModal": {
+    "submit": "Salvar"
+  },
+  "career": {
+    "title": "Carreira",
+    "description": "Inclui torneios que não contam para o rating.",
+    "label": "Resumo da carreira",
+    "series": "Séries",
+    "games": "Partidas",
+    "record": "{wins} V – {losses} D",
+    "recordDraws": "{wins} V – {draws} E – {losses} D",
+    "frags": "Saldo de frags",
+    "fragsValue": "{diff} ({for} feitos, {against} sofridos)",
+    "titles": "Títulos",
+    "podiums": "Pódios",
+    "best": "Melhor colocação",
+    "streak": "Sequência atual",
+    "streakWon": "{count, plural, one {# vitória} other {# vitórias}}",
+    "streakLost": "{count, plural, one {# derrota} other {# derrotas}}",
+    "none": "—",
+    "empty": "Nenhuma partida ainda."
+  },
+  "evolution": {
+    "title": "Evolução do rating",
+    "label": "Rating ao longo do tempo",
+    "value": "Rating"
+  },
+  "recent": {
+    "title": "Últimas séries",
+    "label": "Últimas séries decididas",
+    "tournament": "Torneio",
+    "opponent": "Adversário",
+    "result": "Resultado",
+    "when": "Quando",
+    "won": "Vitória",
+    "lost": "Derrota",
+    "draw": "Empate",
+    "score": "{outcome}, {wins} × {losses}",
+    "walkover": "{outcome} por W.O.",
+    "all": "Ver todas as partidas"
+  },
+  "games": {
+    "description": "Inclui torneios que não contam para o rating.",
+    "label": "Partidas da pessoa",
+    "tournament": "Torneio",
+    "series": "Série",
+    "map": "Mapa",
+    "mapValue": "{map} (partida {number})",
+    "noMap": "Partida {number}",
+    "opponent": "Adversário",
+    "result": "Resultado",
+    "won": "Vitória",
+    "lost": "Derrota",
+    "score": "{result}, {for} × {against}",
+    "points": "Pontos",
+    "after": "Rating depois",
+    "when": "Quando",
+    "notRated": "—",
+    "any": "Todos",
+    "clear": "Limpar filtros",
+    "empty": "Nenhuma partida ainda.",
+    "emptyFiltered": "Nenhuma partida com estes filtros."
+  },
+  "opponents": {
+    "label": "Confrontos por adversário",
+    "opponent": "Adversário",
+    "series": "Séries",
+    "games": "Partidas",
+    "last": "Último confronto",
+    "modality": "Modalidade",
+    "all": "Todas",
+    "duel": "Duelo",
+    "tdm": "TDM",
+    "versus": "Você contra {name}",
+    "versusNone": "Vocês ainda não se enfrentaram.",
+    "empty": "Nenhum confronto ainda."
   }
 }

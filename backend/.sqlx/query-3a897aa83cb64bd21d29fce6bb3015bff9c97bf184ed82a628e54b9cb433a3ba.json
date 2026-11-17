@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select m.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  m.left_at is null as \"active!\"\n           from tenant_members m\n           join users u on u.id = m.user_id\n           where m.tenant_id = $1 and m.user_id = any($2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "avatar_url",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "active!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "3a897aa83cb64bd21d29fce6bb3015bff9c97bf184ed82a628e54b9cb433a3ba"
+}

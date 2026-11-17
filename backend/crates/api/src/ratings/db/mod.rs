@@ -1,4 +1,4 @@
-//! SQL do rating: a configuração, o ranking, os mapas, o retrospecto por
+//! SQL do rating: a configuração, o ranking, o histórico, o retrospecto por
 //! arena e os ajustes de um membro aqui; o recálculo (marcas, lock, histórico e
 //! cache) em `cache`.
 
@@ -7,16 +7,8 @@ mod cache;
 use engine::rating::{EloConfig, PROVISIONAL_GAMES};
 use sqlx::{PgConnection, PgExecutor, PgPool};
 
-use super::types::{
-    AdjustmentAuthor, MapRecord, RankingEntry, RatedGame, RatedTournament, RatingAdjustment,
-};
-use crate::{
-    auth::resolve_avatar,
-    shared::{ApiError, Locale},
-    teams,
-    tenants::TenantId,
-    tournaments::NameTranslation,
-};
+use super::types::{AdjustmentAuthor, MapRecord, RankingEntry, RatingAdjustment, RatingPoint};
+use crate::{auth::resolve_avatar, tenants::TenantId};
 
 pub use cache::{consume_dirty, dirty_tenants, is_dirty, lock, read, sources, write};
 
@@ -95,77 +87,23 @@ pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>,
         .collect())
 }
 
-/// Até `limit` mapas que contaram para `user`, do mais recente. O adversário
-/// é o time do outro lado do mapa.
-pub async fn recent_games(
+/// O histórico do rating de `user` (o cache), do primeiro evento ao último.
+pub async fn history(
     db: &PgPool,
     tenant: TenantId,
     user: i64,
-    limit: i64,
-) -> Result<Vec<RatedGame>, ApiError> {
-    let mut conn = db.acquire().await?;
-    let rows = sqlx::query!(
-        r#"select g.match_key, g.number, mp.name as "map?", h.won as "won!", h.delta,
-                  h.rating_after, h.at, t.slug, t.locale, t.name,
-                  coalesce((select array_agg(tr.locale order by tr.locale)
-                            from tournament_translations tr where tr.tournament_id = t.id),
-                           '{}') as "translation_locales!",
-                  coalesce((select array_agg(tr.name order by tr.locale)
-                            from tournament_translations tr where tr.tournament_id = t.id),
-                           '{}') as "translation_names!",
-                  case gp.side when 'a' then g.side_b else g.side_a end as "opponent!"
-           from rating_history h
-           join match_games g on g.id = h.game_id and g.tenant_id = h.tenant_id
-           join match_game_players gp on gp.game_id = g.id and gp.user_id = h.user_id
-           join tournaments t on t.id = g.tournament_id
-           left join maps mp on mp.id = g.map_id
-           where h.tenant_id = $1 and h.user_id = $2
-           order by h.seq desc
-           limit $3"#,
+) -> Result<Vec<RatingPoint>, sqlx::Error> {
+    sqlx::query_as!(
+        RatingPoint,
+        r#"select at, rating_after as rating, delta, won
+           from rating_history
+           where tenant_id = $1 and user_id = $2
+           order by seq"#,
         tenant.get(),
-        user,
-        limit
+        user
     )
-    .fetch_all(&mut *conn)
-    .await?;
-    let ids: Vec<i64> = rows.iter().map(|r| r.opponent).collect();
-    let opponents = teams::by_ids(&mut conn, tenant, &ids).await?;
-
-    rows.into_iter()
-        .map(|r| {
-            let translations = r
-                .translation_locales
-                .iter()
-                .zip(r.translation_names)
-                .map(|(locale, name)| {
-                    Ok(NameTranslation {
-                        locale: Locale::from_db(locale)?,
-                        name,
-                    })
-                })
-                .collect::<Result<_, ApiError>>()?;
-            let opponent = opponents
-                .iter()
-                .find(|t| t.id == r.opponent)
-                .ok_or_else(ApiError::internal)?;
-            Ok(RatedGame {
-                tournament: RatedTournament {
-                    slug: r.slug,
-                    locale: Locale::from_db(&r.locale)?,
-                    name: r.name,
-                    translations,
-                },
-                match_key: r.match_key,
-                game: r.number,
-                map: r.map,
-                opponent: opponent.view(),
-                won: r.won,
-                delta: r.delta,
-                rating_after: r.rating_after,
-                at: r.at,
-            })
-        })
-        .collect()
+    .fetch_all(db)
+    .await
 }
 
 /// As vitórias e derrotas de `user` em cada arena, da mais jogada à menos: os

@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with mine as (\n               select t.id as tournament_id, t.tenant_id, g.id as game_id, g.map_id, p.side,\n                      g.confirmed_at\n               from tournaments t\n               join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n               join match_games g on g.id = p.game_id\n               where t.tenant_id = $1 and g.status = 'confirmed'\n           )\n           select\n               coalesce((select json_agg(x order by x.last_at desc, x.slug) from (\n                   select t.slug, t.locale, t.name, max(m.confirmed_at) as last_at,\n                          coalesce((select json_agg(json_build_object('locale', tr.locale,\n                                                                      'name', tr.name)\n                                                    order by tr.locale)\n                                    from tournament_translations tr\n                                    where tr.tournament_id = t.id), '[]'::json) as translations\n                   from mine m join tournaments t on t.id = m.tournament_id\n                   group by t.id) x), '[]') as \"tournaments!: Json<Vec<TournamentRow>>\",\n               coalesce((select json_agg(x order by x.name, x.slug) from (\n                   select distinct mp.slug, mp.name\n                   from mine m join maps mp on mp.id = m.map_id) x), '[]')\n                   as \"maps!: Json<Vec<MapLabel>>\",\n               coalesce((select json_agg(x order by lower(x.nickname), x.user_id) from (\n                   select distinct o.user_id, tm.nickname,\n                          coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                          tm.left_at is null as active\n                   from mine m\n                   join match_game_players o on o.game_id = m.game_id and o.side <> m.side\n                   join tenant_members tm on tm.tenant_id = m.tenant_id and tm.user_id = o.user_id\n                   join users u on u.id = o.user_id) x), '[]')\n                   as \"opponents!: Json<Vec<PersonRow>>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tournaments!: Json<Vec<TournamentRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "maps!: Json<Vec<MapLabel>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "opponents!: Json<Vec<PersonRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "2a705cb48d4afab875a8131335b8e0d85d1a1e4714cd8a51cfbd2694e30c577c"
+}
